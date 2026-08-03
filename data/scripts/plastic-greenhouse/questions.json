@@ -285,5 +285,39 @@
         ]
       }
     ]
+  },
+  {
+    "type": "slider",
+    "scene": "你出門了",
+    "question": "想大便的程度",
+    "answers": [
+      {
+        "text": "答案 A",
+        "score": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "slider": {
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50,
+      "leftLabel": "超不想",
+      "centerLabel": "好像還好",
+      "rightLabel": "超想",
+      "minScore": [
+        20,
+        -10,
+        -10
+      ],
+      "maxScore": [
+        -20,
+        10,
+        10
+      ]
+    }
   }
 ]
