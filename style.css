@@ -374,3 +374,46 @@ body{
 .film{
   background:color-mix(in srgb,var(--theme-background) 92%,#000)!important;
 }
+
+
+/* ===== 題目上一題導覽 ===== */
+.quiz-nav {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.quiz-nav .qnum {
+  grid-column: 2;
+  text-align: center;
+}
+
+.quiz-back {
+  grid-column: 1;
+  border: 0;
+  background: transparent;
+  color: var(--theme-muted, var(--script-muted, #8e949e));
+  cursor: pointer;
+  letter-spacing: .12em;
+  padding: 8px 0;
+  transition: .25s;
+}
+
+.quiz-back:hover {
+  color: var(--theme-accent, var(--script-accent, #d7c28b));
+  transform: translateX(-3px);
+}
+
+@media (max-width: 650px) {
+  .quiz-nav {
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+  }
+
+  .quiz-nav .qnum {
+    grid-column: 2;
+    text-align: right;
+  }
+}

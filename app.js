@@ -514,8 +514,91 @@ function wrapCanvasText(
   return lines;
 }
 
+function hexToRgba(hex, alpha = 1) {
+  const normalized = normalizeHexColor(hex, '#000000');
+  const value = normalized.slice(1);
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${red},${green},${blue},${alpha})`;
+}
+
+function drawRoundedRect(
+  context,
+  x,
+  y,
+  width,
+  height,
+  radius
+) {
+  const safeRadius = Math.min(
+    radius,
+    width / 2,
+    height / 2
+  );
+
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.arcTo(
+    x + width,
+    y,
+    x + width,
+    y + height,
+    safeRadius
+  );
+  context.arcTo(
+    x + width,
+    y + height,
+    x,
+    y + height,
+    safeRadius
+  );
+  context.arcTo(
+    x,
+    y + height,
+    x,
+    y,
+    safeRadius
+  );
+  context.arcTo(
+    x,
+    y,
+    x + width,
+    y,
+    safeRadius
+  );
+  context.closePath();
+}
+
+function drawCenteredWrappedText(
+  context,
+  text,
+  centerX,
+  startY,
+  maxWidth,
+  lineHeight,
+  maxLines = 5
+) {
+  const lines = wrapCanvasText(
+    context,
+    text,
+    maxWidth
+  ).slice(0, maxLines);
+
+  lines.forEach((line, index) => {
+    context.fillText(
+      line,
+      centerX,
+      startY + index * lineHeight
+    );
+  });
+
+  return startY + lines.length * lineHeight;
+}
+
 async function createResultShareBlob() {
-  const { top } = result();
+  const { ranking, top } = result();
 
   if (!top) {
     throw new Error('找不到角色結果');
@@ -534,21 +617,52 @@ async function createResultShareBlob() {
     throw new Error('瀏覽器不支援圖片產生');
   }
 
-  const gradient =
-    context.createLinearGradient(
-      0,
-      0,
-      0,
-      canvas.height
+  const theme =
+    DATA.setting?.theme || {};
+
+  const backgroundColor =
+    normalizeHexColor(
+      theme.backgroundColor,
+      '#f6f2e8'
     );
 
-  gradient.addColorStop(0, normalizeHexColor(DATA.setting?.theme?.backgroundSecondaryColor, '#151a25'));
+  const panelColor =
+    normalizeHexColor(
+      theme.panelColor,
+      '#fffaf0'
+    );
 
-  gradient.addColorStop(0.55, normalizeHexColor(DATA.setting?.theme?.backgroundColor, '#080a0f'));
+  const titleColor =
+    normalizeHexColor(
+      theme.titleColor,
+      '#211c19'
+    );
 
-  gradient.addColorStop(1, normalizeHexColor(DATA.setting?.theme?.panelColor, '#17120e'));
+  const textColor =
+    normalizeHexColor(
+      theme.textColor,
+      '#332c27'
+    );
 
-  context.fillStyle = gradient;
+  const mutedColor =
+    normalizeHexColor(
+      theme.mutedColor,
+      '#776b61'
+    );
+
+  const accentColor =
+    normalizeHexColor(
+      theme.accentColor,
+      '#8e1818'
+    );
+
+  const borderColor =
+    normalizeHexColor(
+      theme.borderColor,
+      accentColor
+    );
+
+  context.fillStyle = backgroundColor;
   context.fillRect(
     0,
     0,
@@ -556,165 +670,257 @@ async function createResultShareBlob() {
     canvas.height
   );
 
+  const paperGradient =
+    context.createRadialGradient(
+      540,
+      300,
+      20,
+      540,
+      900,
+      1000
+    );
+
+  paperGradient.addColorStop(
+    0,
+    hexToRgba(panelColor, .96)
+  );
+
+  paperGradient.addColorStop(
+    1,
+    hexToRgba(backgroundColor, .96)
+  );
+
+  context.fillStyle = paperGradient;
+  context.fillRect(
+    0,
+    0,
+    1080,
+    1920
+  );
+
+  const margin = 92;
+  const contentWidth = 896;
+
+  context.textAlign = 'center';
+  context.textBaseline = 'alphabetic';
+  context.fillStyle = titleColor;
+  context.font =
+    '500 48px "Noto Serif TC", serif';
+
+  const preface =
+    DATA.setting?.result
+      ?.shareImagePreface ||
+    DATA.setting?.result
+      ?.imagePreface ||
+    `在${DATA.setting.title || DATA.setting.name || '故事'}的世界裡你是`;
+
+  let cursorY = 100;
+
+  cursorY = drawCenteredWrappedText(
+    context,
+    preface,
+    540,
+    cursorY,
+    850,
+    62,
+    3
+  ) + 26;
+
+  const imageX = 150;
+  const imageY = cursorY;
+  const imageWidth = 780;
+  const imageHeight = 690;
+
+  context.strokeStyle = borderColor;
+  context.lineWidth = 5;
+  context.strokeRect(
+    imageX,
+    imageY,
+    imageWidth,
+    imageHeight
+  );
+
   try {
     const image =
-      await loadShareImage(
-        top.image
-      );
+      await loadShareImage(top.image);
 
     drawCoverImage(
       context,
       image,
-      0,
-      0,
-      1080,
-      1150
-    );
-
-    const fade =
-      context.createLinearGradient(
-        0,
-        600,
-        0,
-        1220
-      );
-
-    fade.addColorStop(
-      0,
-      'rgba(8,10,15,0)'
-    );
-
-    fade.addColorStop(
-      1,
-      'rgba(8,10,15,1)'
-    );
-
-    context.fillStyle = fade;
-    context.fillRect(
-      0,
-      560,
-      1080,
-      700
+      imageX + 8,
+      imageY + 8,
+      imageWidth - 16,
+      imageHeight - 16
     );
   } catch (error) {
     console.warn(
       '分享圖角色圖片載入失敗',
       error
     );
-  }
 
-  context.textAlign = 'center';
-
-  context.fillStyle =
-    'rgba(236,229,209,.8)';
-
-  context.font =
-    '500 28px sans-serif';
-
-  context.fillText(
-    String(
-      DATA.setting.subtitle ||
-      'ASSIGN ROLES'
-    ).toUpperCase(),
-    540,
-    1050
-  );
-
-  context.fillStyle = normalizeHexColor(DATA.setting?.theme?.titleColor, '#f4efe2');
-  context.font =
-    '700 86px sans-serif';
-
-  context.fillText(
-    top.name || '',
-    540,
-    1170
-  );
-
-  if (top.kr) {
     context.fillStyle =
-      'rgba(244,239,226,.62)';
+      hexToRgba(panelColor, .7);
 
+    context.fillRect(
+      imageX + 8,
+      imageY + 8,
+      imageWidth - 16,
+      imageHeight - 16
+    );
+
+    context.fillStyle = mutedColor;
     context.font =
-      '400 30px sans-serif';
-
+      '400 44px "Noto Serif TC", serif';
     context.fillText(
-      top.kr,
+      '角色圖片',
       540,
-      1220
+      imageY + imageHeight / 2
     );
   }
 
-  context.fillStyle = normalizeHexColor(DATA.setting?.theme?.accentColor, '#d7c28b');
-  context.font =
-    '700 48px sans-serif';
+  cursorY = imageY + imageHeight + 76;
 
+  context.fillStyle = titleColor;
+  context.font =
+    '700 70px "Noto Serif TC", serif';
   context.fillText(
-    `${top.pct}% 共鳴`,
+    top.name || '',
     540,
-    1310
+    cursorY
   );
 
-  context.textAlign = 'left';
-  context.fillStyle =
-    'rgba(244,239,226,.86)';
+  cursorY += 70;
 
+  if (top.kr) {
+    context.fillStyle = mutedColor;
+    context.font =
+      '400 34px "Noto Serif TC", serif';
+    context.fillText(
+      top.kr,
+      540,
+      cursorY
+    );
+    cursorY += 50;
+  }
+
+  context.fillStyle = textColor;
   context.font =
-    '400 34px sans-serif';
+    '400 31px "Noto Serif TC", serif';
 
-  const descriptionLines =
-    wrapCanvasText(
-      context,
-      top.description ||
+  cursorY = drawCenteredWrappedText(
+    context,
+    top.description ||
       top.desc ||
       '',
-      820
-    ).slice(0, 6);
+    540,
+    cursorY,
+    820,
+    46,
+    4
+  ) + 34;
 
-  descriptionLines.forEach(
-    (line, index) => {
-      context.fillText(
-        line,
-        130,
-        1410 + index * 55
-      );
-    }
+  const rankingHeight =
+    105 + ranking.length * 58;
+
+  const rankingY = Math.min(
+    cursorY,
+    1880 - rankingHeight
   );
 
-  context.strokeStyle =
-    'rgba(215,194,139,.5)';
+  context.strokeStyle = borderColor;
+  context.lineWidth = 4;
+  context.fillStyle =
+    hexToRgba(panelColor, .72);
 
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(130, 1770);
-  context.lineTo(950, 1770);
+  drawRoundedRect(
+    context,
+    margin,
+    rankingY,
+    contentWidth,
+    rankingHeight,
+    2
+  );
+  context.fill();
   context.stroke();
 
-  context.textAlign = 'center';
-  context.fillStyle =
-    'rgba(244,239,226,.72)';
-
+  context.fillStyle = accentColor;
   context.font =
-    '400 28px sans-serif';
-
+    '600 42px "Noto Serif TC", serif';
   context.fillText(
-    DATA.setting.title ||
-      DATA.setting.name ||
-      'Assign Roles',
+    DATA.setting?.result
+      ?.resonanceLabel ||
+      '靈魂共鳴度',
     540,
-    1830
+    rankingY + 64
   );
 
-  context.fillStyle =
-    'rgba(244,239,226,.42)';
+  ranking.forEach((character, index) => {
+    const rowY =
+      rankingY + 110 + index * 58;
 
-  context.font =
-    '400 22px sans-serif';
+    context.textAlign = 'left';
+    context.fillStyle = textColor;
+    context.font =
+      '400 28px "Noto Serif TC", serif';
+    context.fillText(
+      character.name || '',
+      145,
+      rowY
+    );
 
-  context.fillText(
-    '角色分配測驗',
-    540,
-    1875
-  );
+    const barX = 305;
+    const barWidth = 515;
+    const barHeight = 17;
+
+    context.fillStyle =
+      hexToRgba(mutedColor, .18);
+
+    drawRoundedRect(
+      context,
+      barX,
+      rowY - 16,
+      barWidth,
+      barHeight,
+      9
+    );
+    context.fill();
+
+    context.fillStyle =
+      index === 0
+        ? accentColor
+        : hexToRgba(accentColor, .72);
+
+    drawRoundedRect(
+      context,
+      barX,
+      rowY - 16,
+      Math.max(
+        8,
+        barWidth *
+          Math.max(
+            0,
+            Math.min(
+              100,
+              Number(character.pct || 0)
+            )
+          ) /
+          100
+      ),
+      barHeight,
+      9
+    );
+    context.fill();
+
+    context.textAlign = 'right';
+    context.fillStyle = titleColor;
+    context.font =
+      '600 28px sans-serif';
+    context.fillText(
+      `${character.pct}%`,
+      930,
+      rowY
+    );
+  });
 
   return new Promise(
     (resolve, reject) => {
@@ -724,9 +930,7 @@ async function createResultShareBlob() {
             resolve(blob);
           } else {
             reject(
-              new Error(
-                '圖片產生失敗'
-              )
+              new Error('圖片產生失敗')
             );
           }
         },
@@ -1050,10 +1254,20 @@ function renderQuiz(p) {
 
   p.innerHTML = `
     <div class="question">
-      <div class="qnum">
-        QUESTION ${String(state.index + 1).padStart(2, '0')}
-        /
-        ${String(DATA.questions.length).padStart(2, '0')}
+      <div class="quiz-nav">
+        <button
+          class="quiz-back"
+          id="previousQuestion"
+          type="button"
+        >
+          ‹ 上一題
+        </button>
+
+        <div class="qnum">
+          QUESTION ${String(state.index + 1).padStart(2, '0')}
+          /
+          ${String(DATA.questions.length).padStart(2, '0')}
+        </div>
       </div>
 
       <p class="scene-text">${esc(q.scene || '')}</p>
@@ -1185,6 +1399,147 @@ function addScores(scoreArray) {
     (current, index) =>
       current + Number(scoreArray?.[index] || 0)
   );
+}
+
+function scoreContributionForAnswer(record) {
+  const question =
+    DATA.questions?.[
+      Number(record?.questionIndex)
+    ];
+
+  if (!question || !record) {
+    return [0, 0, 0];
+  }
+
+  const type =
+    record.type ||
+    question.type ||
+    'single';
+
+  if (type === 'bestWorst') {
+    const most =
+      question.answers?.[
+        Number(record.mostIndex)
+      ];
+
+    const least =
+      question.answers?.[
+        Number(record.leastIndex)
+      ];
+
+    return [0, 1, 2].map(index =>
+      Number(
+        (
+          most?.mostScore ||
+          most?.score ||
+          []
+        )[index] || 0
+      ) +
+      Number(
+        (
+          least?.leastScore ||
+          []
+        )[index] || 0
+      )
+    );
+  }
+
+  if (type === 'slider') {
+    const slider =
+      question.slider || {};
+
+    const min =
+      Number(slider.min ?? 0);
+
+    const max =
+      Number(slider.max ?? 100);
+
+    const value =
+      Number(record.value ?? min);
+
+    const ratio =
+      max === min
+        ? 0
+        : Math.max(
+            0,
+            Math.min(
+              1,
+              (value - min) /
+                (max - min)
+            )
+          );
+
+    const minScore =
+      slider.minScore || [0, 0, 0];
+
+    const maxScore =
+      slider.maxScore || [0, 0, 0];
+
+    return [0, 1, 2].map(index => {
+      const low =
+        Number(minScore[index] || 0);
+
+      const high =
+        Number(maxScore[index] || 0);
+
+      return low +
+        (high - low) * ratio;
+    });
+  }
+
+  const answer =
+    question.answers?.[
+      Number(record.answerIndex)
+    ];
+
+  return [0, 1, 2].map(index =>
+    Number(answer?.score?.[index] || 0)
+  );
+}
+
+function rebuildScoresFromAnswers() {
+  state.scores = [0, 0, 0];
+
+  state.answers.forEach(record => {
+    const contribution =
+      scoreContributionForAnswer(record);
+
+    state.scores =
+      state.scores.map(
+        (score, index) =>
+          score +
+          Number(
+            contribution[index] || 0
+          )
+      );
+  });
+}
+
+function goToPreviousQuestion() {
+  if (state.index <= 0) {
+    state.answers = [];
+    state.scores = [0, 0, 0];
+    state.route = null;
+    state.page = 'route';
+    render();
+    return;
+  }
+
+  const previousIndex =
+    state.index - 1;
+
+  state.answers =
+    state.answers.filter(
+      answerRecord =>
+        Number(
+          answerRecord.questionIndex
+        ) < previousIndex
+    );
+
+  state.index = previousIndex;
+  rebuildScoresFromAnswers();
+  state.page = 'quiz';
+  render();
 }
 
 function finishQuestion(answerRecord) {
@@ -1376,6 +1731,7 @@ function bind(){
     };
   });
   document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
+  document.querySelector('#previousQuestion')?.addEventListener('click',goToPreviousQuestion);
   document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];goToQuizWithInterlude(0)});
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
   let mostIndex = null;
