@@ -1,20 +1,83 @@
 import { json } from '../lib/response.js';
 import { verifySession } from '../lib/auth.js';
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+const ALLOWED_EXTENSIONS = {
+  image: new Set([
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'gif'
+  ]),
+  music: new Set([
+    'mp3',
+    'wav',
+    'ogg',
+    'm4a',
+    'aac'
+  ]),
+  bgm: new Set([
+    'mp3',
+    'wav',
+    'ogg',
+    'm4a',
+    'aac'
+  ])
+};
+
 function clean(value) {
   return String(value)
+    .normalize('NFKD')
     .replace(/[^a-zA-Z0-9._-]/g, '-')
-    .replace(/-+/g, '-');
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
-export async function onRequestPost({ request, env }) {
-  if (!await verifySession(request, env)) {
-    return json({ error: '未登入' }, 401);
+function getExtension(fileName) {
+  const parts = String(fileName).split('.');
+
+  return parts.length > 1
+    ? parts.pop().toLowerCase()
+    : '';
+}
+
+function estimateBase64Bytes(base64) {
+  const normalized =
+    String(base64).replace(/\s/g, '');
+
+  const padding =
+    normalized.endsWith('==')
+      ? 2
+      : normalized.endsWith('=')
+        ? 1
+        : 0;
+
+  return Math.floor(
+    normalized.length * 3 / 4
+  ) - padding;
+}
+
+export async function onRequestPost({
+  request,
+  env
+}) {
+  if (
+    !await verifySession(
+      request,
+      env
+    )
+  ) {
+    return json({
+      error: '未登入'
+    }, 401);
   }
 
   if (!env.ADMIN_UPLOADS) {
     return json({
-      error: 'Cloudflare 尚未綁定 ADMIN_UPLOADS KV Namespace'
+      error:
+        'Cloudflare 尚未綁定 ADMIN_UPLOADS KV Namespace'
     }, 500);
   }
 
@@ -26,18 +89,52 @@ export async function onRequestPost({ request, env }) {
       contentBase64
     } = await request.json();
 
-    if (!scriptId || !kind || !fileName || !contentBase64) {
-      return json({ error: '缺少上傳參數' }, 400);
+    if (
+      !scriptId ||
+      !kind ||
+      !fileName ||
+      !contentBase64
+    ) {
+      return json({
+        error: '缺少上傳參數'
+      }, 400);
     }
 
-    const allowedKinds = new Set([
-      'image',
-      'music',
-      'bgm'
-    ]);
+    if (!ALLOWED_EXTENSIONS[kind]) {
+      return json({
+        error: '不支援的檔案類型'
+      }, 400);
+    }
 
-    if (!allowedKinds.has(kind)) {
-      return json({ error: '不支援的檔案類型' }, 400);
+    const extension =
+      getExtension(fileName);
+
+    if (
+      !ALLOWED_EXTENSIONS[kind]
+        .has(extension)
+    ) {
+      return json({
+        error:
+          `不支援 .${extension || '未知'} 格式`
+      }, 400);
+    }
+
+    const byteSize =
+      estimateBase64Bytes(
+        contentBase64
+      );
+
+    if (byteSize <= 0) {
+      return json({
+        error: '檔案內容為空'
+      }, 400);
+    }
+
+    if (byteSize > MAX_FILE_SIZE) {
+      return json({
+        error:
+          '檔案超過 20 MB，請先壓縮後再上傳'
+      }, 413);
     }
 
     const folder =
@@ -47,15 +144,24 @@ export async function onRequestPost({ request, env }) {
           ? 'character-music'
           : 'bgm';
 
-    const path =
-      `assets/scripts/${clean(scriptId)}/${folder}/` +
-      `${Date.now()}-${clean(fileName)}`;
+    const safeScriptId =
+      clean(scriptId);
 
-    const uploadKey = crypto.randomUUID();
+    const safeFileName =
+      clean(fileName) ||
+      `upload.${extension}`;
+
+    const path =
+      `assets/scripts/${safeScriptId}/${folder}/` +
+      `${Date.now()}-${safeFileName}`;
+
+    const uploadKey =
+      crypto.randomUUID();
 
     /*
-     * Cloudflare KV 的 metadata 必須使用 options.metadata。
-     * 不能使用 customMetadata。
+     * KV 只作為發布前暫存。
+     * 真正的永久檔案會在 publish.js 中
+     * 一次 Commit 到 GitHub。
      */
     await env.ADMIN_UPLOADS.put(
       uploadKey,
@@ -64,23 +170,34 @@ export async function onRequestPost({ request, env }) {
         metadata: {
           path,
           kind,
-          fileName: clean(fileName),
-          scriptId: clean(scriptId),
-          createdAt: new Date().toISOString()
-        }
+          fileName: safeFileName,
+          scriptId: safeScriptId,
+          byteSize,
+          createdAt:
+            new Date().toISOString()
+        },
+        expirationTtl:
+          24 * 60 * 60
       }
     );
 
     return json({
       ok: true,
       path,
-      uploadKey
+      uploadKey,
+      byteSize,
+      pending: true
     });
   } catch (error) {
-    console.error('upload-file error', error);
+    console.error(
+      'upload-file error',
+      error
+    );
 
     return json({
-      error: error?.message || '檔案上傳失敗'
+      error:
+        error?.message ||
+        '檔案上傳失敗'
     }, 500);
   }
 }

@@ -10,7 +10,23 @@ import {
   commitFiles
 } from '../lib/github.js';
 
-async function collectPendingUploads(
+function jsonFile(
+  path,
+  value
+) {
+  return {
+    path,
+    content:
+      JSON.stringify(
+        value,
+        null,
+        2
+      ) + '\n',
+    encoding: 'utf-8'
+  };
+}
+
+async function collectUploads(
   env
 ) {
   if (!env.ADMIN_UPLOADS) {
@@ -39,12 +55,13 @@ async function collectPendingUploads(
 
     for (const keyInfo of keys) {
       const entry =
-        await env.ADMIN_UPLOADS.getWithMetadata(
-          keyInfo.name,
-          'text'
-        );
+        await env.ADMIN_UPLOADS
+          .getWithMetadata(
+            keyInfo.name,
+            'text'
+          );
 
-      const contentBase64 =
+      const base64 =
         entry?.value;
 
       const metadata =
@@ -52,30 +69,25 @@ async function collectPendingUploads(
         keyInfo.metadata ||
         {};
 
-      /*
-       * 壞掉或舊版格式的暫存資料，不應卡住整次發布。
-       * 稍後直接從 KV 清除。
-       */
+      keysToDelete.push(
+        keyInfo.name
+      );
+
       if (
-        !contentBase64 ||
+        !base64 ||
         !metadata.path
       ) {
-        keysToDelete.push(
-          keyInfo.name
-        );
-
         continue;
       }
 
       files.push({
-        path: metadata.path,
-        content: contentBase64,
-        encoding: 'base64'
+        path:
+          metadata.path,
+        content:
+          base64,
+        encoding:
+          'base64'
       });
-
-      keysToDelete.push(
-        keyInfo.name
-      );
     }
 
     cursor =
@@ -87,22 +99,6 @@ async function collectPendingUploads(
   return {
     files,
     keysToDelete
-  };
-}
-
-function makeJsonFile(
-  path,
-  value
-) {
-  return {
-    path,
-    content:
-      JSON.stringify(
-        value,
-        null,
-        2
-      ) + '\n',
-    encoding: 'utf-8'
   };
 }
 
@@ -126,11 +122,10 @@ export async function onRequestPost({
       await request.json();
 
     if (
-      !data ||
-      !data.index ||
-      !data.settings ||
-      !Array.isArray(data.hosts) ||
-      !data.scripts ||
+      !data?.index ||
+      !data?.settings ||
+      !Array.isArray(data?.hosts) ||
+      !data?.scripts ||
       typeof data.scripts !== 'object'
     ) {
       return json({
@@ -139,20 +134,16 @@ export async function onRequestPost({
       }, 400);
     }
 
-    /*
-     * 所有 JSON 先放進同一個檔案陣列，
-     * 不再逐檔呼叫 GitHub Contents API。
-     */
     const files = [
-      makeJsonFile(
+      jsonFile(
         'data/index.json',
         data.index
       ),
-      makeJsonFile(
+      jsonFile(
         'data/settings.json',
         data.settings
       ),
-      makeJsonFile(
+      jsonFile(
         'data/hosts.json',
         data.hosts
       )
@@ -174,19 +165,19 @@ export async function onRequestPost({
         `data/scripts/${scriptId}`;
 
       files.push(
-        makeJsonFile(
+        jsonFile(
           `${base}/settings.json`,
           scriptData.settings || {}
         ),
-        makeJsonFile(
+        jsonFile(
           `${base}/story.json`,
           scriptData.story || {}
         ),
-        makeJsonFile(
+        jsonFile(
           `${base}/questions.json`,
           scriptData.questions || []
         ),
-        makeJsonFile(
+        jsonFile(
           `${base}/characters.json`,
           scriptData.characters || {
             male: [],
@@ -196,60 +187,48 @@ export async function onRequestPost({
       );
     }
 
-    /*
-     * 圖片與 MP3 也一起加入相同 Commit。
-     */
-    const pendingUploads =
-      await collectPendingUploads(
+    const pending =
+      await collectUploads(
         env
       );
 
     files.push(
-      ...pendingUploads.files
+      ...pending.files
     );
 
-    const message =
-      'content: publish Assign Roles CMS ' +
-      new Date().toISOString();
-
-    /*
-     * 無論幾個 JSON、幾張圖、幾首 MP3，
-     * 此處最多只會建立一個 Git commit。
-     */
     const result =
       await commitFiles(
         env,
         files,
-        message
+        'content: publish Assign Roles CMS ' +
+        new Date().toISOString()
       );
 
     /*
-     * GitHub 批次作業成功後才清除 KV。
-     * 即使內容完全相同、沒有建立 Commit，
-     * 暫存檔也已確認存在於生成後的 tree 或內容相同，
-     * 因此可以安全清除。
+     * 只有 GitHub Commit 成功後，
+     * 才刪除 KV 暫存檔。
      */
     for (
       const key
-      of pendingUploads.keysToDelete
+      of pending.keysToDelete
     ) {
-      await env.ADMIN_UPLOADS.delete(
-        key
-      );
+      await env.ADMIN_UPLOADS
+        .delete(key);
     }
 
     return json({
       ok: true,
-      changed: result.changed,
+      changed:
+        result.changed,
       commitSha:
         result.commitSha || null,
       fileCount:
         result.fileCount || 0,
       uploadedCount:
-        pendingUploads.files.length,
+        pending.files.length,
       message:
         result.changed
-          ? '已建立 1 個 Commit'
+          ? `已將 ${pending.files.length} 個素材與 JSON 合併為 1 個 Commit`
           : '內容沒有變更，未建立 Commit'
     });
   } catch (error) {
