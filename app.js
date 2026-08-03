@@ -10,6 +10,118 @@ let transitionLocked = false;
 let liffReady = false;
 let liffError = '';
 
+const LIFF_RETURN_STATE_KEY =
+  'assignRolesV2LiffReturnState';
+
+const LIFF_AUTO_SHARE_KEY =
+  'assignRolesV2AutoShare';
+
+function saveLiffReturnState() {
+  const payload = {
+    activeScriptId,
+    state: {
+      ...state,
+      page: 'share'
+    },
+    savedAt: Date.now()
+  };
+
+  sessionStorage.setItem(
+    LIFF_RETURN_STATE_KEY,
+    JSON.stringify(payload)
+  );
+
+  sessionStorage.setItem(
+    LIFF_AUTO_SHARE_KEY,
+    '1'
+  );
+}
+
+function readLiffReturnState() {
+  const serialized =
+    sessionStorage.getItem(
+      LIFF_RETURN_STATE_KEY
+    );
+
+  if (!serialized) {
+    return null;
+  }
+
+  try {
+    const payload =
+      JSON.parse(serialized);
+
+    /*
+     * 超過 30 分鐘的登入返回資料不再使用。
+     */
+    if (
+      !payload?.savedAt ||
+      Date.now() - payload.savedAt >
+        30 * 60 * 1000
+    ) {
+      clearLiffReturnState();
+      return null;
+    }
+
+    return payload;
+  } catch {
+    clearLiffReturnState();
+    return null;
+  }
+}
+
+function clearLiffReturnState() {
+  sessionStorage.removeItem(
+    LIFF_RETURN_STATE_KEY
+  );
+
+  sessionStorage.removeItem(
+    LIFF_AUTO_SHARE_KEY
+  );
+}
+
+function shouldAutoShareAfterLogin() {
+  return (
+    sessionStorage.getItem(
+      LIFF_AUTO_SHARE_KEY
+    ) === '1'
+  );
+}
+
+function buildLoginRedirectUrl() {
+  const url =
+    new URL(
+      window.location.href
+    );
+
+  /*
+   * 避免把 LINE 登入回傳參數再次塞回 redirectUri。
+   */
+  [
+    'code',
+    'state',
+    'friendship_status_changed',
+    'liffClientId',
+    'liffRedirectUri'
+  ].forEach(key => {
+    url.searchParams.delete(key);
+  });
+
+  if (activeScriptId) {
+    url.searchParams.set(
+      'script',
+      activeScriptId
+    );
+  }
+
+  url.searchParams.set(
+    'resumeShare',
+    '1'
+  );
+
+  return url.toString();
+}
+
 const resetState = () => ({
   page: 'scriptSelect', route: null, index: 0, scores: [0,0,0],
   answers: [], muted: false, note: '', playerName: '', playDate: '',
@@ -493,13 +605,136 @@ function shareMessage(){
   const {ranking,top}=result(),h=selectedHost();
   return [`【${DATA.setting.title}｜角色測驗結果】`,'',`指定主持人：${h?.displayName||h?.name||'未指定'}`,`玩家：${state.playerName}`,`遊玩日期：${state.playDate}`,`結果角色：${top.name}`,`最高共鳴度：${top.pct}%`,'','角色共鳴排行：',...ranking.map((c,i)=>`${i+1}. ${c.name} ${c.pct}%`),'','玩家留言：',state.note.trim()||'無'].join('\n');
 }
-async function send(){
-  saveForm(); if(!state.playerName){status('請填寫玩家姓名');return} if(!state.playDate){status('請選擇日期');return} if(!selectedHost()){status('請選擇主持人');return}
-  if(!liffReady){await initLiff();if(!liffReady){status(`LINE 初始化失敗：${liffError}`);return}}
-  if(!liff.isLoggedIn()){liff.login({redirectUri:location.href});return}
-  if(!liff.isApiAvailable('shareTargetPicker')){status('請從 LINE App 開啟');return}
-  try{const r=await liff.shareTargetPicker([{type:'text',text:shareMessage()}],{isMultiple:false});if(r){state.page='success';render()}else status('已取消分享')}
-  catch(e){status(`分享失敗：${e?.message||'未知錯誤'}`)}
+async function send({
+  resumedAfterLogin = false
+} = {}) {
+  saveForm();
+
+  if (!state.playerName) {
+    status('請填寫玩家姓名');
+    return;
+  }
+
+  if (!state.playDate) {
+    status('請選擇日期');
+    return;
+  }
+
+  if (!selectedHost()) {
+    status('請選擇主持人');
+    return;
+  }
+
+  if (!liffReady) {
+    status('正在連接 LINE…');
+
+    await initLiff();
+
+    if (!liffReady) {
+      status(
+        `LINE 初始化失敗：${liffError}`
+      );
+
+      return;
+    }
+  }
+
+  if (!liff.isLoggedIn()) {
+    /*
+     * LINE Login 會重新載入整個頁面。
+     * 先保存測驗結果與分享表單，返回後再還原。
+     */
+    saveLiffReturnState();
+
+    status(
+      '正在前往 LINE 登入，完成後會自動返回傳送頁。'
+    );
+
+    liff.login({
+      redirectUri:
+        buildLoginRedirectUrl()
+    });
+
+    return;
+  }
+
+  if (
+    !liff.isApiAvailable(
+      'shareTargetPicker'
+    )
+  ) {
+    status(
+      '目前開啟方式不支援 LINE 聊天室選擇器。請用 LIFF 網址在 LINE 中開啟。'
+    );
+
+    return;
+  }
+
+  const button =
+    document.querySelector(
+      '#sendToLine'
+    );
+
+  if (button) {
+    button.disabled = true;
+  }
+
+  status(
+    resumedAfterLogin
+      ? '登入完成，正在開啟 LINE 聊天室選擇器…'
+      : '正在開啟 LINE 聊天室選擇器…'
+  );
+
+  try {
+    /*
+     * 成功時 Promise 可能不帶回傳值。
+     * 不能用 if (result) 判斷成功或取消。
+     */
+    await liff.shareTargetPicker(
+      [
+        {
+          type: 'text',
+          text: shareMessage()
+        }
+      ],
+      {
+        isMultiple: false
+      }
+    );
+
+    clearLiffReturnState();
+
+    state.page = 'success';
+    render();
+  } catch (error) {
+    console.error(
+      'shareTargetPicker failed',
+      error
+    );
+
+    const code =
+      error?.code || '';
+
+    if (
+      code === 'USER_CANCEL' ||
+      code === 'CANCEL'
+    ) {
+      status(
+        '你取消了分享，測驗結果仍保留。'
+      );
+    } else {
+      status(
+        `分享失敗：${
+          error?.message ||
+          '未知錯誤'
+        }`
+      );
+    }
+  } finally {
+    if (button) {
+      button.disabled = false;
+    }
+  }
 }
 function restart() {
   const muted = state.muted;
@@ -659,22 +894,30 @@ async function boot() {
   try {
     await loadGlobalData();
 
+    const savedReturnState =
+      readLiffReturnState();
+
     const requestedScriptId =
+      savedReturnState?.activeScriptId ||
       getRequestedScriptId();
 
     if (requestedScriptId) {
       const meta =
-        getScriptMeta(requestedScriptId);
+        getScriptMeta(
+          requestedScriptId
+        );
 
       if (
         !meta ||
         meta.status === 'draft'
       ) {
+        clearLiffReturnState();
+
         showScriptNotFound(
           requestedScriptId
         );
 
-        initLiff();
+        await initLiff();
         return;
       }
 
@@ -682,34 +925,75 @@ async function boot() {
         requestedScriptId
       );
 
-      /*
-       * 所有直接入口統一使用：
-       * /?script=plastic-greenhouse
-       *
-       * 不依賴 Cloudflare 的 /play/* rewrite。
-       */
       setScriptUrl(
         requestedScriptId,
         true
       );
 
-      state.page = 'start';
+      if (
+        savedReturnState?.state
+      ) {
+        state = {
+          ...resetState(),
+          ...savedReturnState.state,
+          page: 'share'
+        };
+      } else {
+        state.page = 'start';
+      }
+
       render();
-      initLiff();
+
+      await initLiff();
+
+      /*
+       * LINE 登入返回後，恢復結果頁並自動再次開啟 picker。
+       * 等一個事件循環，確保分享頁按鈕已渲染完成。
+       */
+      if (
+        savedReturnState &&
+        shouldAutoShareAfterLogin() &&
+        liffReady &&
+        liff.isLoggedIn()
+      ) {
+        sessionStorage.removeItem(
+          LIFF_AUTO_SHARE_KEY
+        );
+
+        window.setTimeout(
+          () => {
+            send({
+              resumedAfterLogin: true
+            });
+          },
+          300
+        );
+      }
+
       return;
     }
 
-    state.page = 'scriptSelect';
+    state.page =
+      'scriptSelect';
+
     render();
-    initLiff();
+    await initLiff();
   } catch (error) {
     console.error(error);
 
     app.innerHTML = `
       <section class="panel">
-        <div class="eyebrow">LOAD ERROR</div>
-        <h1 class="section-title">資料載入失敗</h1>
-        <p class="desc">${esc(error.message)}</p>
+        <div class="eyebrow">
+          LOAD ERROR
+        </div>
+
+        <h1 class="section-title">
+          資料載入失敗
+        </h1>
+
+        <p class="desc">
+          ${esc(error.message)}
+        </p>
       </section>
     `;
   }
