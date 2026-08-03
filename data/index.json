@@ -1,0 +1,11 @@
+{
+  "defaultScriptId": "plastic-greenhouse",
+  "scripts": [
+    {
+      "id": "plastic-greenhouse",
+      "name": "塑料溫室",
+      "status": "published",
+      "cover": "assets/scripts/plastic-greenhouse/characters/liu-xianyong.jpg"
+    }
+  ]
+}

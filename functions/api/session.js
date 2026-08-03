@@ -1,0 +1,1 @@
+import {json} from '../lib/response.js';import {verifySession} from '../lib/auth.js';export async function onRequest({request,env}){return await verifySession(request,env)?json({ok:true}):json({error:'未登入'},401)}

@@ -1,576 +1,203 @@
 'use strict';
 
-const DATA_FILES = {
-  setting: './data/setting.json',
-  story: './data/story.json',
-  questions: './data/questions.json',
-  characters: './data/characters.json',
-  hosts: './data/hosts.json'
-};
-
 const DATA = {};
 const app = document.querySelector('#app');
 const musicBtn = document.querySelector('#musicBtn');
-
-const initialState = () => ({
-  page: 'start',
-  route: null,
-  index: 0,
-  scores: [0, 0, 0],
-  answers: [],
-  muted: false,
-  note: '',
-  playerName: '',
-  playDate: '',
-  selectedHostId: ''
-});
-
-let state = initialState();
+let activeScriptId = null;
+let state = {};
 let audio = null;
 let transitionLocked = false;
 let liffReady = false;
 let liffError = '';
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const resetState = () => ({
+  page: 'scriptSelect', route: null, index: 0, scores: [0,0,0],
+  answers: [], muted: false, note: '', playerName: '', playDate: '',
+  selectedHostId: ''
+});
+state = resetState();
 
-function escapeHtml(value = '') {
-  return String(value).replace(/[&<>'"]/g, character => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  })[character]);
-}
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const esc = (v='') => String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
 async function loadJson(url) {
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`無法載入 ${url}，HTTP ${response.status}`);
-  }
-  return response.json();
+  const r = await fetch(url, {cache:'no-store'});
+  if (!r.ok) throw new Error(`無法載入 ${url} (${r.status})`);
+  return r.json();
 }
 
-async function loadAllData() {
-  const entries = await Promise.all(
-    Object.entries(DATA_FILES).map(async ([key, url]) => [key, await loadJson(url)])
-  );
-  for (const [key, value] of entries) DATA[key] = value;
+async function loadGlobalData() {
+  [DATA.index, DATA.global, DATA.hosts] = await Promise.all([
+    loadJson('./data/index.json'), loadJson('./data/settings.json'), loadJson('./data/hosts.json')
+  ]);
+}
+
+async function loadScript(id) {
+  const base = `./data/scripts/${id}`;
+  [DATA.setting, DATA.story, DATA.questions, DATA.characters] = await Promise.all([
+    loadJson(`${base}/settings.json`), loadJson(`${base}/story.json`),
+    loadJson(`${base}/questions.json`), loadJson(`${base}/characters.json`)
+  ]);
+  activeScriptId = id;
+  document.title = `${DATA.setting.title || DATA.setting.name}｜角色測驗`;
 }
 
 async function initLiff() {
-  if (!window.liff) {
-    liffError = 'LIFF SDK 載入失敗';
-    return;
-  }
-
-  const liffId = DATA.setting?.liffId;
-  if (!liffId) {
-    liffError = 'setting.json 尚未設定 liffId';
-    return;
-  }
-
-  try {
-    await window.liff.init({ liffId });
-    liffReady = true;
-    liffError = '';
-  } catch (error) {
-    console.error(error);
-    liffError = error?.message || 'LIFF 初始化失敗';
-  }
+  if (!window.liff) { liffError='LIFF SDK 載入失敗'; return; }
+  const id = DATA.global?.liffId;
+  if (!id) { liffError='data/settings.json 未設定 liffId'; return; }
+  try { await liff.init({liffId:id}); liffReady=true; }
+  catch(e){ console.error(e); liffError=e?.message||'LIFF 初始化失敗'; }
 }
 
 function todayValue() {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 10);
+  const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 }
 
 function initAudio() {
-  if (audio || DATA.setting.audio?.enabled === false) return;
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return;
-
-  const context = new AudioContextClass();
-  const master = context.createGain();
-  master.gain.value = Number(DATA.setting.audio?.volume ?? 0.045);
-  master.connect(context.destination);
-
-  const filter = context.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 520;
-  filter.connect(master);
-
-  const oscillatorOne = context.createOscillator();
-  const oscillatorTwo = context.createOscillator();
-  const gainOne = context.createGain();
-  const gainTwo = context.createGain();
-
-  oscillatorOne.type = 'sine';
-  oscillatorOne.frequency.value = 55;
-  gainOne.gain.value = 0.55;
-
-  oscillatorTwo.type = 'triangle';
-  oscillatorTwo.frequency.value = 82.4;
-  gainTwo.gain.value = 0.12;
-
-  oscillatorOne.connect(gainOne).connect(filter);
-  oscillatorTwo.connect(gainTwo).connect(filter);
-  oscillatorOne.start();
-  oscillatorTwo.start();
-
-  audio = { context, master };
-  musicBtn.textContent = 'SOUND ON';
-}
-
-function toggleAudio() {
-  if (!audio) {
-    initAudio();
+  const bgm = DATA.setting?.bgm;
+  if (audio) {
+    if (audio.tag) audio.tag.play().catch(()=>{});
     return;
   }
-  state.muted = !state.muted;
-  audio.master.gain.setTargetAtTime(
-    state.muted ? 0 : Number(DATA.setting.audio?.volume ?? 0.045),
-    audio.context.currentTime,
-    0.35
-  );
-  musicBtn.textContent = state.muted ? 'SOUND OFF' : 'SOUND ON';
-}
-
-function waitForAdvance(element, minimumHold) {
-  return new Promise(resolve => {
-    let ready = false;
-    let done = false;
-
-    const finish = () => {
-      if (!ready || done) return;
-      done = true;
-      element.removeEventListener('click', finish);
-      resolve();
-    };
-
-    element.addEventListener('click', finish);
-    setTimeout(() => {
-      ready = true;
-      element.classList.add('can-continue');
-    }, minimumHold);
-  });
-}
-
-async function cinematic(items, nextPage) {
-  if (transitionLocked) return;
-  transitionLocked = true;
-  app.innerHTML = '<section class="cinema-stage"></section>';
-  const stage = app.firstElementChild;
-
-  for (const item of items) {
-    stage.classList.remove('visible');
-    await sleep(500);
-    stage.innerHTML = `
-      ${item.chapter ? `<div class="chapter">${escapeHtml(item.chapter)}</div>` : ''}
-      <div class="story-lines">${item.lines.map(line => `<p>${escapeHtml(line)}</p>`).join('')}</div>
-      <div class="continue-hint">點擊畫面繼續</div>
-    `;
-    requestAnimationFrame(() => stage.classList.add('visible'));
-    await waitForAdvance(stage, item.hold || 900);
-  }
-
-  stage.classList.remove('visible');
-  await sleep(650);
-  transitionLocked = false;
-  state.page = nextPage;
-  render();
-}
-
-function getCharacters() {
-  return DATA.characters[state.route] || [];
-}
-
-function getResult() {
-  const max = Math.max(...state.scores, 1);
-  const ranking = getCharacters()
-    .map((character, index) => ({
-      ...character,
-      score: state.scores[index] || 0,
-      pct: Math.round((state.scores[index] || 0) / max * 100)
-    }))
-    .sort((a, b) => b.score - a.score);
-  return { ranking, top: ranking[0] };
-}
-
-function getHosts() {
-  return Array.isArray(DATA.hosts) ? DATA.hosts : [];
-}
-
-function getSelectedHost() {
-  return getHosts().find(host => host.id === state.selectedHostId) || null;
-}
-
-function renderStart(panel) {
-  panel.innerHTML = `
-    <div class="eyebrow">${escapeHtml(DATA.setting.subtitle)}</div>
-    <h1 class="title">${escapeHtml(DATA.setting.title)}</h1>
-    <div class="opening-quote">
-      ${DATA.story.opening.quote.map(line => `<p>${escapeHtml(line)}</p>`).join('')}
-    </div>
-    <button class="btn" id="startBtn" type="button">${escapeHtml(DATA.story.opening.button)}</button>
-  `;
-}
-
-function renderRoute(panel) {
-  const route = DATA.setting.routeSelection;
-  panel.innerHTML = `
-    <div class="eyebrow">SELECT YOUR VIEW</div>
-    <h2 class="section-title">${escapeHtml(route.title)}</h2>
-    <div class="routes">
-      <button class="route" data-route="male" type="button">
-        <small>${escapeHtml(route.maleEyebrow)}</small>
-        <h3>${escapeHtml(route.maleLabel)}</h3>
-        <p>${DATA.characters.male.map(character => escapeHtml(character.name)).join('<br>')}</p>
-      </button>
-      <button class="route" data-route="female" type="button">
-        <small>${escapeHtml(route.femaleEyebrow)}</small>
-        <h3>${escapeHtml(route.femaleLabel)}</h3>
-        <p>${DATA.characters.female.map(character => escapeHtml(character.name)).join('<br>')}</p>
-      </button>
-    </div>
-  `;
-}
-
-function renderQuiz(panel) {
-  const question = DATA.questions[state.index];
-  panel.innerHTML = `
-    <div class="question">
-      <div class="qnum">
-        QUESTION ${String(state.index + 1).padStart(2, '0')} /
-        ${String(DATA.questions.length).padStart(2, '0')}
-      </div>
-      <p class="scene-text">${escapeHtml(question.scene)}</p>
-      <h2>${escapeHtml(question.question)}</h2>
-      <div class="answers">
-        ${question.answers.map((answer, index) => `
-          <button class="answer" data-answer="${index}" type="button">
-            <span>${String(index + 1).padStart(2, '0')}</span>
-            <span>${escapeHtml(answer.text)}</span>
-          </button>
-        `).join('')}
-      </div>
-      <div class="progress">
-        <i style="width:${(state.index + 1) / DATA.questions.length * 100}%"></i>
-      </div>
-    </div>
-  `;
-}
-
-function renderResult(panel) {
-  const { ranking, top } = getResult();
-  const resultSetting = DATA.setting.result;
-
-  panel.innerHTML = `
-    <div class="eyebrow">${escapeHtml(resultSetting.eyebrow)}</div>
-    <div class="result-card">
-      <img src="${escapeHtml(top.image)}" alt="${escapeHtml(top.name)}">
-      <div class="result-name">
-        <h1>${escapeHtml(top.name)}</h1>
-        <p>${escapeHtml(top.kr)}</p>
-      </div>
-    </div>
-    <p class="desc">${escapeHtml(top.description)}</p>
-    <div class="eyebrow resonance-title">${escapeHtml(resultSetting.resonanceLabel)}</div>
-    <div class="rank">
-      ${ranking.map(character => `
-        <div class="rank-row">
-          <span>${escapeHtml(character.name)}</span>
-          <div class="bar"><i style="width:${character.pct}%"></i></div>
-          <b>${character.pct}%</b>
-        </div>
-      `).join('')}
-    </div>
-    <div class="note">
-      <textarea id="note" maxlength="500"
-        placeholder="${escapeHtml(resultSetting.notePlaceholder)}">${escapeHtml(state.note)}</textarea>
-    </div>
-    <div class="actions">
-      <button class="btn" id="goShare" type="button">${escapeHtml(resultSetting.shareButton)}</button>
-      <button class="ghost" id="restart" type="button">${escapeHtml(resultSetting.restartButton)}</button>
-    </div>
-    <p class="share-status">按下傳送後，才會填寫姓名、日期並開啟 LINE 分享視窗。</p>
-  `;
-}
-
-function renderShare(panel) {
-  const { top } = getResult();
-  const shareSetting = DATA.setting.share;
-  if (!state.playDate) state.playDate = todayValue();
-
-  panel.classList.add('share-panel');
-  panel.innerHTML = `
-    <div class="eyebrow">${escapeHtml(shareSetting.eyebrow)}</div>
-    <h2 class="section-title">${escapeHtml(shareSetting.title)}</h2>
-
-    <div class="share-result-mini">
-      <img src="${escapeHtml(top.image)}" alt="${escapeHtml(top.name)}">
-      <div>
-        <small>你的結果</small>
-        <strong>${escapeHtml(top.name)}</strong>
-        <span>${top.pct}% 共鳴</span>
-      </div>
-    </div>
-
-    <div class="fields">
-      <div class="field">
-        <label for="playerName">${escapeHtml(shareSetting.playerNameLabel)}</label>
-        <input id="playerName" maxlength="40" autocomplete="name"
-          value="${escapeHtml(state.playerName)}" placeholder="請輸入姓名或稱呼">
-      </div>
-      <div class="field">
-        <label for="playDate">${escapeHtml(shareSetting.dateLabel)}</label>
-        <input id="playDate" type="date" value="${escapeHtml(state.playDate)}">
-      </div>
-    </div>
-
-    <div class="eyebrow host-heading">${escapeHtml(shareSetting.hostLabel)}</div>
-    <p class="host-intro">請先選擇主持人，再於 LINE 分享視窗中選擇該主持人的聊天室。</p>
-    <div class="host-grid">
-      ${getHosts().map(host => `
-        <label class="host-card host-option">
-          <input type="radio" name="host" value="${escapeHtml(host.id)}"
-            ${host.id === state.selectedHostId ? 'checked' : ''}>
-          <strong>${escapeHtml(host.displayName || host.name)}</strong>
-          <span>${escapeHtml(host.note || '')}</span>
-        </label>
-      `).join('')}
-    </div>
-
-    <div class="actions">
-      <button class="btn" id="sendToLine" type="button">${escapeHtml(shareSetting.button)}</button>
-      <button class="ghost" id="backToResult" type="button">${escapeHtml(shareSetting.backButton)}</button>
-    </div>
-    <p class="share-status" id="shareStatus">
-      只有按下上方按鈕後，才會呼叫 LINE Share Target Picker。
-    </p>
-  `;
-}
-
-function renderSuccess(panel) {
-  const host = getSelectedHost();
-  panel.innerHTML = `
-    <div class="eyebrow">MESSAGE DELIVERED</div>
-    <h2 class="section-title">分享流程已完成</h2>
-    <p class="desc">
-      請確認剛才選擇的是「${escapeHtml(host?.displayName || host?.name || '指定主持人')}」的聊天室。
-    </p>
-    <div class="actions">
-      <button class="btn" id="shareAgain" type="button">再次分享</button>
-      <button class="ghost" id="restart" type="button">重新測驗</button>
-    </div>
-  `;
-}
-
-function render() {
-  app.innerHTML = '';
-  const panel = document.createElement('section');
-  panel.className = 'panel';
-
-  if (state.page === 'start') renderStart(panel);
-  else if (state.page === 'route') renderRoute(panel);
-  else if (state.page === 'quiz') renderQuiz(panel);
-  else if (state.page === 'result') renderResult(panel);
-  else if (state.page === 'share') renderShare(panel);
-  else if (state.page === 'success') renderSuccess(panel);
-
-  app.appendChild(panel);
-  bind();
-}
-
-function answerQuestion(answerIndex) {
-  const question = DATA.questions[state.index];
-  const answer = question.answers[answerIndex];
-
-  state.answers.push({
-    questionIndex: state.index,
-    answerIndex,
-    question: question.question,
-    answer: answer.text
-  });
-
-  state.scores = state.scores.map(
-    (score, index) => score + Number(answer.score[index] || 0)
-  );
-  state.index += 1;
-
-  if (state.index >= DATA.questions.length) {
-    cinematic(DATA.story.epilogue, 'result');
-  } else {
-    cinematic([DATA.story.interludes[state.index]], 'quiz');
-  }
-}
-
-function saveShareForm() {
-  state.playerName = document.querySelector('#playerName')?.value.trim() || '';
-  state.playDate = document.querySelector('#playDate')?.value || '';
-  state.selectedHostId =
-    document.querySelector('input[name="host"]:checked')?.value || state.selectedHostId;
-}
-
-function setShareStatus(message) {
-  const element = document.querySelector('#shareStatus');
-  if (element) element.textContent = message;
-}
-
-function buildShareMessage() {
-  const { ranking, top } = getResult();
-  const host = getSelectedHost();
-  const routeName = state.route === 'male' ? '男角路線' : '女角路線';
-
-  return [
-    `【${DATA.setting.title}｜角色測驗結果】`,
-    '',
-    `指定主持人：${host?.displayName || host?.name || '未指定'}`,
-    `玩家：${state.playerName}`,
-    `遊玩日期：${state.playDate}`,
-    `選擇路線：${routeName}`,
-    `結果角色：${top.name}`,
-    `最高共鳴度：${top.pct}%`,
-    '',
-    '角色共鳴排行：',
-    ...ranking.map((character, index) => `${index + 1}. ${character.name} ${character.pct}%`),
-    '',
-    '玩家留言：',
-    state.note.trim() || '無'
-  ].join('\n');
-}
-
-async function sendToLine() {
-  saveShareForm();
-
-  if (!state.playerName) {
-    setShareStatus('請先填寫玩家姓名。');
-    document.querySelector('#playerName')?.focus();
+  if (bgm?.src) {
+    const tag = new Audio(bgm.src);
+    tag.loop = bgm.loop !== false;
+    tag.volume = Number(bgm.volume ?? .35);
+    tag.play().catch(()=>{});
+    audio = {tag};
+    musicBtn.textContent='SOUND ON';
     return;
   }
-  if (!state.playDate) {
-    setShareStatus('請先選擇遊玩日期。');
-    return;
-  }
-  if (!getSelectedHost()) {
-    setShareStatus('請先選擇主持人。');
-    return;
-  }
-
-  if (!liffReady) {
-    setShareStatus(`LINE 尚未就緒：${liffError || '正在重新初始化'}`);
-    await initLiff();
-    if (!liffReady) return;
-  }
-
-  if (!window.liff.isLoggedIn()) {
-    window.liff.login({ redirectUri: window.location.href });
-    return;
-  }
-
-  if (!window.liff.isApiAvailable('shareTargetPicker')) {
-    setShareStatus('目前環境不支援 LINE 分享視窗，請從 LINE App 開啟。');
-    return;
-  }
-
-  const button = document.querySelector('#sendToLine');
-  if (button) button.disabled = true;
-
-  try {
-    const response = await window.liff.shareTargetPicker(
-      [{ type: 'text', text: buildShareMessage() }],
-      { isMultiple: false }
-    );
-
-    if (response) {
-      state.page = 'success';
-      render();
-    } else {
-      setShareStatus('你取消了分享，測驗結果仍保留。');
-    }
-  } catch (error) {
-    console.error(error);
-    setShareStatus(`LINE 分享失敗：${error?.message || '未知錯誤'}`);
-  } finally {
-    if (button) button.disabled = false;
-  }
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if (!AC) return;
+  const context=new AC(), master=context.createGain(), osc=context.createOscillator();
+  master.gain.value=Number(DATA.setting.audio?.volume ?? .045);
+  master.connect(context.destination); osc.frequency.value=55; osc.connect(master); osc.start();
+  audio={context,master}; musicBtn.textContent='SOUND ON';
 }
 
-function restart() {
-  const muted = state.muted;
-  state = initialState();
-  state.muted = muted;
-  render();
+function toggleAudio(){
+  if(!audio){initAudio();return}
+  state.muted=!state.muted;
+  if(audio.tag){audio.tag.muted=state.muted}
+  else audio.master.gain.setTargetAtTime(state.muted?0:Number(DATA.setting.audio?.volume??.045),audio.context.currentTime,.3);
+  musicBtn.textContent=state.muted?'SOUND OFF':'SOUND ON';
 }
 
-function bind() {
-  document.querySelector('#startBtn')?.addEventListener('click', () => {
-    initAudio();
-    cinematic(DATA.story.prologue, 'route');
-  });
-
-  document.querySelectorAll('[data-route]').forEach(button => {
-    button.addEventListener('click', () => {
-      state.route = button.dataset.route;
-      state.index = 0;
-      state.scores = [0, 0, 0];
-      state.answers = [];
-      cinematic([DATA.story.interludes[0]], 'quiz');
-    });
-  });
-
-  document.querySelectorAll('[data-answer]').forEach(button => {
-    button.addEventListener('click', () => answerQuestion(Number(button.dataset.answer)));
-  });
-
-  document.querySelector('#goShare')?.addEventListener('click', () => {
-    state.note = document.querySelector('#note')?.value || '';
-    state.page = 'share';
-    render();
-  });
-
-  document.querySelector('#sendToLine')?.addEventListener('click', sendToLine);
-
-  document.querySelector('#backToResult')?.addEventListener('click', () => {
-    saveShareForm();
-    state.page = 'result';
-    render();
-  });
-
-  document.querySelector('#shareAgain')?.addEventListener('click', () => {
-    state.page = 'share';
-    render();
-  });
-
-  document.querySelector('#restart')?.addEventListener('click', restart);
-
-  document.querySelectorAll('input[name="host"]').forEach(input => {
-    input.addEventListener('change', () => {
-      state.selectedHostId = input.value;
-    });
+function waitForAdvance(el, hold){
+  return new Promise(resolve=>{
+    let ready=false,done=false;
+    const finish=()=>{if(!ready||done)return;done=true;el.removeEventListener('click',finish);resolve()};
+    el.addEventListener('click',finish);
+    setTimeout(()=>{ready=true;el.classList.add('can-continue')},hold);
   });
 }
 
-async function boot() {
-  try {
-    await loadAllData();
-    document.title = `${DATA.setting.title}｜角色測驗`;
-    render();
-    initLiff();
-  } catch (error) {
-    console.error(error);
-    app.innerHTML = `
-      <section class="panel">
-        <div class="eyebrow">LOAD ERROR</div>
-        <h1 class="title">資料載入失敗</h1>
-        <p class="desc">${escapeHtml(error.message)}</p>
-        <p class="share-status">請透過 GitHub Pages 或本機 HTTP Server 開啟，不要直接雙擊 index.html。</p>
-      </section>
-    `;
+async function cinematic(items,next){
+  if(transitionLocked)return; transitionLocked=true;
+  app.innerHTML='<section class="cinema-stage"></section>'; const stage=app.firstElementChild;
+  for(const item of items||[]){
+    stage.classList.remove('visible'); await sleep(350);
+    stage.innerHTML=`${item.chapter?`<div class="chapter">${esc(item.chapter)}</div>`:''}
+      <div class="story-lines">${(item.lines||[]).map(x=>`<p>${esc(x)}</p>`).join('')}</div>
+      <div class="continue-hint">點擊畫面繼續</div>`;
+    requestAnimationFrame(()=>stage.classList.add('visible'));
+    await waitForAdvance(stage, Number(item.hold||item.duration||900));
   }
+  stage.classList.remove('visible'); await sleep(500); transitionLocked=false; state.page=next; render();
 }
 
-musicBtn.addEventListener('click', toggleAudio);
-boot();
+function chars(){return DATA.characters?.[state.route]||[]}
+function result(){
+  const max=Math.max(...state.scores,1);
+  const ranking=chars().map((c,i)=>({...c,score:state.scores[i]||0,pct:Math.round((state.scores[i]||0)/max*100)})).sort((a,b)=>b.score-a.score);
+  return {ranking,top:ranking[0]};
+}
+function selectedHost(){return (DATA.hosts||[]).find(h=>h.id===state.selectedHostId)}
+
+function renderScriptSelect(p){
+  p.innerHTML=`<div class="eyebrow">SELECT STORY</div><h1 class="title">${esc(DATA.global.siteTitle||'Assign Roles')}</h1>
+  <div class="script-list">${(DATA.index.scripts||[]).filter(s=>s.status!=='draft').map(s=>`
+    <button class="script-card" data-script="${esc(s.id)}"><small>STORY</small><h3>${esc(s.name)}</h3><span>進入故事</span></button>`).join('')}</div>`;
+}
+function renderStart(p){
+  p.innerHTML=`<div class="eyebrow">${esc(DATA.setting.subtitle)}</div><h1 class="title">${esc(DATA.setting.title||DATA.setting.name)}</h1>
+  <div class="opening-quote">${DATA.story.opening.quote.map(x=>`<p>${esc(x)}</p>`).join('')}</div>
+  <button class="btn" id="startBtn">${esc(DATA.story.opening.button||'開始')}</button>`;
+}
+function renderRoute(p){
+  const r=DATA.setting.routeSelection;
+  p.innerHTML=`<div class="eyebrow">SELECT YOUR VIEW</div><h2 class="section-title">${esc(r.title)}</h2><div class="routes">
+  <button class="route" data-route="male"><small>${esc(r.maleEyebrow)}</small><h3>${esc(r.maleLabel)}</h3><p>${DATA.characters.male.map(c=>esc(c.name)).join('<br>')}</p></button>
+  <button class="route" data-route="female"><small>${esc(r.femaleEyebrow)}</small><h3>${esc(r.femaleLabel)}</h3><p>${DATA.characters.female.map(c=>esc(c.name)).join('<br>')}</p></button></div>`;
+}
+function renderQuiz(p){
+  const q=DATA.questions[state.index];
+  p.innerHTML=`<div class="question"><div class="qnum">QUESTION ${String(state.index+1).padStart(2,'0')} / ${String(DATA.questions.length).padStart(2,'0')}</div>
+  <p class="scene-text">${esc(q.scene)}</p><h2>${esc(q.question)}</h2><div class="answers">${q.answers.map((a,i)=>`
+  <button class="answer" data-answer="${i}"><span>${String(i+1).padStart(2,'0')}</span><span>${esc(a.text)}</span></button>`).join('')}</div>
+  <div class="progress"><i style="width:${(state.index+1)/DATA.questions.length*100}%"></i></div></div>`;
+}
+function renderResult(p){
+  const {ranking,top}=result(), s=DATA.setting.result;
+  p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><div class="result-card"><img src="${esc(top.image)}" alt="${esc(top.name)}">
+  <div class="result-name"><h1>${esc(top.name)}</h1><p>${esc(top.kr||'')}</p></div></div><p class="desc">${esc(top.description||top.desc||'')}</p>
+  <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
+  <div class="note"><textarea id="note" placeholder="${esc(s.notePlaceholder)}">${esc(state.note)}</textarea></div><div class="actions">
+  <button class="btn" id="goShare">${esc(s.shareButton)}</button><button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
+  if(top.music) new Audio(top.music).play().catch(()=>{});
+}
+function renderShare(p){
+  const {top}=result(), s=DATA.setting.share; if(!state.playDate)state.playDate=todayValue(); p.classList.add('share-panel');
+  p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><h2 class="section-title">${esc(s.title)}</h2>
+  <div class="share-result-mini"><img src="${esc(top.image)}"><div><small>你的結果</small><strong>${esc(top.name)}</strong><span>${top.pct}% 共鳴</span></div></div>
+  <div class="fields"><div class="field"><label>${esc(s.playerNameLabel)}</label><input id="playerName" value="${esc(state.playerName)}"></div>
+  <div class="field"><label>${esc(s.dateLabel)}</label><input id="playDate" type="date" value="${esc(state.playDate)}"></div></div>
+  <div class="eyebrow host-heading">${esc(s.hostLabel)}</div><div class="host-grid">${DATA.hosts.map(h=>`<label class="host-card"><input type="radio" name="host" value="${esc(h.id)}" ${h.id===state.selectedHostId?'checked':''}><strong>${esc(h.displayName||h.name)}</strong><span>${esc(h.note||'')}</span></label>`).join('')}</div>
+  <div class="actions"><button class="btn" id="sendToLine">${esc(s.button)}</button><button class="ghost" id="backToResult">${esc(s.backButton)}</button></div>
+  <p class="share-status" id="shareStatus">按下按鈕後才會開啟 LINE 分享視窗。</p>`;
+}
+function renderSuccess(p){p.innerHTML=`<div class="eyebrow">MESSAGE DELIVERED</div><h2 class="section-title">分享流程已完成</h2><p class="desc">請確認訊息已送到正確的主持人聊天室。</p><div class="actions"><button class="btn" id="shareAgain">再次分享</button><button class="ghost" id="restart">重新測驗</button></div>`}
+
+function render(){
+  app.innerHTML=''; const p=document.createElement('section');p.className='panel';
+  ({scriptSelect:renderScriptSelect,start:renderStart,route:renderRoute,quiz:renderQuiz,result:renderResult,share:renderShare,success:renderSuccess}[state.page]||renderScriptSelect)(p);
+  app.appendChild(p); bind();
+}
+
+function answer(i){
+  const q=DATA.questions[state.index],a=q.answers[i];
+  state.scores=state.scores.map((x,j)=>x+Number(a.score[j]||0));state.index++;
+  if(state.index>=DATA.questions.length)cinematic(DATA.story.epilogue,'result');
+  else cinematic([DATA.story.interludes[state.index]||{}],'quiz');
+}
+function saveForm(){state.playerName=document.querySelector('#playerName')?.value.trim()||'';state.playDate=document.querySelector('#playDate')?.value||'';state.selectedHostId=document.querySelector('input[name=host]:checked')?.value||state.selectedHostId}
+function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
+function shareMessage(){
+  const {ranking,top}=result(),h=selectedHost();
+  return [`【${DATA.setting.title}｜角色測驗結果】`,'',`指定主持人：${h?.displayName||h?.name||'未指定'}`,`玩家：${state.playerName}`,`遊玩日期：${state.playDate}`,`結果角色：${top.name}`,`最高共鳴度：${top.pct}%`,'','角色共鳴排行：',...ranking.map((c,i)=>`${i+1}. ${c.name} ${c.pct}%`),'','玩家留言：',state.note.trim()||'無'].join('\n');
+}
+async function send(){
+  saveForm(); if(!state.playerName){status('請填寫玩家姓名');return} if(!state.playDate){status('請選擇日期');return} if(!selectedHost()){status('請選擇主持人');return}
+  if(!liffReady){await initLiff();if(!liffReady){status(`LINE 初始化失敗：${liffError}`);return}}
+  if(!liff.isLoggedIn()){liff.login({redirectUri:location.href});return}
+  if(!liff.isApiAvailable('shareTargetPicker')){status('請從 LINE App 開啟');return}
+  try{const r=await liff.shareTargetPicker([{type:'text',text:shareMessage()}],{isMultiple:false});if(r){state.page='success';render()}else status('已取消分享')}
+  catch(e){status(`分享失敗：${e?.message||'未知錯誤'}`)}
+}
+function restart(){const muted=state.muted;state=resetState();state.muted=muted;render()}
+
+function bind(){
+  document.querySelectorAll('[data-script]').forEach(b=>b.onclick=async()=>{await loadScript(b.dataset.script);state.page='start';render()});
+  document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
+  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];cinematic([DATA.story.interludes[0]||{}],'quiz')});
+  document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
+  document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
+  document.querySelector('#sendToLine')?.addEventListener('click',send);
+  document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
+  document.querySelector('#shareAgain')?.addEventListener('click',()=>{state.page='share';render()});
+  document.querySelector('#restart')?.addEventListener('click',restart);
+}
+async function boot(){try{await loadGlobalData();state.page='scriptSelect';render();initLiff()}catch(e){app.innerHTML=`<section class="panel"><h1>資料載入失敗</h1><p>${esc(e.message)}</p></section>`}}
+musicBtn.addEventListener('click',toggleAudio);boot();

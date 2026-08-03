@@ -1,0 +1,3 @@
+import {json} from '../lib/response.js';import {verifySession} from '../lib/auth.js';
+function clean(s){return String(s).replace(/[^a-zA-Z0-9._-]/g,'-')}
+export async function onRequestPost({request,env}){if(!await verifySession(request,env))return json({error:'未登入'},401);const {scriptId,kind,fileName,contentBase64}=await request.json();if(!scriptId||!kind||!fileName||!contentBase64)return json({error:'缺少上傳參數'},400);const folder=kind==='image'?'characters':kind==='music'?'character-music':'bgm';const path=`assets/scripts/${clean(scriptId)}/${folder}/${Date.now()}-${clean(fileName)}`;const key=crypto.randomUUID();await env.ADMIN_UPLOADS.put(key,contentBase64,{customMetadata:{path}});return json({ok:true,path,uploadKey:key})}

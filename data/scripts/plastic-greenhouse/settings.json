@@ -29,5 +29,13 @@
   "audio": {
     "enabled": true,
     "volume": 0.045
+  },
+  "id": "plastic-greenhouse",
+  "name": "塑料溫室",
+  "bgm": {
+    "src": "",
+    "autoplay": false,
+    "loop": true,
+    "volume": 0.35
   }
 }

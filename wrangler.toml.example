@@ -1,0 +1,6 @@
+name = "assign-roles"
+compatibility_date = "2026-08-01"
+
+[[kv_namespaces]]
+binding = "ADMIN_UPLOADS"
+id = "YOUR_KV_NAMESPACE_ID"

@@ -1,31 +1,65 @@
-# Assign Roles v2
+# Assign Roles v2 CMS
 
-此版本以原 GitHub Repository `cmy801027-coder/MJ` 的內容為模板完成：
+## 功能
 
-- 單一 LIFF
-- 使用 `liff.shareTargetPicker()`
-- 進入遊戲時不要求 `chat_message.write`
-- 所有可替換內容移入 `/data`
-- 保留原角色圖片、文字、題目與視覺風格
+- `admin.html` 管理後台
+- 管理多個劇本
+- 編輯開場動畫與停留時間
+- 編輯題目、答案、三個角色分數
+- 編輯男女角色、角色圖片、介紹、角色音樂
+- 新增與刪除主持人
+- 拖曳上傳 BGM、圖片、MP3
+- 按「儲存並發布」後透過 Cloudflare Pages Functions Commit 到 GitHub
+- GitHub Commit 後由 Cloudflare Pages 自動部署
+- 玩家端維持單一 LIFF 與 Share Target Picker
 
-## 資料檔
+## 重要：Cloudflare Pages 設定
 
-- `data/story.json`
-- `data/questions.json`
-- `data/characters.json`
-- `data/hosts.json`
-- `data/setting.json`
+### 1. Environment variables / Secrets
 
-## 部署
+在 Cloudflare Pages 專案的 Settings → Variables and Secrets 設定：
 
-將 ZIP 解壓縮後，把全部內容覆蓋到 GitHub Repository 根目錄。
+- `ADMIN_PASSWORD`：後台登入密碼
+- `SESSION_SECRET`：至少 32 字元的亂數
+- `GITHUB_TOKEN`：GitHub Fine-grained Personal Access Token
+- `GITHUB_OWNER`：`cmy801027-coder`
+- `GITHUB_REPO`：`MJ`
+- `GITHUB_BRANCH`：`main`
 
-GitHub Pages 必須透過 HTTP/HTTPS 開啟。請勿直接雙擊 `index.html`，因為瀏覽器會封鎖 JSON fetch。
+GitHub Token 只需授予此 Repository：
 
-## LINE Developers
+- Contents: Read and write
+- Metadata: Read
 
-- Endpoint URL：網站根網址
-- LIFF ID：修改 `data/setting.json` 的 `liffId`
-- Scope：`openid`、`profile`
-- 不需要 `chat_message.write`
-- 啟用 Share Target Picker
+### 2. 建立 Cloudflare KV
+
+建立一個 KV Namespace，名稱例如 `assign-roles-uploads`。
+
+在 Pages 專案 Settings → Bindings 新增 KV binding：
+
+- Variable name：`ADMIN_UPLOADS`
+- KV namespace：剛建立的 Namespace
+
+KV 只用於「上傳後、發布前」的暫存。發布成功後會自動刪除。
+
+### 3. 重新部署
+
+Cloudflare Pages 必須使用 Git Integration 或 Wrangler 部署，才能執行 `/functions`。
+
+### 4. 開啟後台
+
+`https://你的網域/admin.html`
+
+## 檔案架構
+
+- `data/index.json`：劇本入口
+- `data/settings.json`：全站與 LIFF 設定
+- `data/hosts.json`：主持人
+- `data/scripts/<script-id>/settings.json`
+- `data/scripts/<script-id>/story.json`
+- `data/scripts/<script-id>/questions.json`
+- `data/scripts/<script-id>/characters.json`
+
+## 安全
+
+後台密碼與 GitHub Token 不會出現在前端 JavaScript。所有 GitHub 操作都由 Cloudflare Pages Functions 執行。
