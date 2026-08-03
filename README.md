@@ -1,230 +1,31 @@
-[
-  {
-    "scene": "你推開溫室的門。桌上放著一封已被拆開的信。",
-    "question": "當你發現一段關係裡藏著沒有說出口的真相，你會？",
-    "answers": [
-      {
-        "text": "直接詢問，不讓猜測繼續擴大",
-        "score": [
-          3,
-          1,
-          2
-        ]
-      },
-      {
-        "text": "先觀察，等待對方主動開口",
-        "score": [
-          1,
-          3,
-          2
-        ]
-      },
-      {
-        "text": "把情緒收好，先處理眼前最重要的事",
-        "score": [
-          1,
-          2,
-          3
-        ]
-      },
-      {
-        "text": "暫時離開，確認自己真正想知道什麼",
-        "score": [
-          2,
-          3,
-          1
-        ]
-      }
-    ]
-  },
-  {
-    "scene": "走廊盡頭有兩扇門。一扇傳來哭聲，另一扇透出火光。",
-    "question": "面對一個無法兩全的選擇，你通常依靠什麼？",
-    "answers": [
-      {
-        "text": "原則與承諾",
-        "score": [
-          3,
-          1,
-          2
-        ]
-      },
-      {
-        "text": "直覺與當下感受",
-        "score": [
-          1,
-          3,
-          2
-        ]
-      },
-      {
-        "text": "長期後果與整體利益",
-        "score": [
-          2,
-          1,
-          3
-        ]
-      },
-      {
-        "text": "誰最需要被保護",
-        "score": [
-          2,
-          3,
-          1
-        ]
-      }
-    ]
-  },
-  {
-    "scene": "鏡子裡的人比你慢了一秒才抬起頭。",
-    "question": "別人最常誤解你的地方是？",
-    "answers": [
-      {
-        "text": "以為我的冷靜代表不在乎",
-        "score": [
-          3,
-          1,
-          2
-        ]
-      },
-      {
-        "text": "以為我的隨性代表沒有底線",
-        "score": [
-          1,
-          3,
-          2
-        ]
-      },
-      {
-        "text": "以為我的沉默代表沒有想法",
-        "score": [
-          1,
-          2,
-          3
-        ]
-      },
-      {
-        "text": "以為我的溫柔代表不會拒絕",
-        "score": [
-          2,
-          3,
-          1
-        ]
-      }
-    ]
-  },
-  {
-    "scene": "陌生人圍坐在長桌旁，沒有人願意先說第一句話。",
-    "question": "在陌生團體中，你通常會成為？",
-    "answers": [
-      {
-        "text": "制定方向的人",
-        "score": [
-          3,
-          1,
-          2
-        ]
-      },
-      {
-        "text": "打破僵局的人",
-        "score": [
-          1,
-          3,
-          2
-        ]
-      },
-      {
-        "text": "安定秩序的人",
-        "score": [
-          1,
-          2,
-          3
-        ]
-      },
-      {
-        "text": "察覺每個人狀態的人",
-        "score": [
-          2,
-          3,
-          1
-        ]
-      }
-    ]
-  },
-  {
-    "scene": "錄音機突然轉動，播放出多年前你的聲音。",
-    "question": "如果必須留下一句話給過去的自己，你會說？",
-    "answers": [
-      {
-        "text": "別再為無法控制的事責怪自己",
-        "score": [
-          3,
-          1,
-          2
-        ]
-      },
-      {
-        "text": "你可以更任性一點",
-        "score": [
-          1,
-          3,
-          2
-        ]
-      },
-      {
-        "text": "慢一點，也沒有關係",
-        "score": [
-          1,
-          2,
-          3
-        ]
-      },
-      {
-        "text": "不要因為害怕失去，就先放棄擁有",
-        "score": [
-          2,
-          3,
-          1
-        ]
-      }
-    ]
-  },
-  {
-    "scene": "最後一盞燈熄滅前，有人隔著玻璃喊出了你的名字。",
-    "question": "你最希望被怎樣理解？",
-    "answers": [
-      {
-        "text": "看見我的選擇背後有原因",
-        "score": [
-          3,
-          1,
-          2
-        ]
-      },
-      {
-        "text": "接受我不願被定義",
-        "score": [
-          1,
-          3,
-          2
-        ]
-      },
-      {
-        "text": "相信我即使沉默也一直在場",
-        "score": [
-          1,
-          2,
-          3
-        ]
-      },
-      {
-        "text": "知道我的敏感不是軟弱",
-        "score": [
-          2,
-          3,
-          1
-        ]
-      }
-    ]
-  }
-]
+# Assign Roles v2
+
+此版本以原 GitHub Repository `cmy801027-coder/MJ` 的內容為模板完成：
+
+- 單一 LIFF
+- 使用 `liff.shareTargetPicker()`
+- 進入遊戲時不要求 `chat_message.write`
+- 所有可替換內容移入 `/data`
+- 保留原角色圖片、文字、題目與視覺風格
+
+## 資料檔
+
+- `data/story.json`
+- `data/questions.json`
+- `data/characters.json`
+- `data/hosts.json`
+- `data/setting.json`
+
+## 部署
+
+將 ZIP 解壓縮後，把全部內容覆蓋到 GitHub Repository 根目錄。
+
+GitHub Pages 必須透過 HTTP/HTTPS 開啟。請勿直接雙擊 `index.html`，因為瀏覽器會封鎖 JSON fetch。
+
+## LINE Developers
+
+- Endpoint URL：網站根網址
+- LIFF ID：修改 `data/setting.json` 的 `liffId`
+- Scope：`openid`、`profile`
+- 不需要 `chat_message.write`
+- 啟用 Share Target Picker

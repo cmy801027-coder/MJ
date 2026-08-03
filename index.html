@@ -1,33 +1,24 @@
-{
-  "title": "塑料溫室",
-  "subtitle": "PLASTIC GREENHOUSE",
-  "version": "2.0",
-  "liffId": "2010940918-AhmNBhgx",
-  "routeSelection": {
-    "title": "你要透過誰的眼睛，走進故事？",
-    "maleLabel": "男角路線",
-    "maleEyebrow": "MALE ROUTE",
-    "femaleLabel": "女角路線",
-    "femaleEyebrow": "FEMALE ROUTE"
-  },
-  "result": {
-    "eyebrow": "YOUR SOUL CHARACTER",
-    "resonanceLabel": "靈魂共鳴度 RESONANCE",
-    "notePlaceholder": "寫下你對角色的期待、雷點，或想告訴主持人的話…",
-    "shareButton": "傳送給主持人",
-    "restartButton": "重新測驗"
-  },
-  "share": {
-    "title": "把答案交給引路人",
-    "eyebrow": "DELIVER YOUR RESULT",
-    "playerNameLabel": "玩家姓名 PLAYER NAME",
-    "dateLabel": "遊玩日期 PLAY DATE",
-    "hostLabel": "SELECT HOST",
-    "button": "開啟 LINE 選擇聊天室",
-    "backButton": "返回測驗結果"
-  },
-  "audio": {
-    "enabled": true,
-    "volume": 0.045
-  }
-}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>塑料溫室｜角色測驗</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="film top"></div>
+  <div class="film bottom"></div>
+  <div class="noise"></div>
+  <button id="musicBtn" class="music" type="button">♪ OFF</button>
+  <main id="app">
+    <section class="panel">
+      <div class="eyebrow">LOADING</div>
+      <h1 class="title">資料載入中</h1>
+    </section>
+  </main>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

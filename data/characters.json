@@ -1,0 +1,48 @@
+{
+  "male": [
+    {
+      "id": "liu-xianyong",
+      "name": "劉憲永",
+      "kr": "유헌용",
+      "image": "assets/characters/liu-xianyong.jpg",
+      "description": "冷靜、克制，習慣把真心藏在禮貌與距離之後。你重視秩序，也願意為重要的人承擔代價。"
+    },
+    {
+      "id": "liu-minglang",
+      "name": "劉明朗",
+      "kr": "유명랑",
+      "image": "assets/characters/liu-minglang.jpg",
+      "description": "敏銳而自由，總能察覺氣氛裡最細小的裂縫。你不輕易服從規則，卻有自己的溫柔原則。"
+    },
+    {
+      "id": "zheng-zaihe",
+      "name": "鄭宰賀",
+      "kr": "정재하",
+      "image": "assets/characters/zheng-zaihe.jpg",
+      "description": "安靜、可靠，面對混亂時反而更清醒。你把責任放在情緒之前，像冬日裡不張揚的燈。"
+    }
+  ],
+  "female": [
+    {
+      "id": "zheng-zhuoying",
+      "name": "鄭卓英",
+      "kr": "정탁영",
+      "image": "assets/characters/zheng-zhuoying.jpg",
+      "description": "自省而堅定，總在鏡面與真實之間尋找自己。你看似冷淡，其實對關係有極高的誠實要求。"
+    },
+    {
+      "id": "cui-zhaoxian",
+      "name": "崔昭賢",
+      "kr": "최소현",
+      "image": "assets/characters/cui-zhaoxian.jpg",
+      "description": "理性、細膩，能同時看見人的光亮與陰影。你善於照顧全局，也不願把自己活成誰的附屬。"
+    },
+    {
+      "id": "pu-zhenzhu",
+      "name": "朴珍珠",
+      "kr": "박진주",
+      "image": "assets/characters/pu-zhenzhu.jpg",
+      "description": "柔軟卻不脆弱，直覺像雨幕裡的微光。你珍惜真誠，也願意在必要時做出最果斷的選擇。"
+    }
+  ]
+}
