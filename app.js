@@ -57,9 +57,7 @@ function buildGoogleSheetPayload() {
     })),
     note: state.note || '',
     scores: [...state.scores],
-    answers: [...state.answers],
-    pageUrl: window.location.href,
-    userAgent: navigator.userAgent
+    answers: [...state.answers]
   };
 }
 
