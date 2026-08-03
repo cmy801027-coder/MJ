@@ -118,15 +118,500 @@ function renderScripts(){
  }
 }
 
-function renderStory(){
- const st=script().story;
- const section=(key,title)=>`<div class="card"><div class="row"><h2>${title}</h2><span class="spacer"></span><button data-add-scene="${key}">＋新增段落</button></div>${(st[key]||[]).map((x,i)=>`<div class="list-item"><div class="grid"><div class="field"><label>章節標題</label><input data-story="${key}" data-i="${i}" data-k="chapter" value="${esc(x.chapter||'')}"></div><div class="field"><label>停留毫秒（4000 = 4 秒）</label><input type="number" data-story="${key}" data-i="${i}" data-k="hold" value="${Number(x.hold||900)}"></div></div><div class="field"><label>文字，每行一段</label><textarea data-story-lines="${key}" data-i="${i}">${esc((x.lines||[]).join('\n'))}</textarea></div><button class="danger" data-remove-scene="${key}" data-i="${i}">刪除段落</button></div>`).join('')}</div>`;
- $('#editor').innerHTML=`<div class="card"><h2>首頁第一句</h2><div class="field"><label>每行一段</label><textarea id="openingQuote">${esc(st.opening.quote.join('\n'))}</textarea></div><div class="field"><label>開始按鈕</label><input id="openingButton" value="${esc(st.opening.button)}"></div></div>${section('prologue','開場動畫')}${section('interludes','題目間動畫')}${section('epilogue','結果前動畫')}`;
- $('#openingQuote').oninput=e=>{st.opening.quote=e.target.value.split('\n');setDirty()};$('#openingButton').oninput=e=>{st.opening.button=e.target.value;setDirty()};
- bindInput('[data-story]',el=>{st[el.dataset.story][el.dataset.i][el.dataset.k]=el.dataset.k==='hold'?Number(el.value):el.value});
- bindInput('[data-story-lines]',el=>{st[el.dataset.story][el.dataset.i].lines=el.value.split('\n')});
- document.querySelectorAll('[data-add-scene]').forEach(b=>b.onclick=()=>{st[b.dataset.addScene].push({chapter:'',lines:['新段落'],hold:4000});setDirty();render()});
- document.querySelectorAll('[data-remove-scene]').forEach(b=>b.onclick=()=>{st[b.dataset.removeScene].splice(Number(b.dataset.i),1);setDirty();render()});
+function renderStory() {
+  const st = script().story;
+
+  st.prologue ||= [];
+  st.epilogue ||= [];
+  st.interludes ||= [];
+
+  const questions =
+    script().questions || [];
+
+  /*
+   * 將舊版單一物件格式轉為新版陣列格式。
+   * 每一個 transition index 都是一個動畫清單。
+   */
+  for (
+    let index = 0;
+    index < questions.length;
+    index += 1
+  ) {
+    const value =
+      st.interludes[index];
+
+    if (
+      value &&
+      !Array.isArray(value)
+    ) {
+      st.interludes[index] = [
+        value
+      ];
+    }
+
+    if (
+      !Array.isArray(
+        st.interludes[index]
+      )
+    ) {
+      st.interludes[index] = [];
+    }
+  }
+
+  const renderSceneFields = (
+    sectionKey,
+    scene,
+    sceneIndex
+  ) => `
+    <div class="list-item">
+      <div class="grid">
+        <div class="field">
+          <label>章節標題</label>
+          <input
+            data-scene-section="${sectionKey}"
+            data-scene-index="${sceneIndex}"
+            data-scene-key="chapter"
+            value="${esc(scene.chapter || '')}"
+          >
+        </div>
+
+        <div class="field">
+          <label>最短停留毫秒（4000 = 4 秒）</label>
+          <input
+            type="number"
+            min="0"
+            data-scene-section="${sectionKey}"
+            data-scene-index="${sceneIndex}"
+            data-scene-key="hold"
+            value="${Number(scene.hold || 900)}"
+          >
+        </div>
+      </div>
+
+      <div class="field">
+        <label>動畫文字，每行一段</label>
+        <textarea
+          data-scene-lines-section="${sectionKey}"
+          data-scene-index="${sceneIndex}"
+        >${esc((scene.lines || []).join('\n'))}</textarea>
+      </div>
+
+      <button
+        class="danger"
+        data-remove-scene-section="${sectionKey}"
+        data-scene-index="${sceneIndex}"
+        type="button"
+      >
+        刪除這段動畫
+      </button>
+    </div>
+  `;
+
+  const renderFixedSection = (
+    key,
+    title
+  ) => `
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2>${title}</h2>
+          <small class="muted">
+            可以設定零段、一段或多段動畫。
+          </small>
+        </div>
+
+        <span class="spacer"></span>
+
+        <button
+          data-add-fixed-scene="${key}"
+          type="button"
+        >
+          ＋新增動畫
+        </button>
+      </div>
+
+      ${
+        st[key].length === 0
+          ? `
+            <div class="list-item">
+              <small class="muted">
+                目前沒有動畫，流程會直接進入下一畫面。
+              </small>
+            </div>
+          `
+          : st[key]
+              .map(
+                (scene, index) =>
+                  renderSceneFields(
+                    key,
+                    scene,
+                    index
+                  )
+              )
+              .join('')
+      }
+    </div>
+  `;
+
+  const transitionTitle = index => {
+    if (index === 0) {
+      return '選完角色路線 → 第 1 題';
+    }
+
+    return (
+      `第 ${index} 題 → ` +
+      `第 ${index + 1} 題`
+    );
+  };
+
+  const renderTransition = (
+    transitionIndex
+  ) => {
+    const scenes =
+      st.interludes[
+        transitionIndex
+      ];
+
+    return `
+      <div class="card">
+        <div class="row">
+          <div>
+            <h2>
+              ${transitionTitle(transitionIndex)}
+            </h2>
+
+            <small class="muted">
+              留空代表直接進下一題；也可以連續播放多段動畫。
+            </small>
+          </div>
+
+          <span class="spacer"></span>
+
+          <button
+            data-add-interlude="${transitionIndex}"
+            type="button"
+          >
+            ＋新增動畫
+          </button>
+        </div>
+
+        ${
+          scenes.length === 0
+            ? `
+              <div class="list-item">
+                <small class="muted">
+                  此轉場沒有動畫。
+                </small>
+              </div>
+            `
+            : scenes
+                .map(
+                  (scene, sceneIndex) => `
+                    <div class="list-item">
+                      <div class="row">
+                        <h3>
+                          動畫 ${sceneIndex + 1}
+                        </h3>
+
+                        <span class="spacer"></span>
+
+                        <button
+                          class="danger"
+                          data-remove-interlude="${transitionIndex}:${sceneIndex}"
+                          type="button"
+                        >
+                          刪除
+                        </button>
+                      </div>
+
+                      <div class="grid">
+                        <div class="field">
+                          <label>章節標題</label>
+                          <input
+                            data-interlude="${transitionIndex}:${sceneIndex}:chapter"
+                            value="${esc(scene.chapter || '')}"
+                          >
+                        </div>
+
+                        <div class="field">
+                          <label>最短停留毫秒</label>
+                          <input
+                            type="number"
+                            min="0"
+                            data-interlude="${transitionIndex}:${sceneIndex}:hold"
+                            value="${Number(scene.hold || 900)}"
+                          >
+                        </div>
+                      </div>
+
+                      <div class="field">
+                        <label>動畫文字，每行一段</label>
+                        <textarea
+                          data-interlude-lines="${transitionIndex}:${sceneIndex}"
+                        >${esc((scene.lines || []).join('\n'))}</textarea>
+                      </div>
+                    </div>
+                  `
+                )
+                .join('')
+        }
+      </div>
+    `;
+  };
+
+  $('#editor').innerHTML = `
+    <div class="card">
+      <h2>首頁第一句</h2>
+
+      <div class="field">
+        <label>每行一段</label>
+        <textarea id="openingQuote">${
+          esc(
+            (st.opening?.quote || [])
+              .join('\n')
+          )
+        }</textarea>
+      </div>
+
+      <div class="field">
+        <label>開始按鈕</label>
+        <input
+          id="openingButton"
+          value="${esc(st.opening?.button || '開始')}"
+        >
+      </div>
+    </div>
+
+    ${renderFixedSection(
+      'prologue',
+      '開場動畫'
+    )}
+
+    <div class="card">
+      <h2>題目間動畫</h2>
+
+      <p class="muted">
+        每個轉場都可以完全沒有動畫，也可以加入任意多段動畫。
+      </p>
+    </div>
+
+    ${
+      questions.length === 0
+        ? `
+          <div class="card">
+            <p class="muted">
+              目前沒有題目，新增題目後才會出現轉場設定。
+            </p>
+          </div>
+        `
+        : questions
+            .map(
+              (_, index) =>
+                renderTransition(index)
+            )
+            .join('')
+    }
+
+    ${renderFixedSection(
+      'epilogue',
+      '結果前動畫'
+    )}
+  `;
+
+  $('#openingQuote').oninput = event => {
+    st.opening ||= {};
+    st.opening.quote =
+      event.target.value.split('\n');
+    setDirty();
+  };
+
+  $('#openingButton').oninput = event => {
+    st.opening ||= {};
+    st.opening.button =
+      event.target.value;
+    setDirty();
+  };
+
+  bindInput(
+    '[data-scene-section]',
+    element => {
+      const section =
+        st[element.dataset.sceneSection];
+
+      const scene =
+        section[
+          Number(
+            element.dataset.sceneIndex
+          )
+        ];
+
+      const key =
+        element.dataset.sceneKey;
+
+      scene[key] =
+        key === 'hold'
+          ? Number(element.value)
+          : element.value;
+    }
+  );
+
+  bindInput(
+    '[data-scene-lines-section]',
+    element => {
+      const section =
+        st[
+          element.dataset
+            .sceneLinesSection
+        ];
+
+      section[
+        Number(
+          element.dataset.sceneIndex
+        )
+      ].lines =
+        element.value.split('\n');
+    }
+  );
+
+  document
+    .querySelectorAll(
+      '[data-add-fixed-scene]'
+    )
+    .forEach(button => {
+      button.onclick = () => {
+        st[
+          button.dataset.addFixedScene
+        ].push({
+          chapter: '',
+          lines: [
+            '新動畫'
+          ],
+          hold: 900
+        });
+
+        setDirty();
+        render();
+      };
+    });
+
+  document
+    .querySelectorAll(
+      '[data-remove-scene-section]'
+    )
+    .forEach(button => {
+      button.onclick = () => {
+        st[
+          button.dataset
+            .removeSceneSection
+        ].splice(
+          Number(
+            button.dataset.sceneIndex
+          ),
+          1
+        );
+
+        setDirty();
+        render();
+      };
+    });
+
+  bindInput(
+    '[data-interlude]',
+    element => {
+      const [
+        transitionIndex,
+        sceneIndex,
+        key
+      ] =
+        element.dataset.interlude
+          .split(':');
+
+      const scene =
+        st.interludes[
+          Number(transitionIndex)
+        ][
+          Number(sceneIndex)
+        ];
+
+      scene[key] =
+        key === 'hold'
+          ? Number(element.value)
+          : element.value;
+    }
+  );
+
+  bindInput(
+    '[data-interlude-lines]',
+    element => {
+      const [
+        transitionIndex,
+        sceneIndex
+      ] =
+        element.dataset
+          .interludeLines
+          .split(':')
+          .map(Number);
+
+      st.interludes[
+        transitionIndex
+      ][sceneIndex].lines =
+        element.value.split('\n');
+    }
+  );
+
+  document
+    .querySelectorAll(
+      '[data-add-interlude]'
+    )
+    .forEach(button => {
+      button.onclick = () => {
+        const transitionIndex =
+          Number(
+            button.dataset
+              .addInterlude
+          );
+
+        st.interludes[
+          transitionIndex
+        ].push({
+          chapter: '',
+          lines: [
+            '新動畫'
+          ],
+          hold: 900
+        });
+
+        setDirty();
+        render();
+      };
+    });
+
+  document
+    .querySelectorAll(
+      '[data-remove-interlude]'
+    )
+    .forEach(button => {
+      button.onclick = () => {
+        const [
+          transitionIndex,
+          sceneIndex
+        ] =
+          button.dataset
+            .removeInterlude
+            .split(':')
+            .map(Number);
+
+        st.interludes[
+          transitionIndex
+        ].splice(
+          sceneIndex,
+          1
+        );
+
+        setDirty();
+        render();
+      };
+    });
 }
 
 function renderQuestions() {

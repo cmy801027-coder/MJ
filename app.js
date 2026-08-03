@@ -283,6 +283,60 @@ async function cinematic(items,next){
   stage.classList.remove('visible'); await sleep(500); transitionLocked=false; state.page=next; render();
 }
 
+function getInterludeScenes(transitionIndex) {
+  const value =
+    DATA.story?.interludes?.[transitionIndex];
+
+  /*
+   * 新格式：
+   * interludes[transitionIndex] = [scene, scene, ...]
+   *
+   * 舊格式：
+   * interludes[transitionIndex] = scene
+   *
+   * 空值代表該轉場完全沒有動畫。
+   */
+  if (Array.isArray(value)) {
+    return value.filter(
+      scene =>
+        scene &&
+        (
+          scene.chapter ||
+          Array.isArray(scene.lines)
+        )
+    );
+  }
+
+  if (
+    value &&
+    typeof value === 'object'
+  ) {
+    return [value];
+  }
+
+  return [];
+}
+
+function goToQuizWithInterlude(
+  transitionIndex
+) {
+  const scenes =
+    getInterludeScenes(
+      transitionIndex
+    );
+
+  if (scenes.length === 0) {
+    state.page = 'quiz';
+    render();
+    return;
+  }
+
+  cinematic(
+    scenes,
+    'quiz'
+  );
+}
+
 function chars(){return DATA.characters?.[state.route]||[]}
 function result(){
   const max=Math.max(...state.scores,1);
@@ -447,7 +501,7 @@ function renderResult(p){
   p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><div class="result-card"><img src="${esc(top.image)}" alt="${esc(top.name)}">
   <div class="result-name"><h1>${esc(top.name)}</h1><p>${esc(top.kr||'')}</p></div></div><p class="desc">${esc(top.description||top.desc||'')}</p>
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
-  <div class="actions">
+  <div class="note"><textarea id="note" placeholder="${esc(s.notePlaceholder)}">${esc(state.note)}</textarea></div><div class="actions">
   <button class="btn" id="goShare">${esc(s.shareButton)}</button><button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
   if(top.music) new Audio(top.music).play().catch(()=>{});
 }
@@ -499,17 +553,6 @@ function renderShare(p) {
         </label>
         <input id="playDate" type="date" value="${esc(state.playDate)}">
       </div>
-    </div>
-
-    <div class="note">
-      <label for="note">
-        ${esc(shareSetting.noteLabel || '玩家留言 MESSAGE')}
-      </label>
-      <textarea
-        id="note"
-        maxlength="1000"
-        placeholder="${esc(DATA.setting.result?.notePlaceholder || '可以留下想對主持人說的話')}"
-      >${esc(state.note)}</textarea>
     </div>
 
     <div class="actions">
@@ -577,9 +620,8 @@ function finishQuestion(answerRecord) {
       'result'
     );
   } else {
-    cinematic(
-      [DATA.story.interludes[state.index] || {}],
-      'quiz'
+    goToQuizWithInterlude(
+      state.index
     );
   }
 }
@@ -674,9 +716,6 @@ function saveForm() {
 
   state.playDate =
     document.querySelector('#playDate')?.value || '';
-
-  state.note =
-    document.querySelector('#note')?.value.trim() || '';
 }
 
 function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
@@ -750,7 +789,7 @@ function bind(){
     };
   });
   document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
-  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];cinematic([DATA.story.interludes[0]||{}],'quiz')});
+  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];goToQuizWithInterlude(0)});
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
   let mostIndex = null;
   let leastIndex = null;
@@ -872,7 +911,7 @@ function bind(){
       );
     });
 
-  document.querySelector('#goShare')?.addEventListener('click',()=>{state.page='share';render()});
+  document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
   document.querySelector('#submitToSheet')?.addEventListener('click',submitResultToSheet);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
