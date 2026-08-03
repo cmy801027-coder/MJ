@@ -210,12 +210,140 @@ function renderRoute(p){
   <button class="route" data-route="male"><small>${esc(r.maleEyebrow)}</small><h3>${esc(r.maleLabel)}</h3><p>${DATA.characters.male.map(c=>esc(c.name)).join('<br>')}</p></button>
   <button class="route" data-route="female"><small>${esc(r.femaleEyebrow)}</small><h3>${esc(r.femaleLabel)}</h3><p>${DATA.characters.female.map(c=>esc(c.name)).join('<br>')}</p></button></div>`;
 }
-function renderQuiz(p){
-  const q=DATA.questions[state.index];
-  p.innerHTML=`<div class="question"><div class="qnum">QUESTION ${String(state.index+1).padStart(2,'0')} / ${String(DATA.questions.length).padStart(2,'0')}</div>
-  <p class="scene-text">${esc(q.scene)}</p><h2>${esc(q.question)}</h2><div class="answers">${q.answers.map((a,i)=>`
-  <button class="answer" data-answer="${i}"><span>${String(i+1).padStart(2,'0')}</span><span>${esc(a.text)}</span></button>`).join('')}</div>
-  <div class="progress"><i style="width:${(state.index+1)/DATA.questions.length*100}%"></i></div></div>`;
+function renderQuiz(p) {
+  const q = DATA.questions[state.index];
+  const type = q.type || 'single';
+  const progress =
+    (state.index + 1) /
+    DATA.questions.length *
+    100;
+
+  let controlHtml = '';
+
+  if (type === 'bestWorst') {
+    controlHtml = `
+      <div class="best-worst-help">
+        <span>先選最喜歡</span>
+        <span>再選最不喜歡</span>
+      </div>
+
+      <div class="best-worst-options">
+        ${(q.answers || []).map((answer, index) => `
+          <div class="best-worst-option" data-bw-option="${index}">
+            <div class="best-worst-text">
+              <span>${String(index + 1).padStart(2, '0')}</span>
+              <strong>${esc(answer.text)}</strong>
+            </div>
+
+            <div class="best-worst-actions">
+              <button
+                class="choice-mark most"
+                data-most="${index}"
+                type="button"
+              >
+                最喜歡
+              </button>
+
+              <button
+                class="choice-mark least"
+                data-least="${index}"
+                type="button"
+              >
+                最不喜歡
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <p class="question-hint" id="questionHint">
+        請各選一個選項，兩者不能相同。
+      </p>
+
+      <button
+        class="btn question-submit"
+        id="submitBestWorst"
+        type="button"
+        disabled
+      >
+        確認選擇
+      </button>
+    `;
+  } else if (type === 'slider') {
+    const slider = q.slider || {};
+    const min = Number(slider.min ?? 0);
+    const max = Number(slider.max ?? 100);
+    const step = Number(slider.step ?? 1);
+    const defaultValue = Number(
+      slider.default ?? ((min + max) / 2)
+    );
+
+    controlHtml = `
+      <div class="slider-question-card">
+        <div class="slider-value" id="sliderValue">
+          ${defaultValue}
+        </div>
+
+        <input
+          class="degree-slider"
+          id="degreeSlider"
+          type="range"
+          min="${min}"
+          max="${max}"
+          step="${step}"
+          value="${defaultValue}"
+        >
+
+        <div class="slider-labels">
+          <span>${esc(slider.leftLabel || '偏左')}</span>
+          <span>${esc(slider.centerLabel || '彼此平衡')}</span>
+          <span>${esc(slider.rightLabel || '偏右')}</span>
+        </div>
+      </div>
+
+      <button
+        class="btn question-submit"
+        id="submitSlider"
+        type="button"
+      >
+        確認程度
+      </button>
+    `;
+  } else {
+    controlHtml = `
+      <div class="answers">
+        ${(q.answers || []).map((answer, index) => `
+          <button
+            class="answer"
+            data-answer="${index}"
+            type="button"
+          >
+            <span>${String(index + 1).padStart(2, '0')}</span>
+            <span>${esc(answer.text)}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  p.innerHTML = `
+    <div class="question">
+      <div class="qnum">
+        QUESTION ${String(state.index + 1).padStart(2, '0')}
+        /
+        ${String(DATA.questions.length).padStart(2, '0')}
+      </div>
+
+      <p class="scene-text">${esc(q.scene || '')}</p>
+      <h2>${esc(q.question || '')}</h2>
+
+      ${controlHtml}
+
+      <div class="progress">
+        <i style="width:${progress}%"></i>
+      </div>
+    </div>
+  `;
 }
 function renderResult(p){
   const {ranking,top}=result(), s=DATA.setting.result;
@@ -244,11 +372,120 @@ function render(){
   app.appendChild(p); bind();
 }
 
-function answer(i){
-  const q=DATA.questions[state.index],a=q.answers[i];
-  state.scores=state.scores.map((x,j)=>x+Number(a.score[j]||0));state.index++;
-  if(state.index>=DATA.questions.length)cinematic(DATA.story.epilogue,'result');
-  else cinematic([DATA.story.interludes[state.index]||{}],'quiz');
+function addScores(scoreArray) {
+  state.scores = state.scores.map(
+    (current, index) =>
+      current + Number(scoreArray?.[index] || 0)
+  );
+}
+
+function finishQuestion(answerRecord) {
+  state.answers.push({
+    questionIndex: state.index,
+    type:
+      DATA.questions[state.index].type ||
+      'single',
+    ...answerRecord
+  });
+
+  state.index += 1;
+
+  if (state.index >= DATA.questions.length) {
+    cinematic(
+      DATA.story.epilogue,
+      'result'
+    );
+  } else {
+    cinematic(
+      [DATA.story.interludes[state.index] || {}],
+      'quiz'
+    );
+  }
+}
+
+function answer(i) {
+  const q = DATA.questions[state.index];
+  const a = q.answers[i];
+
+  addScores(a.score);
+
+  finishQuestion({
+    answerIndex: i,
+    answer: a.text
+  });
+}
+
+function answerBestWorst(
+  mostIndex,
+  leastIndex
+) {
+  const q = DATA.questions[state.index];
+  const most = q.answers[mostIndex];
+  const least = q.answers[leastIndex];
+
+  addScores(
+    most.mostScore ||
+    most.score
+  );
+
+  addScores(
+    least.leastScore
+  );
+
+  finishQuestion({
+    mostIndex,
+    leastIndex,
+    mostAnswer: most.text,
+    leastAnswer: least.text
+  });
+}
+
+function answerSlider(value) {
+  const q = DATA.questions[state.index];
+  const slider = q.slider || {};
+
+  const min = Number(slider.min ?? 0);
+  const max = Number(slider.max ?? 100);
+  const numericValue = Number(value);
+
+  const ratio =
+    max === min
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            1,
+            (numericValue - min) /
+              (max - min)
+          )
+        );
+
+  const minScore =
+    slider.minScore || [0, 0, 0];
+
+  const maxScore =
+    slider.maxScore || [0, 0, 0];
+
+  const interpolated =
+    state.scores.map((_, index) => {
+      const low =
+        Number(minScore[index] || 0);
+
+      const high =
+        Number(maxScore[index] || 0);
+
+      return (
+        low +
+        (high - low) * ratio
+      );
+    });
+
+  addScores(interpolated);
+
+  finishQuestion({
+    value: numericValue,
+    ratio
+  });
 }
 function saveForm(){state.playerName=document.querySelector('#playerName')?.value.trim()||'';state.playDate=document.querySelector('#playDate')?.value||'';state.selectedHostId=document.querySelector('input[name=host]:checked')?.value||state.selectedHostId}
 function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
@@ -292,6 +529,126 @@ function bind(){
   document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
   document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];cinematic([DATA.story.interludes[0]||{}],'quiz')});
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
+  let mostIndex = null;
+  let leastIndex = null;
+
+  const updateBestWorst = () => {
+    document
+      .querySelectorAll('[data-most]')
+      .forEach(button => {
+        button.classList.toggle(
+          'selected',
+          Number(button.dataset.most) === mostIndex
+        );
+      });
+
+    document
+      .querySelectorAll('[data-least]')
+      .forEach(button => {
+        button.classList.toggle(
+          'selected',
+          Number(button.dataset.least) === leastIndex
+        );
+      });
+
+    const submit =
+      document.querySelector('#submitBestWorst');
+
+    if (submit) {
+      submit.disabled =
+        mostIndex === null ||
+        leastIndex === null ||
+        mostIndex === leastIndex;
+    }
+
+    const hint =
+      document.querySelector('#questionHint');
+
+    if (
+      hint &&
+      mostIndex !== null &&
+      leastIndex !== null &&
+      mostIndex === leastIndex
+    ) {
+      hint.textContent =
+        '最喜歡和最不喜歡不能選同一個選項。';
+    } else if (hint) {
+      hint.textContent =
+        '請各選一個選項，兩者不能相同。';
+    }
+  };
+
+  document
+    .querySelectorAll('[data-most]')
+    .forEach(button => {
+      button.addEventListener('click', () => {
+        mostIndex =
+          Number(button.dataset.most);
+
+        updateBestWorst();
+      });
+    });
+
+  document
+    .querySelectorAll('[data-least]')
+    .forEach(button => {
+      button.addEventListener('click', () => {
+        leastIndex =
+          Number(button.dataset.least);
+
+        updateBestWorst();
+      });
+    });
+
+  document
+    .querySelector('#submitBestWorst')
+    ?.addEventListener('click', () => {
+      if (
+        mostIndex === null ||
+        leastIndex === null ||
+        mostIndex === leastIndex
+      ) {
+        return;
+      }
+
+      answerBestWorst(
+        mostIndex,
+        leastIndex
+      );
+    });
+
+  const degreeSlider =
+    document.querySelector('#degreeSlider');
+
+  if (degreeSlider) {
+    const valueLabel =
+      document.querySelector('#sliderValue');
+
+    const updateSliderValue = () => {
+      if (valueLabel) {
+        valueLabel.textContent =
+          degreeSlider.value;
+      }
+    };
+
+    degreeSlider.addEventListener(
+      'input',
+      updateSliderValue
+    );
+
+    updateSliderValue();
+  }
+
+  document
+    .querySelector('#submitSlider')
+    ?.addEventListener('click', () => {
+      answerSlider(
+        document
+          .querySelector('#degreeSlider')
+          ?.value
+      );
+    });
+
   document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
   document.querySelector('#sendToLine')?.addEventListener('click',send);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});

@@ -4,3 +4,222 @@
 .script-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin:36px auto;max-width:760px}
 .script-card{background:#0d1016;border:1px solid #30343d;color:#eee;padding:26px;text-align:left;cursor:pointer;transition:.3s}
 .script-card:hover{transform:translateY(-4px);border-color:#aaa}.script-card h3{font-size:24px;margin:8px 0}.script-card small{color:#777;letter-spacing:.2em}
+
+
+/* ===== New question types ===== */
+
+.question-hint {
+  margin: 20px 0 0;
+  color: #7f828a;
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-align: center;
+}
+
+.question-submit {
+  display: block;
+  margin: 30px auto 0;
+}
+
+.best-worst-help {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-bottom: 12px;
+  color: #70747c;
+  font-size: 12px;
+  letter-spacing: .12em;
+}
+
+.best-worst-options {
+  display: grid;
+  gap: 13px;
+}
+
+.best-worst-option {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid #292e37;
+  background: rgba(15, 18, 25, .72);
+  transition: border-color .25s, background .25s;
+}
+
+.best-worst-option:hover {
+  border-color: #555e6d;
+  background: rgba(22, 26, 36, .86);
+}
+
+.best-worst-text {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.best-worst-text > span {
+  color: #555c68;
+  letter-spacing: .14em;
+}
+
+.best-worst-text strong {
+  font-weight: 400;
+  color: #d8d9de;
+  line-height: 1.65;
+}
+
+.best-worst-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.choice-mark {
+  min-width: 92px;
+  padding: 9px 12px;
+  border: 1px solid #38404b;
+  background: transparent;
+  color: #818792;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.choice-mark:hover {
+  color: #eee;
+  border-color: #7c8490;
+}
+
+.choice-mark.most.selected {
+  color: #15171c;
+  border-color: #d9c993;
+  background: #d9c993;
+}
+
+.choice-mark.least.selected {
+  color: #15171c;
+  border-color: #aeb9d7;
+  background: #aeb9d7;
+}
+
+.slider-question-card {
+  margin: 14px 0 0;
+  padding: 34px 30px 28px;
+  border: 1px solid #343b47;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 0, #18212c, #0e131b 72%);
+}
+
+.slider-value {
+  min-height: 40px;
+  margin-bottom: 12px;
+  color: #eef1ef;
+  font-size: 28px;
+  text-align: center;
+}
+
+.degree-slider {
+  width: 100%;
+  appearance: none;
+  height: 9px;
+  border-radius: 999px;
+  outline: none;
+  background:
+    linear-gradient(
+      90deg,
+      #d5c38a 0%,
+      #aabfac 50%,
+      #9eacd1 100%
+    );
+}
+
+.degree-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  border: 6px solid #26323a;
+  border-radius: 50%;
+  background: #f2f4f1;
+  box-shadow:
+    0 0 0 5px rgba(160, 183, 170, .18),
+    0 4px 18px #0008;
+  cursor: grab;
+}
+
+.degree-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 6px solid #26323a;
+  border-radius: 50%;
+  background: #f2f4f1;
+  box-shadow:
+    0 0 0 5px rgba(160, 183, 170, .18),
+    0 4px 18px #0008;
+  cursor: grab;
+}
+
+.slider-labels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 26px;
+  color: #949aa4;
+  font-size: 14px;
+  text-align: center;
+}
+
+.slider-labels span:first-child {
+  text-align: left;
+}
+
+.slider-labels span:last-child {
+  text-align: right;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  gap: 12px;
+  margin: 10px 0 18px;
+}
+
+.score-row label {
+  display: grid;
+  gap: 7px;
+  color: #68727d;
+  font-size: 12px;
+}
+
+.score-row input {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #ccd3da;
+  border-radius: 7px;
+}
+
+@media (max-width: 650px) {
+  .best-worst-option {
+    grid-template-columns: 1fr;
+  }
+
+  .best-worst-actions {
+    justify-content: stretch;
+  }
+
+  .choice-mark {
+    flex: 1;
+  }
+
+  .slider-question-card {
+    padding: 28px 18px 24px;
+    border-radius: 20px;
+  }
+
+  .slider-labels {
+    font-size: 12px;
+  }
+
+  .score-row {
+    grid-template-columns: 1fr;
+  }
+}

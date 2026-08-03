@@ -110,16 +110,534 @@ function renderStory(){
  document.querySelectorAll('[data-remove-scene]').forEach(b=>b.onclick=()=>{st[b.dataset.removeScene].splice(Number(b.dataset.i),1);setDirty();render()});
 }
 
-function renderQuestions(){
- const qs=script().questions, cs=[...(script().characters.male||[])];
- $('#editor').innerHTML=`<div class="card"><div class="row"><h2>題目</h2><span class="spacer"></span><button id="addQuestion">＋新增題目</button></div></div>${qs.map((q,qi)=>`<div class="card"><div class="row"><h2>第 ${qi+1} 題</h2><span class="spacer"></span><button class="danger" data-remove-q="${qi}">刪除題目</button></div><div class="field"><label>場景</label><textarea data-q="${qi}" data-k="scene">${esc(q.scene)}</textarea></div><div class="field"><label>題目</label><textarea data-q="${qi}" data-k="question">${esc(q.question)}</textarea></div><h3>答案與角色分數</h3>${q.answers.map((a,ai)=>`<div class="list-item"><div class="score-grid"><input data-answer-text="${qi}:${ai}" value="${esc(a.text)}">${[0,1,2].map(si=>`<label>${esc(cs[si]?.name||`角色${si+1}`)} <input type="number" data-score="${qi}:${ai}:${si}" value="${Number(a.score[si]||0)}"></label>`).join('')}<button class="danger" data-remove-a="${qi}:${ai}">刪除</button></div></div>`).join('')}<button data-add-answer="${qi}">＋新增答案</button></div>`).join('')}`;
- bindInput('[data-q]',el=>{qs[el.dataset.q][el.dataset.k]=el.value});
- bindInput('[data-answer-text]',el=>{const [q,a]=el.dataset.answerText.split(':').map(Number);qs[q].answers[a].text=el.value});
- bindInput('[data-score]',el=>{const [q,a,s]=el.dataset.score.split(':').map(Number);qs[q].answers[a].score[s]=Number(el.value)});
- $('#addQuestion').onclick=()=>{qs.push({scene:'',question:'新題目',answers:[{text:'答案 A',score:[0,0,0]}]});setDirty();render()};
- document.querySelectorAll('[data-remove-q]').forEach(b=>b.onclick=()=>{qs.splice(Number(b.dataset.removeQ),1);setDirty();render()});
- document.querySelectorAll('[data-add-answer]').forEach(b=>b.onclick=()=>{qs[Number(b.dataset.addAnswer)].answers.push({text:'新答案',score:[0,0,0]});setDirty();render()});
- document.querySelectorAll('[data-remove-a]').forEach(b=>b.onclick=()=>{const [q,a]=b.dataset.removeA.split(':').map(Number);qs[q].answers.splice(a,1);setDirty();render()});
+function renderQuestions() {
+  const qs = script().questions;
+  const characters =
+    script().characters.male || [];
+
+  const scoreInputs = (
+    attribute,
+    value,
+    labelPrefix = ''
+  ) => [0, 1, 2].map(index => `
+    <label>
+      ${esc(labelPrefix)}
+      ${esc(characters[index]?.name || `角色${index + 1}`)}
+      <input
+        type="number"
+        ${attribute}="${value}:${index}"
+      >
+    </label>
+  `).join('');
+
+  const renderSingle = (q, qi) => `
+    <h3>單選答案與角色分數</h3>
+
+    ${(q.answers || []).map((answer, ai) => `
+      <div class="list-item">
+        <div class="score-grid">
+          <input
+            data-answer-text="${qi}:${ai}"
+            value="${esc(answer.text)}"
+            placeholder="答案文字"
+          >
+
+          ${[0, 1, 2].map(si => `
+            <label>
+              ${esc(characters[si]?.name || `角色${si + 1}`)}
+              <input
+                type="number"
+                data-score="${qi}:${ai}:${si}"
+                value="${Number(answer.score?.[si] || 0)}"
+              >
+            </label>
+          `).join('')}
+
+          <button
+            class="danger"
+            data-remove-a="${qi}:${ai}"
+            type="button"
+          >
+            刪除
+          </button>
+        </div>
+      </div>
+    `).join('')}
+
+    <button
+      data-add-answer="${qi}"
+      type="button"
+    >
+      ＋新增答案
+    </button>
+  `;
+
+  const renderBestWorst = (q, qi) => `
+    <h3>四選項：最喜歡與最不喜歡</h3>
+
+    <p class="muted">
+      玩家必須各選一個。每個選項可分別設定「選為最喜歡」和
+      「選為最不喜歡」時，三名角色得到的分數。
+    </p>
+
+    ${(q.answers || []).map((answer, ai) => `
+      <div class="list-item">
+        <div class="field">
+          <label>選項 ${ai + 1}</label>
+          <input
+            data-answer-text="${qi}:${ai}"
+            value="${esc(answer.text)}"
+          >
+        </div>
+
+        <h4>被選為最喜歡時</h4>
+        <div class="score-row">
+          ${[0, 1, 2].map(si => `
+            <label>
+              ${esc(characters[si]?.name || `角色${si + 1}`)}
+              <input
+                type="number"
+                data-most-score="${qi}:${ai}:${si}"
+                value="${Number(answer.mostScore?.[si] ?? answer.score?.[si] ?? 0)}"
+              >
+            </label>
+          `).join('')}
+        </div>
+
+        <h4>被選為最不喜歡時</h4>
+        <div class="score-row">
+          ${[0, 1, 2].map(si => `
+            <label>
+              ${esc(characters[si]?.name || `角色${si + 1}`)}
+              <input
+                type="number"
+                data-least-score="${qi}:${ai}:${si}"
+                value="${Number(answer.leastScore?.[si] || 0)}"
+              >
+            </label>
+          `).join('')}
+        </div>
+
+        <button
+          class="danger"
+          data-remove-a="${qi}:${ai}"
+          type="button"
+        >
+          刪除選項
+        </button>
+      </div>
+    `).join('')}
+
+    <button
+      data-add-answer="${qi}"
+      type="button"
+      ${(q.answers || []).length >= 4 ? 'disabled' : ''}
+    >
+      ＋新增選項
+    </button>
+
+    <small class="muted">
+      建議維持 4 個選項。
+    </small>
+  `;
+
+  const renderSlider = (q, qi) => {
+    const slider = q.slider || {};
+
+    return `
+      <h3>程度拉桿</h3>
+
+      <div class="grid three">
+        <div class="field">
+          <label>最低值</label>
+          <input
+            type="number"
+            data-slider="${qi}:min"
+            value="${Number(slider.min ?? 0)}"
+          >
+        </div>
+
+        <div class="field">
+          <label>最高值</label>
+          <input
+            type="number"
+            data-slider="${qi}:max"
+            value="${Number(slider.max ?? 100)}"
+          >
+        </div>
+
+        <div class="field">
+          <label>預設值</label>
+          <input
+            type="number"
+            data-slider="${qi}:default"
+            value="${Number(slider.default ?? 50)}"
+          >
+        </div>
+
+        <div class="field">
+          <label>左側文字</label>
+          <input
+            data-slider="${qi}:leftLabel"
+            value="${esc(slider.leftLabel || '偏左')}"
+          >
+        </div>
+
+        <div class="field">
+          <label>中央文字</label>
+          <input
+            data-slider="${qi}:centerLabel"
+            value="${esc(slider.centerLabel || '彼此平衡')}"
+          >
+        </div>
+
+        <div class="field">
+          <label>右側文字</label>
+          <input
+            data-slider="${qi}:rightLabel"
+            value="${esc(slider.rightLabel || '偏右')}"
+          >
+        </div>
+      </div>
+
+      <div class="list-item">
+        <h4>拉到最左端時的角色分數</h4>
+        <div class="score-row">
+          ${[0, 1, 2].map(si => `
+            <label>
+              ${esc(characters[si]?.name || `角色${si + 1}`)}
+              <input
+                type="number"
+                data-slider-min-score="${qi}:${si}"
+                value="${Number(slider.minScore?.[si] || 0)}"
+              >
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="list-item">
+        <h4>拉到最右端時的角色分數</h4>
+        <div class="score-row">
+          ${[0, 1, 2].map(si => `
+            <label>
+              ${esc(characters[si]?.name || `角色${si + 1}`)}
+              <input
+                type="number"
+                data-slider-max-score="${qi}:${si}"
+                value="${Number(slider.maxScore?.[si] || 0)}"
+              >
+            </label>
+          `).join('')}
+        </div>
+
+        <p class="muted">
+          中間位置會依比例自動計算分數。
+        </p>
+      </div>
+    `;
+  };
+
+  $('#editor').innerHTML = `
+    <div class="card">
+      <div class="row">
+        <h2>題目</h2>
+        <span class="spacer"></span>
+        <button id="addQuestion" type="button">
+          ＋新增題目
+        </button>
+      </div>
+    </div>
+
+    ${qs.map((q, qi) => {
+      const type = q.type || 'single';
+
+      return `
+        <div class="card">
+          <div class="row">
+            <h2>第 ${qi + 1} 題</h2>
+            <span class="spacer"></span>
+
+            <button
+              class="danger"
+              data-remove-q="${qi}"
+              type="button"
+            >
+              刪除題目
+            </button>
+          </div>
+
+          <div class="field">
+            <label>題目類型</label>
+            <select data-question-type="${qi}">
+              <option value="single" ${type === 'single' ? 'selected' : ''}>
+                一般單選題
+              </option>
+              <option value="bestWorst" ${type === 'bestWorst' ? 'selected' : ''}>
+                四選項：最喜歡＋最不喜歡
+              </option>
+              <option value="slider" ${type === 'slider' ? 'selected' : ''}>
+                程度拉桿
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>場景</label>
+            <textarea
+              data-q="${qi}"
+              data-k="scene"
+            >${esc(q.scene || '')}</textarea>
+          </div>
+
+          <div class="field">
+            <label>題目</label>
+            <textarea
+              data-q="${qi}"
+              data-k="question"
+            >${esc(q.question || '')}</textarea>
+          </div>
+
+          ${
+            type === 'bestWorst'
+              ? renderBestWorst(q, qi)
+              : type === 'slider'
+                ? renderSlider(q, qi)
+                : renderSingle(q, qi)
+          }
+        </div>
+      `;
+    }).join('')}
+  `;
+
+  bindInput('[data-q]', element => {
+    qs[element.dataset.q][element.dataset.k] =
+      element.value;
+  });
+
+  bindInput('[data-answer-text]', element => {
+    const [q, a] =
+      element.dataset.answerText
+        .split(':')
+        .map(Number);
+
+    qs[q].answers[a].text =
+      element.value;
+  });
+
+  bindInput('[data-score]', element => {
+    const [q, a, s] =
+      element.dataset.score
+        .split(':')
+        .map(Number);
+
+    qs[q].answers[a].score[s] =
+      Number(element.value);
+  });
+
+  bindInput('[data-most-score]', element => {
+    const [q, a, s] =
+      element.dataset.mostScore
+        .split(':')
+        .map(Number);
+
+    qs[q].answers[a].mostScore ||= [0, 0, 0];
+    qs[q].answers[a].mostScore[s] =
+      Number(element.value);
+  });
+
+  bindInput('[data-least-score]', element => {
+    const [q, a, s] =
+      element.dataset.leastScore
+        .split(':')
+        .map(Number);
+
+    qs[q].answers[a].leastScore ||= [0, 0, 0];
+    qs[q].answers[a].leastScore[s] =
+      Number(element.value);
+  });
+
+  bindInput('[data-slider]', element => {
+    const [q, key] =
+      element.dataset.slider.split(':');
+
+    qs[Number(q)].slider ||= {};
+
+    const numericKeys =
+      new Set([
+        'min',
+        'max',
+        'default',
+        'step'
+      ]);
+
+    qs[Number(q)].slider[key] =
+      numericKeys.has(key)
+        ? Number(element.value)
+        : element.value;
+  });
+
+  bindInput('[data-slider-min-score]', element => {
+    const [q, s] =
+      element.dataset.sliderMinScore
+        .split(':')
+        .map(Number);
+
+    qs[q].slider ||= {};
+    qs[q].slider.minScore ||= [0, 0, 0];
+    qs[q].slider.minScore[s] =
+      Number(element.value);
+  });
+
+  bindInput('[data-slider-max-score]', element => {
+    const [q, s] =
+      element.dataset.sliderMaxScore
+        .split(':')
+        .map(Number);
+
+    qs[q].slider ||= {};
+    qs[q].slider.maxScore ||= [0, 0, 0];
+    qs[q].slider.maxScore[s] =
+      Number(element.value);
+  });
+
+  document
+    .querySelectorAll('[data-question-type]')
+    .forEach(select => {
+      select.addEventListener('change', () => {
+        const q =
+          qs[Number(select.dataset.questionType)];
+
+        q.type = select.value;
+
+        if (q.type === 'single') {
+          q.answers ||= [
+            {
+              text: '答案 A',
+              score: [0, 0, 0]
+            }
+          ];
+        }
+
+        if (q.type === 'bestWorst') {
+          q.answers = Array.from(
+            { length: 4 },
+            (_, index) => {
+              const old =
+                q.answers?.[index] || {};
+
+              return {
+                text:
+                  old.text ||
+                  `選項 ${index + 1}`,
+                mostScore:
+                  old.mostScore ||
+                  old.score ||
+                  [0, 0, 0],
+                leastScore:
+                  old.leastScore ||
+                  [0, 0, 0]
+              };
+            }
+          );
+        }
+
+        if (q.type === 'slider') {
+          q.slider ||= {
+            min: 0,
+            max: 100,
+            step: 1,
+            default: 50,
+            leftLabel: '偏付出',
+            centerLabel: '彼此平衡',
+            rightLabel: '偏被付出',
+            minScore: [0, 0, 0],
+            maxScore: [0, 0, 0]
+          };
+        }
+
+        setDirty();
+        render();
+      });
+    });
+
+  $('#addQuestion').onclick = () => {
+    qs.push({
+      type: 'single',
+      scene: '',
+      question: '新題目',
+      answers: [
+        {
+          text: '答案 A',
+          score: [0, 0, 0]
+        }
+      ]
+    });
+
+    setDirty();
+    render();
+  };
+
+  document
+    .querySelectorAll('[data-remove-q]')
+    .forEach(button => {
+      button.onclick = () => {
+        qs.splice(
+          Number(button.dataset.removeQ),
+          1
+        );
+
+        setDirty();
+        render();
+      };
+    });
+
+  document
+    .querySelectorAll('[data-add-answer]')
+    .forEach(button => {
+      button.onclick = () => {
+        const q =
+          qs[Number(button.dataset.addAnswer)];
+
+        if (
+          q.type === 'bestWorst' &&
+          q.answers.length >= 4
+        ) {
+          return;
+        }
+
+        q.answers.push(
+          q.type === 'bestWorst'
+            ? {
+                text: '新選項',
+                mostScore: [0, 0, 0],
+                leastScore: [0, 0, 0]
+              }
+            : {
+                text: '新答案',
+                score: [0, 0, 0]
+              }
+        );
+
+        setDirty();
+        render();
+      };
+    });
+
+  document
+    .querySelectorAll('[data-remove-a]')
+    .forEach(button => {
+      button.onclick = () => {
+        const [q, a] =
+          button.dataset.removeA
+            .split(':')
+            .map(Number);
+
+        qs[q].answers.splice(a, 1);
+        setDirty();
+        render();
+      };
+    });
 }
 
 function renderCharacters(){
