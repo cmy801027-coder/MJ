@@ -708,6 +708,113 @@ function resultImageFileName() {
   );
 }
 
+function isMobileDevice() {
+  return (
+    /Android|iPhone|iPad|iPod/i.test(
+      navigator.userAgent
+    ) ||
+    (
+      navigator.maxTouchPoints > 1 &&
+      window.matchMedia(
+        '(max-width: 900px)'
+      ).matches
+    )
+  );
+}
+
+async function saveResultImage() {
+  const button =
+    document.querySelector(
+      '#saveResultImage'
+    );
+
+  const mobile =
+    isMobileDevice();
+
+  if (button) {
+    button.disabled = true;
+    button.textContent =
+      '圖片產生中…';
+  }
+
+  try {
+    const blob =
+      await createResultShareBlob();
+
+    const file =
+      new File(
+        [blob],
+        resultImageFileName(),
+        {
+          type: 'image/png'
+        }
+      );
+
+    if (
+      mobile &&
+      navigator.share &&
+      navigator.canShare?.({
+        files: [file]
+      })
+    ) {
+      await navigator.share({
+        files: [file],
+        title: '儲存測驗結果圖片',
+        text:
+          '請在分享選單中選擇「儲存影像」或相簿應用程式。'
+      });
+
+      return;
+    }
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement('a');
+
+    link.href = url;
+    link.download =
+      resultImageFileName();
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(
+      () =>
+        URL.revokeObjectURL(url),
+      1500
+    );
+
+    if (mobile) {
+      window.alert(
+        '此瀏覽器無法開啟相簿儲存選單，圖片已下載。請從下載項目將圖片存入相簿。'
+      );
+    }
+  } catch (error) {
+    if (
+      error?.name !==
+      'AbortError'
+    ) {
+      console.error(error);
+
+      window.alert(
+        error?.message ||
+        '圖片產生失敗'
+      );
+    }
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent =
+        mobile
+          ? '放進相簿'
+          : '存成圖片';
+    }
+  }
+}
+
 async function downloadResultImage() {
   const button =
     document.querySelector(
@@ -759,10 +866,10 @@ async function downloadResultImage() {
   }
 }
 
-async function shareResultToInstagram() {
+async function shareResultToSocial() {
   const button =
     document.querySelector(
-      '#shareResultInstagram'
+      '#shareResultSocial'
     );
 
   if (button) {
@@ -822,7 +929,7 @@ async function shareResultToInstagram() {
     );
 
     window.alert(
-      '此瀏覽器無法直接開啟 Instagram 分享選單，圖片已下載。請打開 Instagram 後選擇這張圖片。'
+      '此瀏覽器無法開啟社群分享選單，圖片已下載。請從社群 App 選擇這張圖片。'
     );
   } catch (error) {
     if (
@@ -833,14 +940,14 @@ async function shareResultToInstagram() {
 
       window.alert(
         error?.message ||
-        'Instagram 分享準備失敗'
+        '社群分享準備失敗'
       );
     }
   } finally {
     if (button) {
       button.disabled = false;
       button.textContent =
-        '放到 IG';
+        '分享社群';
     }
   }
 }
@@ -1004,8 +1111,12 @@ function renderResult(p){
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
   <div class="actions result-share-actions">
   <button class="btn" id="goShare">${esc(s.shareButton)}</button>
-  <button class="ghost" id="saveResultImage">存成圖片</button>
-  <button class="ghost" id="shareResultInstagram">放到 IG</button>
+  <button class="ghost" id="saveResultImage">${
+    isMobileDevice()
+      ? '放進相簿'
+      : '存成圖片'
+  }</button>
+  <button class="ghost" id="shareResultSocial">分享社群</button>
   <button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
   if(top.music) new Audio(top.music).play().catch(()=>{});
 }
@@ -1430,8 +1541,8 @@ function bind(){
     });
 
   document.querySelector('#goShare')?.addEventListener('click',()=>{state.page='share';render()});
-  document.querySelector('#saveResultImage')?.addEventListener('click',downloadResultImage);
-  document.querySelector('#shareResultInstagram')?.addEventListener('click',shareResultToInstagram);
+  document.querySelector('#saveResultImage')?.addEventListener('click',saveResultImage);
+  document.querySelector('#shareResultSocial')?.addEventListener('click',shareResultToSocial);
   document.querySelector('#submitToSheet')?.addEventListener('click',submitResultToSheet);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
