@@ -127,3 +127,49 @@
     background-color .2s,
     border-color .2s;
 }
+
+
+/* ===== Theme Preset v3.1.2 Hard Fix ===== */
+
+.theme-preset-controls {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1fr)
+    auto
+    auto;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.theme-preset-controls select {
+  min-height: 42px;
+  padding: 8px 12px;
+}
+
+.theme-debug {
+  margin-top: 18px;
+  border-top: 1px solid #d8dde3;
+  padding-top: 14px;
+}
+
+.theme-debug summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.theme-debug pre {
+  overflow: auto;
+  max-height: 320px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #111820;
+  color: #dce8f1;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .theme-preset-controls {
+    grid-template-columns: 1fr;
+  }
+}

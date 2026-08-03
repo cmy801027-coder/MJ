@@ -96,18 +96,48 @@ function renderScripts(){
   <div class="row">
     <div>
       <strong>Theme Preset</strong>
-      <small class="muted">點一下立即套用完整配色，再按儲存並發布。</small>
+      <small class="muted">
+        選擇後按「套用預設」，色碼欄位會立即重建。
+      </small>
     </div>
-    <span class="spacer"></span>
-    <button id="resetThemePreset" class="secondary" type="button">重置黑金</button>
   </div>
+
+  <div class="theme-preset-controls">
+    <select id="themePresetSelect">
+      ${Object.entries(THEME_PRESETS).map(([key,preset])=>`
+        <option value="${key}">
+          ${preset.label}
+        </option>
+      `).join('')}
+    </select>
+
+    <button
+      id="applyThemePresetButton"
+      type="button"
+    >
+      套用預設
+    </button>
+
+    <button
+      id="resetThemePreset"
+      class="secondary"
+      type="button"
+    >
+      重置黑金
+    </button>
+  </div>
+
   <div class="theme-preset-grid">
     ${Object.entries(THEME_PRESETS).map(([key,preset])=>`
       <button
         class="theme-preset-button"
         data-theme-preset="${key}"
         type="button"
-        style="--preset-bg:${preset.backgroundColor};--preset-accent:${preset.accentColor};--preset-title:${preset.titleColor}"
+        style="
+          --preset-bg:${preset.backgroundColor};
+          --preset-accent:${preset.accentColor};
+          --preset-title:${preset.titleColor}
+        "
       >
         <i></i>
         <span>${preset.label}</span>
@@ -116,18 +146,32 @@ function renderScripts(){
   </div>
 
   <div class="theme-live-preview" id="themeLivePreview">
-    <div class="theme-preview-eyebrow">QUESTION 01 / 10</div>
+    <div class="theme-preview-eyebrow">
+      QUESTION 01 / 10
+    </div>
+
     <h3>這是一段題目文字</h3>
     <p>一般內文與場景說明會顯示在這裡。</p>
 
-    <button type="button" class="theme-preview-option">
+    <button
+      type="button"
+      class="theme-preview-option"
+    >
       01　這是一個選項
     </button>
 
-    <button type="button" class="theme-preview-main-button">
+    <button
+      type="button"
+      class="theme-preview-main-button"
+    >
       確認選擇
     </button>
   </div>
+
+  <details class="theme-debug">
+    <summary>目前實際 Theme 資料</summary>
+    <pre id="themeDebugJson"></pre>
+  </details>
 </div>
 
 ${[
@@ -254,90 +298,232 @@ base.settings.theme=structuredClone(
 
    const updateThemePreview=theme=>{
      const preview=$('#themeLivePreview');
+     const debug=$('#themeDebugJson');
+
+     if(debug){
+       debug.textContent=JSON.stringify(
+         theme||{},
+         null,
+         2
+       )
+     }
 
      if(!preview)return;
 
-     const set=(name,value)=>{
-       preview.style.setProperty(name,value)
-     };
+     const value=(key,fallback)=>
+       theme?.[key]||fallback;
 
-     set('--preview-bg',theme.backgroundColor||'#080909');
-     set('--preview-panel',theme.panelColor||'#10100e');
-     set('--preview-title',theme.questionColor||theme.titleColor||'#f5e8bd');
-     set('--preview-text',theme.textColor||'#d8cfb5');
-     set('--preview-muted',theme.mutedColor||'#80765b');
-     set('--preview-option',theme.optionColor||'#dbd0af');
-     set('--preview-card',theme.cardColor||'#15140f');
-     set('--preview-border',theme.borderColor||'#443a20');
-     set('--preview-accent',theme.accentColor||'#d3b45f');
-     set('--preview-button-bg',theme.buttonBackgroundColor||'#d3b45f');
-     set('--preview-button-text',theme.buttonTextColor||'#11100c');
+     preview.style.background=
+       `radial-gradient(circle at 50% 0, ${
+         value('panelColor','#10100e')
+       }, ${
+         value('backgroundColor','#080909')
+       } 72%)`;
+
+     preview.style.borderColor=
+       value('borderColor','#443a20');
+
+     preview.style.color=
+       value('textColor','#d8cfb5');
+
+     const eyebrow=
+       preview.querySelector(
+         '.theme-preview-eyebrow'
+       );
+
+     const title=
+       preview.querySelector('h3');
+
+     const paragraph=
+       preview.querySelector('p');
+
+     const option=
+       preview.querySelector(
+         '.theme-preview-option'
+       );
+
+     const mainButton=
+       preview.querySelector(
+         '.theme-preview-main-button'
+       );
+
+     if(eyebrow){
+       eyebrow.style.color=
+         value('mutedColor','#80765b')
+     }
+
+     if(title){
+       title.style.color=
+         value(
+           'questionColor',
+           value('titleColor','#f5e8bd')
+         )
+     }
+
+     if(paragraph){
+       paragraph.style.color=
+         value('textColor','#d8cfb5')
+     }
+
+     if(option){
+       option.style.color=
+         value('optionColor','#dbd0af');
+
+       option.style.background=
+         value('cardColor','#15140f');
+
+       option.style.borderColor=
+         value('borderColor','#443a20')
+     }
+
+     if(mainButton){
+       mainButton.style.color=
+         value(
+           'buttonTextColor',
+           '#11100c'
+         );
+
+       mainButton.style.background=
+         value(
+           'buttonBackgroundColor',
+           '#d3b45f'
+         );
+
+       mainButton.style.borderColor=
+         value(
+           'buttonBackgroundColor',
+           '#d3b45f'
+         )
+     }
    };
 
    const markActivePreset=presetKey=>{
      document
-       .querySelectorAll('[data-theme-preset]')
+       .querySelectorAll(
+         '[data-theme-preset]'
+       )
        .forEach(button=>{
          button.classList.toggle(
            'active',
-           button.dataset.themePreset===presetKey
+           button.dataset.themePreset===
+             presetKey
          )
-       })
+       });
+
+     const select=
+       $('#themePresetSelect');
+
+     if(
+       select &&
+       presetKey &&
+       THEME_PRESETS[presetKey]
+     ){
+       select.value=presetKey
+     }
    };
 
-   const syncThemeControls=theme=>{
-     Object.entries(theme).forEach(([key,value])=>{
-       if(key==='label'||typeof value!=='string')return;
+   const clonePreset=presetKey=>{
+     const preset=
+       THEME_PRESETS[presetKey];
 
-       const picker=document.querySelector(
-         `[data-theme-color-picker="${key}"]`
-       );
+     if(!preset){
+       throw new Error(
+         `找不到 Theme Preset：${presetKey}`
+       )
+     }
 
-       const text=document.querySelector(
-         `[data-theme-color-text="${key}"]`
-       );
+     const result={};
 
-       if(picker)picker.value=value;
-       if(text)text.value=value.toLowerCase()
-     })
+     Object.entries(preset)
+       .forEach(([key,value])=>{
+         if(key==='label')return;
+         result[key]=String(value)
+           .toLowerCase()
+       });
+
+     return result
    };
 
    const applyThemePreset=presetKey=>{
-     const preset=THEME_PRESETS[presetKey];
+     try{
+       const nextTheme=
+         clonePreset(presetKey);
 
-     if(!preset)return;
+       /*
+        * 直接替換整個 theme，而不是逐欄修改。
+        * 避免殘留舊欄位或 Proxy／參照問題。
+        */
+       script().settings.theme=
+         structuredClone(nextTheme);
 
-     script().settings.theme ||= {};
+       setDirty();
 
-     Object.entries(preset).forEach(([key,value])=>{
-       if(key==='label')return;
-       script().settings.theme[key]=value.toLowerCase()
-     });
+       /*
+        * 重新渲染目前頁面。
+        * 色票的 value 會直接從新的
+        * script().settings.theme 產生。
+        */
+       render();
 
-     syncThemeControls(script().settings.theme);
-     updateThemePreview(script().settings.theme);
-     markActivePreset(presetKey);
-     setDirty();
+       markActivePreset(presetKey);
 
-     notice(
-       `已套用「${preset.label}」配色，請按儲存並發布`
-     )
+       updateThemePreview(
+         script().settings.theme
+       );
+
+       const preset=
+         THEME_PRESETS[presetKey];
+
+       notice(
+         `已套用「${preset.label}」：` +
+         `${script().settings.theme.backgroundColor}。` +
+         '請按儲存並發布。'
+       )
+     }catch(error){
+       console.error(error);
+
+       notice(
+         error?.message||
+         '套用 Theme Preset 失敗',
+         true
+       )
+     }
    };
 
    document
-     .querySelectorAll('[data-theme-preset]')
+     .querySelectorAll(
+       '[data-theme-preset]'
+     )
      .forEach(button=>{
        button.onclick=()=>{
-         applyThemePreset(button.dataset.themePreset)
+         applyThemePreset(
+           button.dataset.themePreset
+         )
        }
      });
 
-   $('#resetThemePreset').onclick=()=>{
-     applyThemePreset('blackGold')
-   };
+   $('#applyThemePresetButton')
+     ?.addEventListener(
+       'click',
+       ()=>{
+         applyThemePreset(
+           $('#themePresetSelect')?.value||
+           'blackGold'
+         )
+       }
+     );
+
+   $('#resetThemePreset')
+     ?.addEventListener(
+       'click',
+       ()=>{
+         applyThemePreset('blackGold')
+       }
+     );
 
    updateThemePreview(
-     script().settings.theme||THEME_PRESETS.blackGold
+     script().settings.theme||
+     clonePreset('blackGold')
    );
 
    const themeDefaults={
@@ -988,6 +1174,64 @@ async function uploadFile(file,z){
 $('#loginForm').onsubmit=async e=>{e.preventDefault();try{await api('login',{method:'POST',body:JSON.stringify({password:$('#password').value})});showAdmin();await load()}catch(err){$('#loginStatus').textContent=err.message}};
 document.querySelectorAll('aside [data-tab]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render()});
 $('#reloadBtn').onclick=async()=>{if(S.dirty&&!confirm('尚未發布的修改會消失，繼續？'))return;await load();notice('已重新載入')};
-$('#publishBtn').onclick=async()=>{try{$('#publishBtn').disabled=true;S.data.hosts=[];await api('publish',{method:'POST',body:JSON.stringify(S.data)});S.dirty=false;$('#publishBtn').textContent='儲存並發布';notice('已 Commit 到 GitHub，等待 Cloudflare 部署')}catch(e){notice(e.message,true)}finally{$('#publishBtn').disabled=false}};
+$('#publishBtn').onclick=async()=>{
+  try{
+    $('#publishBtn').disabled=true;
+
+    S.data.hosts=[];
+
+    const currentScript=
+      S.data.scripts[S.scriptId];
+
+    if(!currentScript?.settings){
+      throw new Error(
+        '目前劇本缺少 settings'
+      )
+    }
+
+    currentScript.settings.theme=
+      structuredClone(
+        currentScript.settings.theme||{}
+      );
+
+    if(
+      !currentScript.settings.theme
+        .backgroundColor
+    ){
+      throw new Error(
+        'Theme 尚未正確套用：缺少 backgroundColor'
+      )
+    }
+
+    const payload=
+      JSON.parse(
+        JSON.stringify(S.data)
+      );
+
+    await api(
+      'publish',
+      {
+        method:'POST',
+        body:JSON.stringify(payload)
+      }
+    );
+
+    S.dirty=false;
+    $('#publishBtn').textContent=
+      '儲存並發布';
+
+    notice(
+      `已發布 Theme：${
+        currentScript.settings.theme
+          .backgroundColor
+      }，等待 Cloudflare 部署`
+    )
+  }catch(e){
+    console.error(e);
+    notice(e.message,true)
+  }finally{
+    $('#publishBtn').disabled=false
+  }
+};
 $('#logoutBtn').onclick=async()=>{await api('logout',{method:'POST'});showLogin()};
 session();
