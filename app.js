@@ -1,8 +1,8 @@
 const C = window.QUIZ_CONFIG;
-const L = window.LIFF_CONFIG || { liffId: 'YOUR_LIFF_ID', hosts: [] };
+const L = window.LIFF_CONFIG || { gameLiffId: 'YOUR_GAME_LIFF_ID', shareLiffId: 'YOUR_SHARE_LIFF_ID', hosts: [] };
 const app = document.querySelector('#app');
 const musicBtn = document.querySelector('#musicBtn');
-let state = { page:'start', name:'', time:'', route:null, index:0, scores:[0,0,0], answers:[], muted:false, selectedHost:null };
+let state = { page:'start', route:null, index:0, scores:[0,0,0], answers:[], muted:false, note:'' };
 let audio = null;
 let transitionLocked = false;
 let liffReady = false;
@@ -13,17 +13,17 @@ function escapeHtml(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','
 
 async function initLiff(){
   if (!window.liff) { liffError = 'LIFF SDK 載入失敗'; return; }
-  if (!L.liffId || L.liffId === 'YOUR_LIFF_ID') { liffError = '尚未設定 LIFF ID'; return; }
+  if (!L.gameLiffId || L.gameLiffId === 'YOUR_GAME_LIFF_ID') {
+    // 即使尚未設定遊戲 LIFF ID，測驗仍可在一般瀏覽器遊玩。
+    liffError = '尚未設定遊戲 LIFF ID';
+    return;
+  }
   try {
-    await liff.init({ liffId: L.liffId });
+    await liff.init({ liffId: L.gameLiffId });
     liffReady = true;
-    if (!liff.isLoggedIn()) {
-      // 外部瀏覽器會進行 LINE Login，LIFF 瀏覽器通常已登入。
-      liff.login({ redirectUri: window.location.href });
-    }
   } catch (error) {
     console.error(error);
-    liffError = error?.message || 'LIFF 初始化失敗';
+    liffError = error?.message || '遊戲 LIFF 初始化失敗';
   }
 }
 initLiff();
@@ -81,7 +81,6 @@ function getResult(){
 function render(){
   app.innerHTML=''; const p=document.createElement('section'); p.className='panel';
   if(state.page==='start') p.innerHTML=`<div class="eyebrow">${C.subtitle}</div><h1 class="title">${C.title}</h1><div class="opening-quote">${C.opening.quote.map(x=>`<p>${x}</p>`).join('')}</div><button class="btn" id="startBtn">${C.opening.button}</button>`;
-  if(state.page==='info') p.innerHTML=`<div class="eyebrow">VISITOR RECORD</div><h2 class="section-title">留下你的名字</h2><div class="fields"><div class="field"><label>玩家姓名 PLAYER NAME</label><input id="name" value="${escapeHtml(state.name)}" placeholder="請輸入您的稱呼"></div><div class="field"><label>遊玩時間 PLAY TIME</label><input id="time" value="${escapeHtml(state.time)}" placeholder="例：2026/8/3 晚上"></div></div><button class="btn" id="infoNext">下一步</button>`;
   if(state.page==='route') p.innerHTML=`<div class="eyebrow">SELECT YOUR VIEW</div><h2 class="section-title">你要透過誰的眼睛，走進故事？</h2><div class="routes"><button class="route" data-route="male"><small>MALE ROUTE</small><h3>男角路線</h3><p>${C.characters.male.map(x=>x.name).join('<br>')}</p></button><button class="route" data-route="female"><small>FEMALE ROUTE</small><h3>女角路線</h3><p>${C.characters.female.map(x=>x.name).join('<br>')}</p></button></div>`;
   if(state.page==='quiz'){
     const q=C.questions[state.index];
@@ -89,65 +88,41 @@ function render(){
   }
   if(state.page==='result'){
     const { ranking:rank, top }=getResult();
-    p.innerHTML=`<div class="eyebrow">YOUR SOUL CHARACTER</div><div class="result-card"><img src="${top.image}" alt="${top.name}"><div class="result-name"><h1>${top.name}</h1><p>${top.kr}</p></div></div><p class="desc">${top.desc}</p><div class="eyebrow resonance-title">靈魂共鳴度 RESONANCE</div><div class="rank">${rank.map(r=>`<div class="rank-row"><span>${r.name}</span><div class="bar"><i style="width:${r.pct}%"></i></div><b>${r.pct}%</b></div>`).join('')}</div><div class="note"><textarea id="note" placeholder="寫下你對角色的期待、雷點，或想告訴主持人的話…"></textarea></div><div class="actions"><button class="btn" id="chooseHost">交給主持人</button><button class="ghost" id="restart">重新測驗</button></div><p class="share-status" id="shareStatus">${liffError ? `LIFF：${escapeHtml(liffError)}` : '按下後選擇主持人，再由 LINE 選擇實際收件人。'}</p>`;
-  }
-  if(state.page==='hosts'){
-    const hosts=L.hosts || [];
-    p.innerHTML=`<div class="eyebrow">CHOOSE YOUR GUIDE</div><h2 class="section-title">將答案交給哪位引路人？</h2><p class="host-intro">先選主持人，下一步 LINE 會開啟好友與群組選擇器。請選擇同一位主持人送出。</p><div class="host-grid">${hosts.map(h=>`<button class="host-card" data-host="${escapeHtml(h.id)}"><strong>${escapeHtml(h.displayName||h.name)}</strong><span>${escapeHtml(h.note||'主持人')}</span></button>`).join('')}</div><button class="ghost" id="backResult">返回結果</button><p class="share-status" id="shareStatus"></p>`;
+    p.innerHTML=`<div class="eyebrow">YOUR SOUL CHARACTER</div><div class="result-card"><img src="${top.image}" alt="${top.name}"><div class="result-name"><h1>${top.name}</h1><p>${top.kr}</p></div></div><p class="desc">${top.desc}</p><div class="eyebrow resonance-title">靈魂共鳴度 RESONANCE</div><div class="rank">${rank.map(r=>`<div class="rank-row"><span>${r.name}</span><div class="bar"><i style="width:${r.pct}%"></i></div><b>${r.pct}%</b></div>`).join('')}</div><div class="note"><textarea id="note" placeholder="寫下你對角色的期待、雷點，或想告訴主持人的話…">${escapeHtml(state.note||'')}</textarea></div><div class="actions"><button class="btn" id="goShare">傳送給主持人</button><button class="ghost" id="restart">重新測驗</button></div><p class="share-status" id="shareStatus">姓名、日期與主持人會在下一頁才填寫。</p>`;
   }
   app.appendChild(p); bind();
 }
 
-async function shareToLine(host){
-  const status=document.querySelector('#shareStatus');
-  const { ranking, top }=getResult();
-  const note=(document.querySelector('#note')?.value || state.note || '').trim();
-  state.note=note;
-  const routeName=state.route==='male'?'男角路線':'女角路線';
-  const message=[
-    `【${C.title}｜角色測驗結果】`,
-    '',
-    `指定主持人：${host.displayName || host.name}`,
-    `玩家：${state.name || '未命名玩家'}`,
-    `遊玩時間：${state.time || '未填寫'}`,
-    `選擇路線：${routeName}`,
-    `結果角色：${top.name}`,
-    `最高共鳴度：${top.pct}%`,
-    '',
-    '角色共鳴排行：',
-    ...ranking.map((r,i)=>`${i+1}. ${r.name} ${r.pct}%`),
-    '',
-    '玩家留言：',
-    note || '無'
-  ].join('\n');
 
-  if(!liffReady){
-    status.textContent=liffError || 'LIFF 尚未完成初始化，請確認 LIFF ID 與網址設定。';
+function buildSharePayload(){
+  const { ranking, top } = getResult();
+  return {
+    title: C.title,
+    route: state.route,
+    routeName: state.route === 'male' ? '男角路線' : '女角路線',
+    top,
+    ranking,
+    answers: state.answers,
+    note: (document.querySelector('#note')?.value || state.note || '').trim(),
+    savedAt: new Date().toISOString()
+  };
+}
+
+function goToShareLiff(){
+  const status = document.querySelector('#shareStatus');
+  state.note = document.querySelector('#note')?.value || '';
+  localStorage.setItem('plastikQuizShareResult', JSON.stringify(buildSharePayload()));
+
+  if (!L.shareLiffId || L.shareLiffId === 'YOUR_SHARE_LIFF_ID') {
+    status.textContent = '尚未設定分享 LIFF ID，請先修改 liff-config.js。';
     return;
   }
-  if(!liff.isApiAvailable('shareTargetPicker')){
-    status.textContent='目前環境不支援 LINE 分享對象選擇器，請改用 LINE App 開啟此 LIFF 網址。';
-    return;
-  }
-
-  status.textContent='正在開啟 LINE 分享對象選擇器…';
-  try{
-    const result=await liff.shareTargetPicker([{ type:'text', text:message }], { isMultiple:false });
-    if(result){
-      status.textContent=`已送出。請確認剛才選擇的是「${host.displayName || host.name}」。`;
-    }else{
-      status.textContent='你取消了分享，結果尚未送出。';
-    }
-  }catch(error){
-    console.error(error);
-    status.textContent=`LINE 分享失敗：${error?.message || '未知錯誤'}`;
-  }
+  window.location.href = `https://liff.line.me/${encodeURIComponent(L.shareLiffId)}`;
 }
 
 function bind(){
-  document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(C.prologue,'info');});
-  document.querySelector('#infoNext')?.addEventListener('click',()=>{state.name=document.querySelector('#name').value.trim();state.time=document.querySelector('#time').value.trim();state.page='route';render();});
-  document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];state.answers=[];state.selectedHost=null;cinematic([C.interludes[0]],'quiz');}));
+  document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(C.prologue,'route');});
+  document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];state.answers=[];cinematic([C.interludes[0]],'quiz');}));
   document.querySelectorAll('[data-answer]').forEach(b=>b.addEventListener('click',()=>{
     const answerIndex=Number(b.dataset.answer);
     const score=C.questions[state.index].a[answerIndex][1];
@@ -156,12 +131,8 @@ function bind(){
     if(state.index>=C.questions.length){cinematic([{chapter:'EPILOGUE',lines:['所有答案都已沉入玻璃底下。','現在，看看誰在另一端凝視你。'],hold:1200}],'result');}
     else cinematic([C.interludes[state.index]],'quiz');
   }));
-  document.querySelector('#restart')?.addEventListener('click',()=>{state={page:'start',name:'',time:'',route:null,index:0,scores:[0,0,0],answers:[],muted:state.muted,selectedHost:null};render();});
-  document.querySelector('#chooseHost')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='hosts';render();});
-  document.querySelector('#backResult')?.addEventListener('click',()=>{state.page='result';render();document.querySelector('#note').value=state.note||'';});
-  document.querySelectorAll('[data-host]').forEach(b=>b.addEventListener('click',()=>{
-    const host=L.hosts.find(h=>h.id===b.dataset.host);
-    if(host){state.selectedHost=host.id;shareToLine(host);}
-  }));
+  document.querySelector('#restart')?.addEventListener('click',()=>{state={page:'start',route:null,index:0,scores:[0,0,0],answers:[],muted:state.muted,note:''};render();});
+  document.querySelector('#goShare')?.addEventListener('click',goToShareLiff);
 }
+
 musicBtn.addEventListener('click',toggleAudio); render();
