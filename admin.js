@@ -57,7 +57,42 @@ function renderScripts(){
     </div>
   </div>
 `).join('')}</div>
- ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div><div class="field"><label>測驗背景顏色</label><div class="color-setting-row"><input id="scriptBackgroundColor" type="color" value="${esc(script().settings.theme?.backgroundColor||'#080a0f')}"><input id="scriptBackgroundColorText" value="${esc(script().settings.theme?.backgroundColor||'#080a0f')}" maxlength="7" placeholder="#080a0f"></div><small class="muted">每個劇本可設定不同背景顏色。</small></div></div></div>`:''}`;
+ ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div><div class="field theme-color-group">
+<label>劇本主題顏色</label>
+
+${[
+  ['backgroundColor','背景顏色','#080a0f'],
+  ['titleColor','主標題文字','#f4efe2'],
+  ['textColor','一般內文','#d8d9de'],
+  ['questionColor','題目文字','#f1ede4'],
+  ['optionColor','選項文字','#d8d9de'],
+  ['mutedColor','弱化文字','#8e949e'],
+  ['accentColor','強調色','#d7c28b'],
+  ['buttonTextColor','按鈕文字','#111318'],
+  ['buttonBackgroundColor','按鈕背景','#d7c28b']
+].map(([key,label,fallback])=>`
+  <div class="theme-color-item">
+    <span>${label}</span>
+    <div class="color-setting-row">
+      <input
+        type="color"
+        data-theme-color-picker="${key}"
+        value="${esc(script().settings.theme?.[key]||fallback)}"
+      >
+      <input
+        data-theme-color-text="${key}"
+        value="${esc(script().settings.theme?.[key]||fallback)}"
+        maxlength="7"
+        placeholder="${fallback}"
+      >
+    </div>
+  </div>
+`).join('')}
+
+<small class="muted">
+  每個劇本可使用不同的完整配色。
+</small>
+</div></div></div>`:''}`;
  document.querySelectorAll('[data-open]').forEach(button => {
    button.onclick = () => {
      S.scriptId = button.dataset.open;
@@ -94,7 +129,22 @@ function renderScripts(){
      );
    };
  });
- $('#addScript').onclick=()=>{const name=prompt('新劇本名稱');if(!name)return;let id=(prompt('網址 ID（英文、數字、連字號）',`story-${Date.now()}`)||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');if(!id||S.data.scripts[id])return notice('ID 無效或已存在',true);const base=structuredClone(script());base.settings.id=id;base.settings.name=name;base.settings.title=name;base.settings.theme=structuredClone(base.settings.theme||{backgroundColor:'#080a0f'});base.meta={id,name,status:'draft',cover:''};S.data.scripts[id]=base;S.data.index.scripts.push(base.meta);S.scriptId=id;setDirty();render()};
+ $('#addScript').onclick=()=>{const name=prompt('新劇本名稱');if(!name)return;let id=(prompt('網址 ID（英文、數字、連字號）',`story-${Date.now()}`)||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');if(!id||S.data.scripts[id])return notice('ID 無效或已存在',true);const base=structuredClone(script());base.settings.id=id;
+base.settings.name=name;
+base.settings.title=name;
+base.settings.theme=structuredClone(
+  base.settings.theme||{
+    backgroundColor:'#080a0f',
+    titleColor:'#f4efe2',
+    textColor:'#d8d9de',
+    questionColor:'#f1ede4',
+    optionColor:'#d8d9de',
+    mutedColor:'#8e949e',
+    accentColor:'#d7c28b',
+    buttonTextColor:'#111318',
+    buttonBackgroundColor:'#d7c28b'
+  }
+);base.meta={id,name,status:'draft',cover:''};S.data.scripts[id]=base;S.data.index.scripts.push(base.meta);S.scriptId=id;setDirty();render()};
  document.querySelectorAll('[data-remove-script]').forEach(b=>b.onclick=()=>{if(!confirm('將刪除整個劇本資料與素材，確定？'))return;const id=b.dataset.removeScript;delete S.data.scripts[id];S.data.index.scripts=S.data.index.scripts.filter(x=>x.id!==id);S.scriptId=S.data.index.defaultScriptId;setDirty();render()});
  if($('#scriptName')){
    $('#scriptName').oninput=e=>{
@@ -116,28 +166,72 @@ function renderScripts(){
      setDirty()
    };
 
-   const saveBackgroundColor=value=>{
+   const themeDefaults={
+     backgroundColor:'#080a0f',
+     titleColor:'#f4efe2',
+     textColor:'#d8d9de',
+     questionColor:'#f1ede4',
+     optionColor:'#d8d9de',
+     mutedColor:'#8e949e',
+     accentColor:'#d7c28b',
+     buttonTextColor:'#111318',
+     buttonBackgroundColor:'#d7c28b'
+   };
+
+   const saveThemeColor=(key,value)=>{
      const normalized=String(value||'').trim();
-     if(!/^#[0-9a-fA-F]{6}$/.test(normalized))return;
-     script().settings.theme ||= {};
-     script().settings.theme.backgroundColor=normalized.toLowerCase();
-     $('#scriptBackgroundColor').value=normalized;
-     $('#scriptBackgroundColorText').value=normalized.toLowerCase();
-     setDirty()
-   };
 
-   $('#scriptBackgroundColor').oninput=e=>{
-     saveBackgroundColor(e.target.value)
-   };
-
-   $('#scriptBackgroundColorText').onchange=e=>{
-     if(!/^#[0-9a-fA-F]{6}$/.test(e.target.value.trim())){
-       notice('背景顏色請使用 #RRGGBB 格式，例如 #080a0f',true);
-       e.target.value=script().settings.theme?.backgroundColor||'#080a0f';
-       return
+     if(!/^#[0-9a-fA-F]{6}$/.test(normalized)){
+       return false
      }
-     saveBackgroundColor(e.target.value)
+
+     script().settings.theme ||= {};
+     script().settings.theme[key]=normalized.toLowerCase();
+
+     const picker=document.querySelector(
+       `[data-theme-color-picker="${key}"]`
+     );
+
+     const text=document.querySelector(
+       `[data-theme-color-text="${key}"]`
+     );
+
+     if(picker)picker.value=normalized;
+     if(text)text.value=normalized.toLowerCase();
+
+     setDirty();
+     return true
    };
+
+   document
+     .querySelectorAll('[data-theme-color-picker]')
+     .forEach(input=>{
+       input.oninput=e=>{
+         saveThemeColor(
+           e.target.dataset.themeColorPicker,
+           e.target.value
+         )
+       }
+     });
+
+   document
+     .querySelectorAll('[data-theme-color-text]')
+     .forEach(input=>{
+       input.onchange=e=>{
+         const key=e.target.dataset.themeColorText;
+
+         if(!saveThemeColor(key,e.target.value)){
+           notice(
+             '顏色請使用 #RRGGBB 格式，例如 #d7c28b',
+             true
+           );
+
+           e.target.value=
+             script().settings.theme?.[key]||
+             themeDefaults[key]
+         }
+       }
+     });
  }
 }
 

@@ -222,25 +222,84 @@ function normalizeHexColor(
 }
 
 function applyScriptTheme() {
-  const backgroundColor =
-    normalizeHexColor(
-      DATA.setting?.theme?.backgroundColor,
-      '#080a0f'
-    );
+  const theme =
+    DATA.setting?.theme || {};
 
-  document.documentElement.style.setProperty(
-    '--script-background',
-    backgroundColor
+  const colors = {
+    '--script-background':
+      normalizeHexColor(
+        theme.backgroundColor,
+        '#080a0f'
+      ),
+
+    '--script-title':
+      normalizeHexColor(
+        theme.titleColor,
+        '#f4efe2'
+      ),
+
+    '--script-text':
+      normalizeHexColor(
+        theme.textColor,
+        '#d8d9de'
+      ),
+
+    '--script-question':
+      normalizeHexColor(
+        theme.questionColor,
+        '#f1ede4'
+      ),
+
+    '--script-option':
+      normalizeHexColor(
+        theme.optionColor,
+        '#d8d9de'
+      ),
+
+    '--script-muted':
+      normalizeHexColor(
+        theme.mutedColor,
+        '#8e949e'
+      ),
+
+    '--script-accent':
+      normalizeHexColor(
+        theme.accentColor,
+        '#d7c28b'
+      ),
+
+    '--script-button-text':
+      normalizeHexColor(
+        theme.buttonTextColor,
+        '#111318'
+      ),
+
+    '--script-button-background':
+      normalizeHexColor(
+        theme.buttonBackgroundColor,
+        '#d7c28b'
+      )
+  };
+
+  Object.entries(colors).forEach(
+    ([name, value]) => {
+      document.documentElement
+        .style
+        .setProperty(
+          name,
+          value
+        );
+    }
   );
 
   document.body.style.background =
-    backgroundColor;
+    colors['--script-background'];
 
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute(
       'content',
-      backgroundColor
+      colors['--script-background']
     );
 }
 

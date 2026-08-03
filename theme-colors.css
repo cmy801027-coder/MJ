@@ -1,0 +1,142 @@
+
+/* ===== 每個劇本完整主題色 ===== */
+
+:root {
+  --script-background: #080a0f;
+  --script-title: #f4efe2;
+  --script-text: #d8d9de;
+  --script-question: #f1ede4;
+  --script-option: #d8d9de;
+  --script-muted: #8e949e;
+  --script-accent: #d7c28b;
+  --script-button-text: #111318;
+  --script-button-background: #d7c28b;
+}
+
+html,
+body {
+  background-color: var(--script-background);
+  color: var(--script-text);
+}
+
+.title,
+.section-title,
+.result-name h1,
+.share-result-mini strong {
+  color: var(--script-title);
+}
+
+.desc,
+.scene-text,
+.opening-quote,
+.story-lines,
+.result-card p,
+.share-result-mini span,
+.fields label,
+.note label {
+  color: var(--script-text);
+}
+
+.question h2 {
+  color: var(--script-question);
+}
+
+.answer,
+.best-worst-text strong,
+.slider-labels,
+.choice-mark {
+  color: var(--script-option);
+}
+
+.eyebrow,
+.qnum,
+.muted,
+.question-hint,
+.continue-hint,
+.script-card small,
+.rank-row span,
+.share-status {
+  color: var(--script-muted);
+}
+
+.progress i,
+.bar i,
+.resonance-title,
+.slider-value,
+.chapter {
+  color: var(--script-accent);
+}
+
+.progress i,
+.bar i {
+  background: var(--script-accent);
+}
+
+.btn {
+  color: var(--script-button-text);
+  background: var(--script-button-background);
+  border-color: var(--script-button-background);
+}
+
+.btn:hover {
+  filter: brightness(1.08);
+}
+
+.answer:hover,
+.route:hover,
+.script-card:hover,
+.best-worst-option:hover {
+  border-color: var(--script-accent);
+}
+
+.choice-mark.most.selected,
+.choice-mark.least.selected {
+  color: var(--script-button-text);
+  background: var(--script-button-background);
+  border-color: var(--script-button-background);
+}
+
+/* ===== 後台主題色設定 ===== */
+
+.theme-color-group {
+  grid-column: 1 / -1;
+}
+
+.theme-color-group > label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.theme-color-item {
+  display: grid;
+  grid-template-columns: minmax(130px, 180px) 1fr;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.theme-color-item > span {
+  font-size: 14px;
+}
+
+.color-setting-row {
+  display: grid;
+  grid-template-columns: 72px minmax(140px, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.color-setting-row input[type="color"] {
+  width: 72px;
+  min-height: 44px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .theme-color-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
