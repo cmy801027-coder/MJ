@@ -31,48 +31,62 @@
     }
   ],
   "interludes": [
-    {
-      "chapter": "CHAPTER I",
-      "lines": [
-        "玻璃上的霧氣，",
-        "留下了另一個人的指紋。"
-      ]
-    },
-    {
-      "chapter": "CHAPTER II",
-      "lines": [
-        "真相並沒有消失，",
-        "它只是換了一張臉。"
-      ]
-    },
-    {
-      "chapter": "CHAPTER III",
-      "lines": [
-        "每一個選擇，",
-        "都正在替你塑造一個人。"
-      ]
-    },
-    {
-      "chapter": "CHAPTER IV",
-      "lines": [
-        "有人在說謊。",
-        "也許，那個人正是你。"
-      ]
-    },
-    {
-      "chapter": "CHAPTER V",
-      "lines": [
-        "門即將關上。",
-        "你只能帶走一樣東西。"
-      ]
-    },
-    {
-      "chapter": "FINAL",
-      "lines": [
-        "故事走到最後，",
-        "請誠實回答自己的名字。"
-      ]
-    }
+    [
+      {
+        "chapter": "CHAPTER I",
+        "lines": [
+          "玻璃上的霧氣，",
+          "留下了另一個人的指紋。"
+        ]
+      }
+    ],
+    [
+      {
+        "chapter": "CHAPTER II",
+        "lines": [
+          "真相並沒有消失，",
+          "它只是換了一張臉。"
+        ]
+      }
+    ],
+    [
+      {
+        "chapter": "CHAPTER III",
+        "lines": [
+          "每一個選擇，",
+          "都正在替你塑造一個人。"
+        ]
+      }
+    ],
+    [
+      {
+        "chapter": "CHAPTER IV",
+        "lines": [
+          "有人在說謊。",
+          "也許，那個人正是你。"
+        ]
+      }
+    ],
+    [
+      {
+        "chapter": "CHAPTER V",
+        "lines": [
+          "門即將關上。",
+          "你只能帶走一樣東西。"
+        ]
+      }
+    ],
+    [
+      {
+        "chapter": "FINAL",
+        "lines": [
+          "故事走到最後，",
+          "請誠實回答自己的名字。"
+        ]
+      }
+    ],
+    [],
+    []
   ],
   "epilogue": [
     {
