@@ -95,3 +95,31 @@
     flex-wrap: wrap;
   }
 }
+
+
+/* v3.3 font and animation controls */
+
+.text-style-toolbar {
+  grid-template-columns:
+    minmax(170px, 1.2fr)
+    minmax(90px, 110px)
+    minmax(170px, 1fr)
+    minmax(130px, .8fr)
+    minmax(110px, 130px)
+    auto;
+}
+
+.text-style-toolbar select {
+  width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .text-style-toolbar {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .text-style-toggles {
+    grid-column: 1 / -1;
+  }
+}

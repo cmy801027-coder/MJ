@@ -48,12 +48,20 @@ function bindCommon(){document.querySelectorAll('[data-action=delete]').forEach(
 
 
 const TEXT_FONT_OPTIONS = [
-  ['notoSerif','Noto Serif TC'],
-  ['notoSans','Noto Sans TC'],
-  ['serif','Serif'],
-  ['sans','Sans Serif'],
-  ['mono','Monospace'],
-  ['cursive','Cursive']
+  ['notoSerif','思源宋體｜Noto Serif TC'],
+  ['notoSans','思源黑體｜Noto Sans TC'],
+  ['lxgwWenkai','霞鶩文楷｜LXGW WenKai TC'],
+  ['shipporiMincho','日系明朝｜Shippori Mincho'],
+  ['zenMaru','圓體｜Zen Maru Gothic'],
+  ['kosugiMaru','小杉圓體｜Kosugi Maru'],
+  ['maShanZheng','馬善政毛筆｜Ma Shan Zheng'],
+  ['zcoolXiaoWei','站酷小薇體｜ZCOOL XiaoWei'],
+  ['longCang','龍藏體｜Long Cang'],
+  ['liuJian','劉建毛草｜Liu Jian Mao Cao'],
+  ['serif','系統襯線體'],
+  ['sans','系統無襯線體'],
+  ['mono','等寬字體'],
+  ['cursive','手寫字體']
 ];
 
 function inferTextStyleKey(element) {
@@ -160,7 +168,9 @@ function getTextStyle(styleKey) {
         color: '',
         bold: false,
         italic: false,
-        underline: false
+        underline: false,
+        animation: '',
+        animationDuration: ''
       }
   );
 }
@@ -235,6 +245,44 @@ function renderTextStyleToolbar(
         </div>
       </label>
 
+      <label>
+        <span>動畫</span>
+        <select data-style-prop="animation">
+          <option value="" ${!style.animation ? 'selected' : ''}>
+            無動畫
+          </option>
+          <option value="fade" ${style.animation === 'fade' ? 'selected' : ''}>
+            浮現
+          </option>
+          <option value="typewriter" ${style.animation === 'typewriter' ? 'selected' : ''}>
+            打字機
+          </option>
+        </select>
+      </label>
+
+      <label>
+        <span>
+          ${
+            style.animation === 'typewriter'
+              ? '每字毫秒'
+              : '動畫毫秒'
+          }
+        </span>
+        <input
+          type="number"
+          min="12"
+          max="10000"
+          step="10"
+          data-style-prop="animationDuration"
+          value="${esc(style.animationDuration || '')}"
+          placeholder="${
+            style.animation === 'typewriter'
+              ? '45'
+              : '900'
+          }"
+        >
+      </label>
+
       <div class="text-style-toggles">
         <button
           type="button"
@@ -284,6 +332,22 @@ function syncTextStylePreview(
       '"Noto Serif TC", serif',
     notoSans:
       '"Noto Sans TC", sans-serif',
+    lxgwWenkai:
+      '"LXGW WenKai TC", cursive',
+    shipporiMincho:
+      '"Shippori Mincho B1", serif',
+    zenMaru:
+      '"Zen Maru Gothic", sans-serif',
+    kosugiMaru:
+      '"Kosugi Maru", sans-serif',
+    maShanZheng:
+      '"Ma Shan Zheng", cursive',
+    zcoolXiaoWei:
+      '"ZCOOL XiaoWei", serif',
+    longCang:
+      '"Long Cang", cursive',
+    liuJian:
+      '"Liu Jian Mao Cao", cursive',
     serif:
       'serif',
     sans:
@@ -361,6 +425,21 @@ function bindTextStyleToolbar(
                     8,
                     Math.min(
                       160,
+                      Number(value)
+                    )
+                  );
+          }
+
+          if (
+            property === 'animationDuration'
+          ) {
+            value =
+              value === ''
+                ? ''
+                : Math.max(
+                    12,
+                    Math.min(
+                      10000,
                       Number(value)
                     )
                   );
@@ -473,7 +552,9 @@ function bindTextStyleToolbar(
             color: '',
             bold: false,
             italic: false,
-            underline: false
+            underline: false,
+            animation: '',
+            animationDuration: ''
           };
 
         setDirty();

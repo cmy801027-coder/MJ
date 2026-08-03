@@ -213,6 +213,22 @@ function textStyleCss(styleKey) {
       '"Noto Serif TC", serif',
     notoSans:
       '"Noto Sans TC", sans-serif',
+    lxgwWenkai:
+      '"LXGW WenKai TC", cursive',
+    shipporiMincho:
+      '"Shippori Mincho B1", serif',
+    zenMaru:
+      '"Zen Maru Gothic", sans-serif',
+    kosugiMaru:
+      '"Kosugi Maru", sans-serif',
+    maShanZheng:
+      '"Ma Shan Zheng", cursive',
+    zcoolXiaoWei:
+      '"ZCOOL XiaoWei", serif',
+    longCang:
+      '"Long Cang", cursive',
+    liuJian:
+      '"Liu Jian Mao Cao", cursive',
     serif:
       'serif',
     sans:
@@ -285,9 +301,35 @@ function styledText(
   styleKey,
   tagName = 'span'
 ) {
+  const style =
+    getTextStyle(styleKey);
+
+  const animation =
+    ['fade', 'typewriter'].includes(
+      style.animation
+    )
+      ? style.animation
+      : '';
+
+  const duration =
+    Math.max(
+      200,
+      Math.min(
+        10000,
+        Number(style.animationDuration) ||
+        (
+          animation === 'typewriter'
+            ? 45
+            : 900
+        )
+      )
+    );
+
   return (
     `<${tagName} ` +
     `data-text-style="${esc(styleKey)}" ` +
+    `data-text-animation="${esc(animation)}" ` +
+    `data-animation-duration="${duration}" ` +
     `style="${esc(textStyleCss(styleKey))}">` +
     `${esc(value)}` +
     `</${tagName}>`
@@ -313,6 +355,94 @@ function styledLines(
   );
 }
 
+function runTextAnimations(root = document) {
+  root
+    .querySelectorAll(
+      '[data-text-animation]:not([data-animation-ready])'
+    )
+    .forEach(element => {
+      element.dataset.animationReady =
+        'true';
+
+      const animation =
+        element.dataset.textAnimation;
+
+      const duration =
+        Number(
+          element.dataset.animationDuration
+        ) || 900;
+
+      if (animation === 'fade') {
+        element.style.setProperty(
+          '--text-animation-duration',
+          `${duration}ms`
+        );
+
+        element.classList.add(
+          'text-animation-fade'
+        );
+
+        requestAnimationFrame(() => {
+          element.classList.add(
+            'is-visible'
+          );
+        });
+
+        return;
+      }
+
+      if (animation !== 'typewriter') {
+        return;
+      }
+
+      const originalText =
+        element.textContent || '';
+
+      element.textContent = '';
+      element.classList.add(
+        'text-animation-typewriter'
+      );
+
+      const characterDelay =
+        Math.max(
+          12,
+          Math.min(
+            300,
+            duration
+          )
+        );
+
+      let index = 0;
+
+      const timer =
+        window.setInterval(
+          () => {
+            element.textContent =
+              originalText.slice(
+                0,
+                index + 1
+              );
+
+            index += 1;
+
+            if (
+              index >=
+              originalText.length
+            ) {
+              window.clearInterval(
+                timer
+              );
+
+              element.classList.add(
+                'is-complete'
+              );
+            }
+          },
+          characterDelay
+        );
+    });
+}
+
 function canvasTextStyle(
   context,
   styleKey,
@@ -326,6 +456,22 @@ function canvasTextStyle(
       '"Noto Serif TC", serif',
     notoSans:
       '"Noto Sans TC", sans-serif',
+    lxgwWenkai:
+      '"LXGW WenKai TC", cursive',
+    shipporiMincho:
+      '"Shippori Mincho B1", serif',
+    zenMaru:
+      '"Zen Maru Gothic", sans-serif',
+    kosugiMaru:
+      '"Kosugi Maru", sans-serif',
+    maShanZheng:
+      '"Ma Shan Zheng", cursive',
+    zcoolXiaoWei:
+      '"ZCOOL XiaoWei", serif',
+    longCang:
+      '"Long Cang", cursive',
+    liuJian:
+      '"Liu Jian Mao Cao", cursive',
     serif:
       'serif',
     sans:
@@ -582,6 +728,7 @@ async function cinematic(items,next,stylePrefix='story.scenes'){
     stage.innerHTML=`${item.chapter?`<div class="chapter">${styledText(item.chapter,`${stylePrefix}.${itemIndex}.chapter`)}</div>`:''}
       <div class="story-lines">${styledLines(item.lines||[],`${stylePrefix}.${itemIndex}.lines`)}</div>
       <div class="continue-hint">點擊畫面繼續</div>`;
+    runTextAnimations(stage);
     requestAnimationFrame(()=>stage.classList.add('visible'));
     await waitForAdvance(stage, Number(item.hold||item.duration||900));
   }
@@ -1881,7 +2028,9 @@ function renderSuccess(p) {
 function render(){
   app.innerHTML=''; const p=document.createElement('section');p.className='panel';
   ({scriptSelect:renderScriptSelect,start:renderStart,route:renderRoute,quiz:renderQuiz,result:renderResult,share:renderShare,success:renderSuccess}[state.page]||renderScriptSelect)(p);
-  app.appendChild(p); bind();
+  app.appendChild(p);
+  bind();
+  runTextAnimations(p);
 }
 
 function addScores(scoreArray) {
