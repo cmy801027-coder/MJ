@@ -108,16 +108,34 @@ function buildSharePayload(){
   };
 }
 
+function encodeSharePayload(payload){
+  const json = JSON.stringify(payload);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
 function goToShareLiff(){
   const status = document.querySelector('#shareStatus');
   state.note = document.querySelector('#note')?.value || '';
-  localStorage.setItem('plastikQuizShareResult', JSON.stringify(buildSharePayload()));
+  const payload = buildSharePayload();
+
+  // localStorage 只作備援。不同 LIFF App 在部分手機上可能使用不同儲存空間。
+  localStorage.setItem('plastikQuizShareResult', JSON.stringify(payload));
 
   if (!L.shareLiffId || L.shareLiffId === 'YOUR_SHARE_LIFF_ID') {
     status.textContent = '尚未設定分享 LIFF ID，請先修改 liff-config.js。';
     return;
   }
-  window.location.href = `https://liff.line.me/${encodeURIComponent(L.shareLiffId)}`;
+
+  try {
+    const encoded = encodeSharePayload(payload);
+    window.location.href = `https://liff.line.me/${encodeURIComponent(L.shareLiffId)}?result=${encodeURIComponent(encoded)}`;
+  } catch (error) {
+    console.error(error);
+    status.textContent = '測驗結果整理失敗，請重新整理後再試。';
+  }
 }
 
 function bind(){

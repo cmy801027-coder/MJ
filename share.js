@@ -10,7 +10,30 @@ function todayValue(){
   return new Date(d.getTime()-offset*60000).toISOString().slice(0,10);
 }
 
+function decodeSharePayload(value){
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 function loadResult(){
+  result = null;
+
+  // 優先從網址取得，避免不同 LIFF App 的 WebView 儲存空間彼此隔離。
+  const encoded = new URLSearchParams(window.location.search).get('result');
+  if(encoded){
+    try {
+      result = decodeSharePayload(encoded);
+      localStorage.setItem('plastikQuizShareResult', JSON.stringify(result));
+      return;
+    } catch(error){
+      console.warn('網址中的測驗結果解析失敗', error);
+    }
+  }
+
+  // 備援：同一瀏覽器環境下再嘗試 localStorage。
   try { result=JSON.parse(localStorage.getItem('plastikQuizShareResult')||'null'); }
   catch { result=null; }
 }
