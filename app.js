@@ -807,10 +807,7 @@ async function saveResultImage() {
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent =
-        mobile
-          ? '放進相簿'
-          : '存成圖片';
+      button.textContent = '存成圖片';
     }
   }
 }
@@ -1111,12 +1108,7 @@ function renderResult(p){
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
   <div class="actions result-share-actions">
   <button class="btn" id="goShare">${esc(s.shareButton)}</button>
-  <button class="ghost" id="saveResultImage">${
-    isMobileDevice()
-      ? '放進相簿'
-      : '存成圖片'
-  }</button>
-  <button class="ghost" id="shareResultSocial">分享社群</button>
+  <button class="ghost" id="saveResultImage">存成圖片</button>
   <button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
   if(top.music) new Audio(top.music).play().catch(()=>{});
 }
@@ -1542,7 +1534,6 @@ function bind(){
 
   document.querySelector('#goShare')?.addEventListener('click',()=>{state.page='share';render()});
   document.querySelector('#saveResultImage')?.addEventListener('click',saveResultImage);
-  document.querySelector('#shareResultSocial')?.addEventListener('click',shareResultToSocial);
   document.querySelector('#submitToSheet')?.addEventListener('click',submitResultToSheet);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
