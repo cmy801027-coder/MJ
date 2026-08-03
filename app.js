@@ -474,6 +474,52 @@ function drawCoverImage(
   );
 }
 
+function drawContainImage(
+  context,
+  image,
+  x,
+  y,
+  width,
+  height,
+  backgroundColor
+) {
+  context.fillStyle =
+    backgroundColor;
+
+  context.fillRect(
+    x,
+    y,
+    width,
+    height
+  );
+
+  const scale =
+    Math.min(
+      width / image.width,
+      height / image.height
+    );
+
+  const drawWidth =
+    image.width * scale;
+
+  const drawHeight =
+    image.height * scale;
+
+  const drawX =
+    x + (width - drawWidth) / 2;
+
+  const drawY =
+    y + (height - drawHeight) / 2;
+
+  context.drawImage(
+    image,
+    drawX,
+    drawY,
+    drawWidth,
+    drawHeight
+  );
+}
+
 function wrapCanvasText(
   context,
   text,
@@ -722,9 +768,9 @@ async function createResultShareBlob() {
     540,
     cursorY,
     850,
-    62,
+    76,
     3
-  ) + 26;
+  ) + 42;
 
   const imageX = 150;
   const imageY = cursorY;
@@ -744,13 +790,14 @@ async function createResultShareBlob() {
     const image =
       await loadShareImage(top.image);
 
-    drawCoverImage(
+    drawContainImage(
       context,
       image,
       imageX + 8,
       imageY + 8,
       imageWidth - 16,
-      imageHeight - 16
+      imageHeight - 16,
+      panelColor
     );
   } catch (error) {
     console.warn(
@@ -778,7 +825,7 @@ async function createResultShareBlob() {
     );
   }
 
-  cursorY = imageY + imageHeight + 76;
+  cursorY = imageY + imageHeight + 92;
 
   context.fillStyle = titleColor;
   context.font =
@@ -789,7 +836,7 @@ async function createResultShareBlob() {
     cursorY
   );
 
-  cursorY += 70;
+  cursorY += 86;
 
   if (top.kr) {
     context.fillStyle = mutedColor;
@@ -800,7 +847,7 @@ async function createResultShareBlob() {
       540,
       cursorY
     );
-    cursorY += 50;
+    cursorY += 68;
   }
 
   context.fillStyle = textColor;
@@ -815,12 +862,12 @@ async function createResultShareBlob() {
     540,
     cursorY,
     820,
-    46,
+    62,
     4
-  ) + 34;
+  ) + 58;
 
   const rankingHeight =
-    105 + ranking.length * 58;
+    96 + ranking.length * 61;
 
   const rankingY = Math.min(
     cursorY,
@@ -845,18 +892,18 @@ async function createResultShareBlob() {
 
   context.fillStyle = accentColor;
   context.font =
-    '600 42px "Noto Serif TC", serif';
+    '600 30px "Noto Serif TC", serif';
   context.fillText(
     DATA.setting?.result
       ?.resonanceLabel ||
       '靈魂共鳴度',
     540,
-    rankingY + 64
+    rankingY + 58
   );
 
   ranking.forEach((character, index) => {
     const rowY =
-      rankingY + 110 + index * 58;
+      rankingY + 104 + index * 61;
 
     context.textAlign = 'left';
     context.fillStyle = textColor;
