@@ -40,5 +40,32 @@
   },
   "googleSheets": {
     "webAppUrl": "https://script.google.com/macros/s/AKfycbwaJYILtZ52Ly0f305-hyHmUHfXELUZw9dv_M1kduPu7vSTAygNnQc4wuKc5wGaN5f_/exec"
+  },
+  "theme": {
+    "backgroundColor": "#080607",
+    "backgroundSecondaryColor": "#1a090d",
+    "panelColor": "#12090c",
+    "cardColor": "#170c10",
+    "cardHoverColor": "#241016",
+    "titleColor": "#f0d9d9",
+    "subtitleColor": "#ad777d",
+    "textColor": "#d7c6c8",
+    "questionColor": "#ffd9dd",
+    "optionColor": "#d7c6c8",
+    "mutedColor": "#80666b",
+    "accentColor": "#a9132b",
+    "accentSecondaryColor": "#5f1b29",
+    "borderColor": "#4a2029",
+    "buttonTextColor": "#fff1f2",
+    "buttonBackgroundColor": "#8f1125",
+    "buttonHoverColor": "#c61d38",
+    "progressBackgroundColor": "#2b151a",
+    "progressColor": "#b71730",
+    "sliderStartColor": "#42131c",
+    "sliderMiddleColor": "#85182a",
+    "sliderEndColor": "#d43b50",
+    "sliderThumbColor": "#f2d9dd",
+    "bestColor": "#c11b37",
+    "worstColor": "#5b1523"
   }
 }
