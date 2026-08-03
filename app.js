@@ -131,7 +131,7 @@ function goToShareLiff(){
 
   try {
     const encoded = encodeSharePayload(payload);
-    window.location.href = `https://liff.line.me/${encodeURIComponent(L.shareLiffId)}?result=${encodeURIComponent(encoded)}`;
+    window.location.href = `https://liff.line.me/${encodeURIComponent(L.shareLiffId)}/?result=${encodeURIComponent(encoded)}`;
   } catch (error) {
     console.error(error);
     status.textContent = '測驗結果整理失敗，請重新整理後再試。';

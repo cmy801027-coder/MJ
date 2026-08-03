@@ -18,11 +18,29 @@ function decodeSharePayload(value){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
-function loadResult(){
-  result = null;
+function getEncodedResultFromUrl(){
+  const direct = new URLSearchParams(window.location.search).get('result');
+  if (direct) return direct;
 
-  // 優先從網址取得，避免不同 LIFF App 的 WebView 儲存空間彼此隔離。
-  const encoded = new URLSearchParams(window.location.search).get('result');
+  // LIFF 第一次跳轉時，附加資訊可能暫存在 liff.state。
+  const stateValue = new URLSearchParams(window.location.search).get('liff.state');
+  if (!stateValue) return '';
+
+  try {
+    const restored = decodeURIComponent(stateValue);
+    const queryIndex = restored.indexOf('?');
+    if (queryIndex < 0) return '';
+    return new URLSearchParams(restored.slice(queryIndex + 1)).get('result') || '';
+  } catch (error) {
+    console.warn('liff.state 解析失敗', error);
+    return '';
+  }
+}
+
+function loadResult(encodedHint=''){
+  result = null;
+  const encoded = encodedHint || getEncodedResultFromUrl();
+
   if(encoded){
     try {
       result = decodeSharePayload(encoded);
@@ -33,7 +51,6 @@ function loadResult(){
     }
   }
 
-  // 備援：同一瀏覽器環境下再嘗試 localStorage。
   try { result=JSON.parse(localStorage.getItem('plastikQuizShareResult')||'null'); }
   catch { result=null; }
 }
@@ -63,19 +80,37 @@ function render(message=''){
 }
 
 async function init(){
-  loadResult();
-  render();
-  if(!result) return;
-  if(!window.liff){ render('LIFF SDK 載入失敗。'); return; }
-  if(!L.shareLiffId || L.shareLiffId==='YOUR_SHARE_LIFF_ID'){ render('尚未設定分享 LIFF ID。'); return; }
+  // 先保留第一次導向時的參數。此時 result 可能位於 liff.state。
+  const encodedBeforeInit = getEncodedResultFromUrl();
+
+  if(!window.liff){
+    loadResult(encodedBeforeInit);
+    render(result ? 'LIFF SDK 載入失敗。' : '找不到測驗結果。');
+    return;
+  }
+
+  if(!L.shareLiffId || L.shareLiffId==='YOUR_SHARE_LIFF_ID'){
+    loadResult(encodedBeforeInit);
+    render('尚未設定分享 LIFF ID。');
+    return;
+  }
+
   try{
+    // LINE 官方建議等待 liff.init() 完成後，再讀取 LIFF URL 的附加參數。
     await liff.init({liffId:L.shareLiffId});
     liffReady=true;
+
+    loadResult(getEncodedResultFromUrl() || encodedBeforeInit);
+    render();
+    if(!result) return;
+
     if(!liff.isLoggedIn()){
       liff.login({redirectUri:window.location.href});
+      return;
     }
   }catch(e){
     console.error(e);
+    loadResult(encodedBeforeInit);
     render(`分享 LIFF 初始化失敗：${e?.message||'未知錯誤'}`);
   }
 }
