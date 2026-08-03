@@ -2,6 +2,38 @@
 
 const S={tab:'scripts',data:null,scriptId:null,dirty:false};
 const $=s=>document.querySelector(s), esc=(v='')=>String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const THEME_PRESETS={
+  horror:{
+    label:'恐怖',backgroundColor:'#080607',backgroundSecondaryColor:'#1a090d',panelColor:'#12090c',cardColor:'#170c10',cardHoverColor:'#241016',titleColor:'#f0d9d9',subtitleColor:'#ad777d',textColor:'#d7c6c8',questionColor:'#ffd9dd',optionColor:'#d7c6c8',mutedColor:'#80666b',accentColor:'#a9132b',accentSecondaryColor:'#5f1b29',borderColor:'#4a2029',buttonTextColor:'#fff1f2',buttonBackgroundColor:'#8f1125',buttonHoverColor:'#c61d38',progressBackgroundColor:'#2b151a',progressColor:'#b71730',sliderStartColor:'#42131c',sliderMiddleColor:'#85182a',sliderEndColor:'#d43b50',sliderThumbColor:'#f2d9dd',bestColor:'#c11b37',worstColor:'#5b1523'
+  },
+  school:{
+    label:'校園',backgroundColor:'#f2f7fb',backgroundSecondaryColor:'#dbeaf5',panelColor:'#ffffff',cardColor:'#f9fcff',cardHoverColor:'#e9f4fb',titleColor:'#24445f',subtitleColor:'#66849b',textColor:'#40596d',questionColor:'#173e5d',optionColor:'#355870',mutedColor:'#8197a7',accentColor:'#5da9d6',accentSecondaryColor:'#f0ad5d',borderColor:'#bcd3e2',buttonTextColor:'#ffffff',buttonBackgroundColor:'#4f9dcc',buttonHoverColor:'#317fae',progressBackgroundColor:'#d5e6f1',progressColor:'#58a6d3',sliderStartColor:'#8cc6e7',sliderMiddleColor:'#a8d8c7',sliderEndColor:'#f0bd7d',sliderThumbColor:'#ffffff',bestColor:'#5da9d6',worstColor:'#f0ad5d'
+  },
+  cinema:{
+    label:'電影',backgroundColor:'#090909',backgroundSecondaryColor:'#1b1b1b',panelColor:'#111111',cardColor:'#171717',cardHoverColor:'#222222',titleColor:'#f5f0e6',subtitleColor:'#b8ad99',textColor:'#d8d1c5',questionColor:'#fff8ea',optionColor:'#d6cec0',mutedColor:'#81796c',accentColor:'#c8a35f',accentSecondaryColor:'#7e1d25',borderColor:'#3d3932',buttonTextColor:'#111111',buttonBackgroundColor:'#d1ad66',buttonHoverColor:'#ead09a',progressBackgroundColor:'#28251f',progressColor:'#c8a35f',sliderStartColor:'#8b6f3d',sliderMiddleColor:'#c8a35f',sliderEndColor:'#ead09a',sliderThumbColor:'#fff6df',bestColor:'#d0ae69',worstColor:'#87252c'
+  },
+  cyberpunk:{
+    label:'Cyberpunk',backgroundColor:'#050611',backgroundSecondaryColor:'#11152b',panelColor:'#0a0d1c',cardColor:'#0e1226',cardHoverColor:'#171d3a',titleColor:'#f6f4ff',subtitleColor:'#7df9ff',textColor:'#c8c7e8',questionColor:'#fff0ff',optionColor:'#d2d0ff',mutedColor:'#777aa5',accentColor:'#00f5ff',accentSecondaryColor:'#ff2bd6',borderColor:'#26325e',buttonTextColor:'#040513',buttonBackgroundColor:'#00f5ff',buttonHoverColor:'#ff2bd6',progressBackgroundColor:'#151a35',progressColor:'#00f5ff',sliderStartColor:'#00f5ff',sliderMiddleColor:'#7a5cff',sliderEndColor:'#ff2bd6',sliderThumbColor:'#ffffff',bestColor:'#00f5ff',worstColor:'#ff2bd6'
+  },
+  warm:{
+    label:'暖色',backgroundColor:'#241713',backgroundSecondaryColor:'#40261e',panelColor:'#2e1d18',cardColor:'#36221c',cardHoverColor:'#4a2d23',titleColor:'#fff0db',subtitleColor:'#d9aa7c',textColor:'#ecd8c5',questionColor:'#ffe5ca',optionColor:'#ead1bb',mutedColor:'#a68169',accentColor:'#dc8b4d',accentSecondaryColor:'#c45e4c',borderColor:'#644235',buttonTextColor:'#28150f',buttonBackgroundColor:'#e49a58',buttonHoverColor:'#ffc27f',progressBackgroundColor:'#513128',progressColor:'#e49a58',sliderStartColor:'#c85f4b',sliderMiddleColor:'#e49a58',sliderEndColor:'#f2c879',sliderThumbColor:'#fff1dc',bestColor:'#e49a58',worstColor:'#c85f4b'
+  },
+  blackGold:{
+    label:'黑金',backgroundColor:'#080909',backgroundSecondaryColor:'#171510',panelColor:'#10100e',cardColor:'#15140f',cardHoverColor:'#211e14',titleColor:'#f5e8bd',subtitleColor:'#b8a46f',textColor:'#d8cfb5',questionColor:'#fff2c7',optionColor:'#dbd0af',mutedColor:'#80765b',accentColor:'#d3b45f',accentSecondaryColor:'#8c6b24',borderColor:'#443a20',buttonTextColor:'#11100c',buttonBackgroundColor:'#d3b45f',buttonHoverColor:'#f0d483',progressBackgroundColor:'#282316',progressColor:'#d3b45f',sliderStartColor:'#80631f',sliderMiddleColor:'#c49d3d',sliderEndColor:'#f0d483',sliderThumbColor:'#fff4cc',bestColor:'#d9bd69',worstColor:'#8c6b24'
+  },
+  palace:{
+    label:'宮廷',backgroundColor:'#180e18',backgroundSecondaryColor:'#331a2d',panelColor:'#211121',cardColor:'#2a1727',cardHoverColor:'#3c2035',titleColor:'#f4dfc0',subtitleColor:'#c49a75',textColor:'#e1cfc2',questionColor:'#ffe9cc',optionColor:'#dfc9ba',mutedColor:'#997f7f',accentColor:'#b88a44',accentSecondaryColor:'#7b294d',borderColor:'#5d344a',buttonTextColor:'#1b1016',buttonBackgroundColor:'#c39a58',buttonHoverColor:'#e4c282',progressBackgroundColor:'#45233a',progressColor:'#c39a58',sliderStartColor:'#7b294d',sliderMiddleColor:'#b88a44',sliderEndColor:'#e4c282',sliderThumbColor:'#fff0dc',bestColor:'#c39a58',worstColor:'#7b294d'
+  },
+  forest:{
+    label:'森林',backgroundColor:'#08110d',backgroundSecondaryColor:'#14271c',panelColor:'#0e1a13',cardColor:'#122018',cardHoverColor:'#1b3023',titleColor:'#e9f0d8',subtitleColor:'#9fb78d',textColor:'#cfdbc7',questionColor:'#f1f6df',optionColor:'#cedbc5',mutedColor:'#71836c',accentColor:'#8ca85b',accentSecondaryColor:'#c3a765',borderColor:'#304936',buttonTextColor:'#0d160f',buttonBackgroundColor:'#96b464',buttonHoverColor:'#b7ce88',progressBackgroundColor:'#263c2b',progressColor:'#96b464',sliderStartColor:'#5d7f50',sliderMiddleColor:'#96b464',sliderEndColor:'#c3a765',sliderThumbColor:'#eef5df',bestColor:'#96b464',worstColor:'#9a7149'
+  },
+  future:{
+    label:'未來',backgroundColor:'#070b12',backgroundSecondaryColor:'#142236',panelColor:'#0d1522',cardColor:'#101c2b',cardHoverColor:'#182a40',titleColor:'#eaf7ff',subtitleColor:'#82bde1',textColor:'#c8dae7',questionColor:'#f1fbff',optionColor:'#c6ddeb',mutedColor:'#71899a',accentColor:'#4ec5e6',accentSecondaryColor:'#7a8dff',borderColor:'#2e4961',buttonTextColor:'#061018',buttonBackgroundColor:'#58c9e8',buttonHoverColor:'#8de0f5',progressBackgroundColor:'#22384a',progressColor:'#58c9e8',sliderStartColor:'#4ec5e6',sliderMiddleColor:'#6ba5ee',sliderEndColor:'#9a79ff',sliderThumbColor:'#f1fbff',bestColor:'#58c9e8',worstColor:'#7a8dff'
+  },
+  white:{
+    label:'純白',backgroundColor:'#f6f6f4',backgroundSecondaryColor:'#e8e8e3',panelColor:'#ffffff',cardColor:'#fbfbf9',cardHoverColor:'#eeeeea',titleColor:'#1d1d1b',subtitleColor:'#666660',textColor:'#3d3d39',questionColor:'#161614',optionColor:'#333330',mutedColor:'#888880',accentColor:'#222220',accentSecondaryColor:'#90908a',borderColor:'#cfcfc8',buttonTextColor:'#ffffff',buttonBackgroundColor:'#222220',buttonHoverColor:'#4b4b47',progressBackgroundColor:'#ddddD7',progressColor:'#222220',sliderStartColor:'#bdbdb6',sliderMiddleColor:'#777772',sliderEndColor:'#222220',sliderThumbColor:'#ffffff',bestColor:'#343430',worstColor:'#999992'
+  }
+};
 async function api(path,options={}){const r=await fetch(`/api/${path}`,{credentials:'include',headers:{'Content-Type':'application/json',...(options.headers||{})},...options});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);return d}
 function notice(t,error=false){$('#notice').innerHTML=`<div class="notice ${error?'error':''}">${esc(t)}</div>`;setTimeout(()=>$('#notice').innerHTML='',4000)}
 async function session(){try{await api('session');showAdmin();await load()}catch{showLogin()}}
@@ -59,6 +91,30 @@ function renderScripts(){
 `).join('')}</div>
  ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div><div class="field theme-color-group">
 <label>劇本主題顏色</label>
+
+<div class="theme-preset-panel">
+  <div class="row">
+    <div>
+      <strong>Theme Preset</strong>
+      <small class="muted">點一下立即套用完整配色，再按儲存並發布。</small>
+    </div>
+    <span class="spacer"></span>
+    <button id="resetThemePreset" class="secondary" type="button">重置黑金</button>
+  </div>
+  <div class="theme-preset-grid">
+    ${Object.entries(THEME_PRESETS).map(([key,preset])=>`
+      <button
+        class="theme-preset-button"
+        data-theme-preset="${key}"
+        type="button"
+        style="--preset-bg:${preset.backgroundColor};--preset-accent:${preset.accentColor};--preset-title:${preset.titleColor}"
+      >
+        <i></i>
+        <span>${preset.label}</span>
+      </button>
+    `).join('')}
+  </div>
+</div>
 
 ${[
   ['backgroundColor','背景顏色','#080a0f'],
@@ -180,6 +236,34 @@ base.settings.theme=structuredClone(
      script().settings.googleSheets ||= {};
      script().settings.googleSheets.webAppUrl=e.target.value.trim();
      setDirty()
+   };
+
+   const applyThemePreset=presetKey=>{
+     const preset=THEME_PRESETS[presetKey];
+     if(!preset)return;
+
+     script().settings.theme ||= {};
+
+     Object.entries(preset).forEach(([key,value])=>{
+       if(key==='label')return;
+       script().settings.theme[key]=value.toLowerCase();
+     });
+
+     setDirty();
+     notice(`已套用「${preset.label}」配色，請按儲存並發布`);
+     render();
+   };
+
+   document
+     .querySelectorAll('[data-theme-preset]')
+     .forEach(button=>{
+       button.onclick=()=>{
+         applyThemePreset(button.dataset.themePreset)
+       }
+     });
+
+   $('#resetThemePreset').onclick=()=>{
+     applyThemePreset('blackGold')
    };
 
    const themeDefaults={
