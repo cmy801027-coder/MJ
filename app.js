@@ -650,11 +650,152 @@ async function createResultShareBlob() {
     throw new Error('找不到角色結果');
   }
 
+  const theme =
+    DATA.setting?.theme || {};
+
+  const backgroundColor =
+    normalizeHexColor(
+      theme.backgroundColor,
+      '#080a0f'
+    );
+
+  const panelColor =
+    normalizeHexColor(
+      theme.panelColor,
+      '#10131a'
+    );
+
+  const titleColor =
+    normalizeHexColor(
+      theme.titleColor,
+      '#f4efe2'
+    );
+
+  const textColor =
+    normalizeHexColor(
+      theme.textColor,
+      '#d8d9de'
+    );
+
+  const mutedColor =
+    normalizeHexColor(
+      theme.mutedColor,
+      '#8e949e'
+    );
+
+  const accentColor =
+    normalizeHexColor(
+      theme.accentColor,
+      '#d7c28b'
+    );
+
+  /*
+   * 先用量測 Canvas 計算實際內容高度，
+   * 再建立最後輸出的 Canvas。
+   */
+  const measureCanvas =
+    document.createElement('canvas');
+
+  measureCanvas.width = 1080;
+  measureCanvas.height = 100;
+
+  const measureContext =
+    measureCanvas.getContext('2d');
+
+  if (!measureContext) {
+    throw new Error('瀏覽器不支援圖片產生');
+  }
+
+  const preface =
+    String(
+      DATA.setting?.resultShare?.preface ||
+      DATA.setting?.shareImage?.preface ||
+      '你的角色結果是'
+    ).trim();
+
+  measureContext.font =
+    '500 38px "Noto Serif TC", serif';
+
+  const prefaceLines =
+    wrapCanvasText(
+      measureContext,
+      preface,
+      850
+    ).slice(0, 4);
+
+  measureContext.font =
+    '400 34px "Noto Serif TC", serif';
+
+  const descriptionLines =
+    wrapCanvasText(
+      measureContext,
+      top.description ||
+      top.desc ||
+      '',
+      820
+    ).slice(0, 10);
+
+  const topPadding = 70;
+  const prefaceLineHeight = 76;
+  const prefaceBottomGap = 42;
+
+  const imageWidth = 840;
+  const imageHeight = 840;
+  const imageBottomGap = 172;
+
+  const roleNameHeight = 86;
+  const subtitleHeight =
+    top.kr ? 68 : 18;
+
+  const descriptionLineHeight = 62;
+  const descriptionBottomGap = 58;
+
+  const rankingHeaderHeight = 62;
+  const rankingRowHeight = 61;
+  const rankingTopPadding = 32;
+  const rankingBottomPadding = 36;
+
+  const rankingHeight =
+    rankingTopPadding +
+    rankingHeaderHeight +
+    ranking.length * rankingRowHeight +
+    rankingBottomPadding;
+
+  const bottomPadding = 44;
+
+  const prefaceHeight =
+    prefaceLines.length *
+      prefaceLineHeight +
+    prefaceBottomGap;
+
+  const descriptionHeight =
+    Math.max(
+      descriptionLineHeight,
+      descriptionLines.length *
+        descriptionLineHeight
+    ) +
+    descriptionBottomGap;
+
+  const finalHeight =
+    topPadding +
+    prefaceHeight +
+    imageHeight +
+    imageBottomGap +
+    roleNameHeight +
+    subtitleHeight +
+    descriptionHeight +
+    rankingHeight +
+    bottomPadding;
+
   const canvas =
     document.createElement('canvas');
 
   canvas.width = 1080;
-  canvas.height = 2160;
+  canvas.height =
+    Math.max(
+      1500,
+      Math.ceil(finalHeight)
+    );
 
   const context =
     canvas.getContext('2d');
@@ -663,52 +804,34 @@ async function createResultShareBlob() {
     throw new Error('瀏覽器不支援圖片產生');
   }
 
-  const theme =
-    DATA.setting?.theme || {};
-
-  const backgroundColor =
-    normalizeHexColor(
-      theme.backgroundColor,
-      '#f6f2e8'
+  /*
+   * 背景。
+   */
+  const gradient =
+    context.createLinearGradient(
+      0,
+      0,
+      0,
+      canvas.height
     );
 
-  const panelColor =
-    normalizeHexColor(
-      theme.panelColor,
-      '#fffaf0'
-    );
+  gradient.addColorStop(
+    0,
+    panelColor
+  );
 
-  const titleColor =
-    normalizeHexColor(
-      theme.titleColor,
-      '#211c19'
-    );
+  gradient.addColorStop(
+    0.55,
+    backgroundColor
+  );
 
-  const textColor =
-    normalizeHexColor(
-      theme.textColor,
-      '#332c27'
-    );
+  gradient.addColorStop(
+    1,
+    panelColor
+  );
 
-  const mutedColor =
-    normalizeHexColor(
-      theme.mutedColor,
-      '#776b61'
-    );
+  context.fillStyle = gradient;
 
-  const accentColor =
-    normalizeHexColor(
-      theme.accentColor,
-      '#8e1818'
-    );
-
-  const borderColor =
-    normalizeHexColor(
-      theme.borderColor,
-      accentColor
-    );
-
-  context.fillStyle = backgroundColor;
   context.fillRect(
     0,
     0,
@@ -716,70 +839,52 @@ async function createResultShareBlob() {
     canvas.height
   );
 
-  const paperGradient =
-    context.createRadialGradient(
-      540,
-      300,
-      20,
-      540,
-      900,
-      1000
-    );
+  let cursorY =
+    topPadding;
 
-  paperGradient.addColorStop(
-    0,
-    hexToRgba(panelColor, .96)
-  );
+  /*
+   * 成果前言。
+   */
+  context.textAlign =
+    'center';
 
-  paperGradient.addColorStop(
-    1,
-    hexToRgba(backgroundColor, .96)
-  );
+  context.fillStyle =
+    textColor;
 
-  context.fillStyle = paperGradient;
-  context.fillRect(
-    0,
-    0,
-    1080,
-    1920
-  );
-
-  const margin = 92;
-  const contentWidth = 896;
-
-  context.textAlign = 'center';
-  context.textBaseline = 'alphabetic';
-  context.fillStyle = titleColor;
   context.font =
-    '500 48px "Noto Serif TC", serif';
+    '500 38px "Noto Serif TC", serif';
 
-  const preface =
-    DATA.setting?.result
-      ?.shareImagePreface ||
-    DATA.setting?.result
-      ?.imagePreface ||
-    `在${DATA.setting.title || DATA.setting.name || '故事'}的世界裡你是`;
+  prefaceLines.forEach(
+    (line, index) => {
+      context.fillText(
+        line,
+        540,
+        cursorY +
+          index *
+            prefaceLineHeight
+      );
+    }
+  );
 
-  let cursorY = 100;
+  cursorY +=
+    prefaceHeight;
 
-  cursorY = drawCenteredWrappedText(
-    context,
-    preface,
-    540,
-    cursorY,
-    850,
-    76,
-    3
-  ) + 42;
+  /*
+   * 角色圖片。
+   * 完整比例、無外框。
+   */
+  const imageX =
+    (canvas.width -
+      imageWidth) / 2;
 
-  const imageX = 150;
-  const imageY = cursorY;
-  const imageWidth = 780;
-  const imageHeight = 690;
+  const imageY =
+    cursorY;
 
   try {
     const image =
-      await loadShareImage(top.image);
+      await loadShareImage(
+        top.image
+      );
 
     drawContainImage(
       context,
@@ -797,7 +902,7 @@ async function createResultShareBlob() {
     );
 
     context.fillStyle =
-      hexToRgba(panelColor, .7);
+      panelColor;
 
     context.fillRect(
       imageX,
@@ -806,159 +911,221 @@ async function createResultShareBlob() {
       imageHeight
     );
 
-    context.fillStyle = mutedColor;
+    context.fillStyle =
+      mutedColor;
+
     context.font =
-      '400 44px "Noto Serif TC", serif';
+      '400 30px "Noto Serif TC", serif';
+
     context.fillText(
-      '角色圖片',
+      '角色圖片載入失敗',
       540,
-      imageY + imageHeight / 2
+      imageY +
+        imageHeight / 2
     );
   }
 
-  cursorY = imageY + imageHeight + 172;
+  cursorY =
+    imageY +
+    imageHeight +
+    imageBottomGap;
 
-  context.fillStyle = titleColor;
+  /*
+   * 角色名稱。
+   */
+  context.fillStyle =
+    titleColor;
+
   context.font =
-    '700 70px "Noto Serif TC", serif';
+    '700 82px "Noto Serif TC", serif';
+
   context.fillText(
     top.name || '',
     540,
     cursorY
   );
 
-  cursorY += 86;
+  cursorY +=
+    roleNameHeight;
 
+  /*
+   * 角色副標。
+   */
   if (top.kr) {
-    context.fillStyle = mutedColor;
+    context.fillStyle =
+      mutedColor;
+
     context.font =
-      '400 34px "Noto Serif TC", serif';
+      '400 32px "Noto Serif TC", serif';
+
     context.fillText(
       top.kr,
       540,
       cursorY
     );
-    cursorY += 68;
+
+    cursorY +=
+      subtitleHeight;
+  } else {
+    cursorY +=
+      subtitleHeight;
   }
 
-  context.fillStyle = textColor;
-  context.font =
-    '400 31px "Noto Serif TC", serif';
+  /*
+   * 角色介紹。
+   */
+  context.textAlign =
+    'left';
 
-  cursorY = drawCenteredWrappedText(
-    context,
-    top.description ||
-      top.desc ||
-      '',
-    540,
-    cursorY,
-    820,
-    62,
-    4
-  ) + 58;
-
-  const rankingHeight =
-    96 + ranking.length * 61;
-
-  const rankingY = Math.min(
-    cursorY,
-    canvas.height - 40 - rankingHeight
-  );
-
-  context.strokeStyle = borderColor;
-  context.lineWidth = 4;
   context.fillStyle =
-    hexToRgba(panelColor, .72);
+    textColor;
 
-  drawRoundedRect(
-    context,
-    margin,
-    rankingY,
-    contentWidth,
-    rankingHeight,
-    2
+  context.font =
+    '400 34px "Noto Serif TC", serif';
+
+  descriptionLines.forEach(
+    (line, index) => {
+      context.fillText(
+        line,
+        130,
+        cursorY +
+          index *
+            descriptionLineHeight
+      );
+    }
   );
-  context.fill();
-  context.stroke();
 
-  context.fillStyle = accentColor;
+  cursorY +=
+    descriptionHeight;
+
+  /*
+   * 靈魂共鳴度。
+   */
+  const rankingX = 110;
+  const rankingWidth = 860;
+  const rankingY =
+    cursorY;
+
+  context.fillStyle =
+    panelColor;
+
+  context.fillRect(
+    rankingX,
+    rankingY,
+    rankingWidth,
+    rankingHeight
+  );
+
+  context.strokeStyle =
+    accentColor;
+
+  context.lineWidth = 2;
+
+  context.strokeRect(
+    rankingX,
+    rankingY,
+    rankingWidth,
+    rankingHeight
+  );
+
+  context.textAlign =
+    'center';
+
+  context.fillStyle =
+    accentColor;
+
   context.font =
     '600 30px "Noto Serif TC", serif';
+
   context.fillText(
-    DATA.setting?.result
-      ?.resonanceLabel ||
-      '靈魂共鳴度',
+    '靈魂共鳴度',
     540,
     rankingY + 58
   );
 
-  ranking.forEach((character, index) => {
-    const rowY =
-      rankingY + 104 + index * 61;
+  ranking.forEach(
+    (character, index) => {
+      const rowY =
+        rankingY +
+        104 +
+        index *
+          rankingRowHeight;
 
-    context.textAlign = 'left';
-    context.fillStyle = textColor;
-    context.font =
-      '400 28px "Noto Serif TC", serif';
-    context.fillText(
-      character.name || '',
-      145,
-      rowY
-    );
+      const labelX =
+        rankingX + 46;
 
-    const barX = 305;
-    const barWidth = 515;
-    const barHeight = 17;
+      const barX =
+        rankingX + 210;
 
-    context.fillStyle =
-      hexToRgba(mutedColor, .18);
+      const barWidth =
+        520;
 
-    drawRoundedRect(
-      context,
-      barX,
-      rowY - 16,
-      barWidth,
-      barHeight,
-      9
-    );
-    context.fill();
+      const percentX =
+        rankingX +
+        rankingWidth -
+        48;
 
-    context.fillStyle =
-      index === 0
-        ? accentColor
-        : hexToRgba(accentColor, .72);
+      context.textAlign =
+        'left';
 
-    drawRoundedRect(
-      context,
-      barX,
-      rowY - 16,
-      Math.max(
-        8,
+      context.fillStyle =
+        textColor;
+
+      context.font =
+        '400 27px "Noto Serif TC", serif';
+
+      context.fillText(
+        character.name || '',
+        labelX,
+        rowY
+      );
+
+      context.fillStyle =
+        mutedColor;
+
+      context.fillRect(
+        barX,
+        rowY - 11,
+        barWidth,
+        4
+      );
+
+      context.fillStyle =
+        accentColor;
+
+      context.fillRect(
+        barX,
+        rowY - 11,
         barWidth *
           Math.max(
             0,
             Math.min(
               100,
-              Number(character.pct || 0)
+              Number(
+                character.pct || 0
+              )
             )
           ) /
-          100
-      ),
-      barHeight,
-      9
-    );
-    context.fill();
+          100,
+        4
+      );
 
-    context.textAlign = 'right';
-    context.fillStyle = titleColor;
-    context.font =
-      '600 28px sans-serif';
-    context.fillText(
-      `${character.pct}%`,
-      930,
-      rowY
-    );
-  });
+      context.textAlign =
+        'right';
+
+      context.fillStyle =
+        titleColor;
+
+      context.font =
+        '600 25px "Noto Serif TC", serif';
+
+      context.fillText(
+        `${character.pct || 0}%`,
+        percentX,
+        rowY
+      );
+    }
+  );
 
   return new Promise(
     (resolve, reject) => {
@@ -968,7 +1135,9 @@ async function createResultShareBlob() {
             resolve(blob);
           } else {
             reject(
-              new Error('圖片產生失敗')
+              new Error(
+                '圖片產生失敗'
+              )
             );
           }
         },
