@@ -37,5 +37,8 @@
     "autoplay": false,
     "loop": true,
     "volume": 0.35
+  },
+  "googleSheets": {
+    "webAppUrl": "https://script.google.com/macros/s/AKfycbwaJYILtZ52Ly0f305-hyHmUHfXELUZw9dv_M1kduPu7vSTAygNnQc4wuKc5wGaN5f_/exec"
   }
 }
