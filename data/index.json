@@ -6,6 +6,12 @@
       "name": "塑料溫室",
       "status": "published",
       "cover": "assets/scripts/plastic-greenhouse/characters/liu-xianyong.jpg"
+    },
+    {
+      "id": "test",
+      "name": "測試測試",
+      "status": "draft",
+      "cover": ""
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "title": "塑料溫室",
+  "title": "測試測試",
   "subtitle": "PLASTIC GREENHOUSE",
   "version": "2.0",
   "liffId": "2010940918-AhmNBhgx",
@@ -30,8 +30,8 @@
     "enabled": true,
     "volume": 0.045
   },
-  "id": "plastic-greenhouse",
-  "name": "塑料溫室",
+  "id": "test",
+  "name": "測試測試",
   "bgm": {
     "src": "assets/scripts/plastic-greenhouse/bgm/1785765051453-K.Fun_Music-Pinyin-Lyrics-.mp3",
     "autoplay": false,
