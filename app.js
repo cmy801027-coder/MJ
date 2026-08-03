@@ -949,11 +949,6 @@ function renderQuiz(p) {
 
   if (type === 'bestWorst') {
     controlHtml = `
-      <div class="best-worst-help">
-        <span>先選最喜歡</span>
-        <span>再選最不喜歡</span>
-      </div>
-
       <div class="best-worst-options">
         ${(q.answers || []).map((answer, index) => `
           <div class="best-worst-option" data-bw-option="${index}">
@@ -968,7 +963,7 @@ function renderQuiz(p) {
                 data-most="${index}"
                 type="button"
               >
-                最喜歡
+                最符合
               </button>
 
               <button
@@ -976,7 +971,7 @@ function renderQuiz(p) {
                 data-least="${index}"
                 type="button"
               >
-                最不喜歡
+                最不符合
               </button>
             </div>
           </div>
@@ -984,7 +979,7 @@ function renderQuiz(p) {
       </div>
 
       <p class="question-hint" id="questionHint">
-        請各選一個選項，兩者不能相同。
+        請各選一個最符合與最不符合的選項，兩者不能相同。
       </p>
 
       <button
@@ -1425,10 +1420,10 @@ function bind(){
       mostIndex === leastIndex
     ) {
       hint.textContent =
-        '最喜歡和最不喜歡不能選同一個選項。';
+        '最符合和最不符合不能選同一個選項。';
     } else if (hint) {
       hint.textContent =
-        '請各選一個選項，兩者不能相同。';
+        '請各選一個最符合與最不符合的選項，兩者不能相同。';
     }
   };
 
