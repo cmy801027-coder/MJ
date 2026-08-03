@@ -46,3 +46,84 @@
   box-shadow:inset 0 0 0 6px var(--preset-title);
 }
 .theme-preset-button span{font-size:13px;font-weight:700}
+
+
+/* ===== Theme Preset 即時預覽修正 ===== */
+
+.theme-preset-button.active {
+  outline: 2px solid var(--preset-accent);
+  outline-offset: 3px;
+  transform: translateY(-2px);
+}
+
+.theme-live-preview {
+  --preview-bg: #080909;
+  --preview-panel: #10100e;
+  --preview-title: #f5e8bd;
+  --preview-text: #d8cfb5;
+  --preview-muted: #80765b;
+  --preview-option: #dbd0af;
+  --preview-card: #15140f;
+  --preview-border: #443a20;
+  --preview-accent: #d3b45f;
+  --preview-button-bg: #d3b45f;
+  --preview-button-text: #11100c;
+
+  margin-top: 20px;
+  padding: 28px;
+  border: 1px solid var(--preview-border);
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at 50% 0,
+      var(--preview-panel),
+      var(--preview-bg) 72%
+    );
+  color: var(--preview-text);
+  transition: .25s;
+}
+
+.theme-preview-eyebrow {
+  margin-bottom: 16px;
+  color: var(--preview-muted);
+  font-size: 11px;
+  letter-spacing: .2em;
+}
+
+.theme-live-preview h3 {
+  margin: 0 0 12px;
+  color: var(--preview-title);
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.theme-live-preview p {
+  color: var(--preview-text);
+  line-height: 1.7;
+}
+
+.theme-preview-option {
+  display: block;
+  width: 100%;
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid var(--preview-border);
+  background: var(--preview-card);
+  color: var(--preview-option);
+  text-align: left;
+}
+
+.theme-preview-main-button {
+  padding: 11px 24px;
+  border: 1px solid var(--preview-button-bg);
+  background: var(--preview-button-bg);
+  color: var(--preview-button-text);
+}
+
+.theme-live-preview,
+.theme-live-preview * {
+  transition:
+    color .2s,
+    background-color .2s,
+    border-color .2s;
+}

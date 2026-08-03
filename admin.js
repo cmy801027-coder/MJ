@@ -114,6 +114,20 @@ function renderScripts(){
       </button>
     `).join('')}
   </div>
+
+  <div class="theme-live-preview" id="themeLivePreview">
+    <div class="theme-preview-eyebrow">QUESTION 01 / 10</div>
+    <h3>這是一段題目文字</h3>
+    <p>一般內文與場景說明會顯示在這裡。</p>
+
+    <button type="button" class="theme-preview-option">
+      01　這是一個選項
+    </button>
+
+    <button type="button" class="theme-preview-main-button">
+      確認選擇
+    </button>
+  </div>
 </div>
 
 ${[
@@ -238,20 +252,76 @@ base.settings.theme=structuredClone(
      setDirty()
    };
 
+   const updateThemePreview=theme=>{
+     const preview=$('#themeLivePreview');
+
+     if(!preview)return;
+
+     const set=(name,value)=>{
+       preview.style.setProperty(name,value)
+     };
+
+     set('--preview-bg',theme.backgroundColor||'#080909');
+     set('--preview-panel',theme.panelColor||'#10100e');
+     set('--preview-title',theme.questionColor||theme.titleColor||'#f5e8bd');
+     set('--preview-text',theme.textColor||'#d8cfb5');
+     set('--preview-muted',theme.mutedColor||'#80765b');
+     set('--preview-option',theme.optionColor||'#dbd0af');
+     set('--preview-card',theme.cardColor||'#15140f');
+     set('--preview-border',theme.borderColor||'#443a20');
+     set('--preview-accent',theme.accentColor||'#d3b45f');
+     set('--preview-button-bg',theme.buttonBackgroundColor||'#d3b45f');
+     set('--preview-button-text',theme.buttonTextColor||'#11100c');
+   };
+
+   const markActivePreset=presetKey=>{
+     document
+       .querySelectorAll('[data-theme-preset]')
+       .forEach(button=>{
+         button.classList.toggle(
+           'active',
+           button.dataset.themePreset===presetKey
+         )
+       })
+   };
+
+   const syncThemeControls=theme=>{
+     Object.entries(theme).forEach(([key,value])=>{
+       if(key==='label'||typeof value!=='string')return;
+
+       const picker=document.querySelector(
+         `[data-theme-color-picker="${key}"]`
+       );
+
+       const text=document.querySelector(
+         `[data-theme-color-text="${key}"]`
+       );
+
+       if(picker)picker.value=value;
+       if(text)text.value=value.toLowerCase()
+     })
+   };
+
    const applyThemePreset=presetKey=>{
      const preset=THEME_PRESETS[presetKey];
+
      if(!preset)return;
 
      script().settings.theme ||= {};
 
      Object.entries(preset).forEach(([key,value])=>{
        if(key==='label')return;
-       script().settings.theme[key]=value.toLowerCase();
+       script().settings.theme[key]=value.toLowerCase()
      });
 
+     syncThemeControls(script().settings.theme);
+     updateThemePreview(script().settings.theme);
+     markActivePreset(presetKey);
      setDirty();
-     notice(`已套用「${preset.label}」配色，請按儲存並發布`);
-     render();
+
+     notice(
+       `已套用「${preset.label}」配色，請按儲存並發布`
+     )
    };
 
    document
@@ -265,6 +335,10 @@ base.settings.theme=structuredClone(
    $('#resetThemePreset').onclick=()=>{
      applyThemePreset('blackGold')
    };
+
+   updateThemePreview(
+     script().settings.theme||THEME_PRESETS.blackGold
+   );
 
    const themeDefaults={
      backgroundColor:'#080a0f',backgroundSecondaryColor:'#151a25',panelColor:'#0d1016',cardColor:'#0e1117',cardHoverColor:'#131722',
@@ -294,6 +368,12 @@ base.settings.theme=structuredClone(
 
      if(picker)picker.value=normalized;
      if(text)text.value=normalized.toLowerCase();
+
+     updateThemePreview(
+       script().settings.theme
+     );
+
+     markActivePreset('');
 
      setDirty();
      return true
