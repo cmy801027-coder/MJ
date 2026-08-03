@@ -1,30 +1,66 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Assign Roles 管理後台</title><link rel="stylesheet" href="admin.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Assign Roles 管理後台</title>
+  <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-<div id="loginView" class="login-shell">
-  <form id="loginForm" class="login-card">
-    <h1>Assign Roles</h1><p>管理後台</p>
-    <input id="password" type="password" placeholder="管理員密碼" required>
-    <button>登入</button><div id="loginStatus"></div>
-  </form>
-</div>
-<div id="adminView" class="admin-shell hidden">
-  <aside>
-    <div class="brand"><strong>Assign Roles</strong><small>內容管理系統</small></div>
-    <button data-tab="scripts">劇本</button><button data-tab="story">開場動畫</button>
-    <button data-tab="questions">題目</button><button data-tab="characters">角色</button>
-    <button data-tab="hosts">主持人</button><button data-tab="bgm">BGM</button>
-    <button id="logoutBtn" class="danger">登出</button>
-  </aside>
-  <main>
-    <header><div><h1 id="pageTitle">劇本</h1><p id="currentScriptLabel"></p></div>
-      <div><button id="reloadBtn" class="secondary">重新載入</button><button id="publishBtn">儲存並發布</button></div></header>
-    <div id="notice"></div><section id="editor"></section>
-  </main>
-</div>
-<script src="admin.js"></script>
-</body></html>
+  <div id="loginView" class="login-shell">
+    <form id="loginForm" class="login-card">
+      <h1>Assign Roles</h1>
+      <p>管理後台</p>
+      <input
+        id="password"
+        type="password"
+        placeholder="管理員密碼"
+        autocomplete="current-password"
+        required
+      >
+      <button type="submit">登入</button>
+      <div id="loginStatus"></div>
+    </form>
+  </div>
+
+  <div id="adminView" class="admin-shell hidden">
+    <aside>
+      <div class="brand">
+        <strong>Assign Roles</strong>
+        <small>內容管理系統</small>
+      </div>
+
+      <button data-tab="scripts" type="button">劇本</button>
+      <button data-tab="story" type="button">開場動畫</button>
+      <button data-tab="questions" type="button">題目</button>
+      <button data-tab="characters" type="button">角色</button>
+      <button data-tab="bgm" type="button">BGM</button>
+
+      <button id="logoutBtn" class="danger" type="button">登出</button>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <h1 id="pageTitle">劇本</h1>
+          <p id="currentScriptLabel"></p>
+        </div>
+
+        <div>
+          <button id="reloadBtn" class="secondary" type="button">
+            重新載入
+          </button>
+          <button id="publishBtn" type="button">
+            儲存並發布
+          </button>
+        </div>
+      </header>
+
+      <div id="notice"></div>
+      <section id="editor"></section>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -203,9 +203,45 @@ async function loadJson(url) {
 }
 
 async function loadGlobalData() {
-  [DATA.index, DATA.global, DATA.hosts] = await Promise.all([
-    loadJson('/data/index.json'), loadJson('/data/settings.json'), loadJson('/data/hosts.json')
+  [DATA.index, DATA.global] = await Promise.all([
+    loadJson('/data/index.json'),
+    loadJson('/data/settings.json')
   ]);
+}
+
+function normalizeHexColor(
+  value,
+  fallback = '#080a0f'
+) {
+  const color =
+    String(value || '').trim();
+
+  return /^#[0-9a-fA-F]{6}$/.test(color)
+    ? color
+    : fallback;
+}
+
+function applyScriptTheme() {
+  const backgroundColor =
+    normalizeHexColor(
+      DATA.setting?.theme?.backgroundColor,
+      '#080a0f'
+    );
+
+  document.documentElement.style.setProperty(
+    '--script-background',
+    backgroundColor
+  );
+
+  document.body.style.background =
+    backgroundColor;
+
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute(
+      'content',
+      backgroundColor
+    );
 }
 
 async function loadScript(id) {
@@ -215,6 +251,7 @@ async function loadScript(id) {
     loadJson(`${base}/questions.json`), loadJson(`${base}/characters.json`)
   ]);
   activeScriptId = id;
+  applyScriptTheme();
   document.title = `${DATA.setting.title || DATA.setting.name}｜角色測驗`;
 }
 
@@ -948,7 +985,6 @@ async function shareResultToSocial() {
     }
   }
 }
-function selectedHost(){return (DATA.hosts||[]).find(h=>h.id===state.selectedHostId)}
 
 function renderScriptSelect(p){
   p.innerHTML=`<div class="eyebrow">SELECT STORY</div><h1 class="title">${esc(DATA.global.siteTitle||'Assign Roles')}</h1>

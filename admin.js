@@ -11,7 +11,7 @@ async function load(){S.data=await api('repository');S.scriptId=S.scriptId||S.da
 function script(){return S.data.scripts[S.scriptId]}
 function setDirty(){S.dirty=true;$('#publishBtn').textContent='儲存並發布 *'}
 function bindInput(selector,handler){document.querySelectorAll(selector).forEach(el=>el.addEventListener('input',e=>{handler(e.target);setDirty()}))}
-function render(){document.querySelectorAll('aside [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));$('#pageTitle').textContent={scripts:'劇本',story:'開場動畫',questions:'題目',characters:'角色',hosts:'主持人',bgm:'BGM'}[S.tab];$('#currentScriptLabel').textContent=script()?.settings?.name||'';({scripts:renderScripts,story:renderStory,questions:renderQuestions,characters:renderCharacters,hosts:renderHosts,bgm:renderBgm}[S.tab])();bindCommon()}
+function render(){document.querySelectorAll('aside [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));$('#pageTitle').textContent={scripts:'劇本',story:'開場動畫',questions:'題目',characters:'角色',bgm:'BGM'}[S.tab];$('#currentScriptLabel').textContent=script()?.settings?.name||'';({scripts:renderScripts,story:renderStory,questions:renderQuestions,characters:renderCharacters,bgm:renderBgm}[S.tab])();bindCommon()}
 function bindCommon(){document.querySelectorAll('[data-action=delete]').forEach(b=>b.onclick=()=>{if(confirm('確定刪除？')){const path=b.dataset.path.split('.');let obj=S.data;for(let i=0;i<path.length-1;i++)obj=obj[path[i]];obj.splice(Number(path.at(-1)),1);setDirty();render()}})}
 
 function renderScripts(){
@@ -57,7 +57,7 @@ function renderScripts(){
     </div>
   </div>
 `).join('')}</div>
- ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div></div></div>`:''}`;
+ ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div><div class="field"><label>測驗背景顏色</label><div class="color-setting-row"><input id="scriptBackgroundColor" type="color" value="${esc(script().settings.theme?.backgroundColor||'#080a0f')}"><input id="scriptBackgroundColorText" value="${esc(script().settings.theme?.backgroundColor||'#080a0f')}" maxlength="7" placeholder="#080a0f"></div><small class="muted">每個劇本可設定不同背景顏色。</small></div></div></div>`:''}`;
  document.querySelectorAll('[data-open]').forEach(button => {
    button.onclick = () => {
      S.scriptId = button.dataset.open;
@@ -94,7 +94,7 @@ function renderScripts(){
      );
    };
  });
- $('#addScript').onclick=()=>{const name=prompt('新劇本名稱');if(!name)return;let id=(prompt('網址 ID（英文、數字、連字號）',`story-${Date.now()}`)||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');if(!id||S.data.scripts[id])return notice('ID 無效或已存在',true);const base=structuredClone(script());base.settings.id=id;base.settings.name=name;base.settings.title=name;base.meta={id,name,status:'draft',cover:''};S.data.scripts[id]=base;S.data.index.scripts.push(base.meta);S.scriptId=id;setDirty();render()};
+ $('#addScript').onclick=()=>{const name=prompt('新劇本名稱');if(!name)return;let id=(prompt('網址 ID（英文、數字、連字號）',`story-${Date.now()}`)||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');if(!id||S.data.scripts[id])return notice('ID 無效或已存在',true);const base=structuredClone(script());base.settings.id=id;base.settings.name=name;base.settings.title=name;base.settings.theme=structuredClone(base.settings.theme||{backgroundColor:'#080a0f'});base.meta={id,name,status:'draft',cover:''};S.data.scripts[id]=base;S.data.index.scripts.push(base.meta);S.scriptId=id;setDirty();render()};
  document.querySelectorAll('[data-remove-script]').forEach(b=>b.onclick=()=>{if(!confirm('將刪除整個劇本資料與素材，確定？'))return;const id=b.dataset.removeScript;delete S.data.scripts[id];S.data.index.scripts=S.data.index.scripts.filter(x=>x.id!==id);S.scriptId=S.data.index.defaultScriptId;setDirty();render()});
  if($('#scriptName')){
    $('#scriptName').oninput=e=>{
@@ -115,503 +115,41 @@ function renderScripts(){
      script().settings.googleSheets.webAppUrl=e.target.value.trim();
      setDirty()
    };
+
+   const saveBackgroundColor=value=>{
+     const normalized=String(value||'').trim();
+     if(!/^#[0-9a-fA-F]{6}$/.test(normalized))return;
+     script().settings.theme ||= {};
+     script().settings.theme.backgroundColor=normalized.toLowerCase();
+     $('#scriptBackgroundColor').value=normalized;
+     $('#scriptBackgroundColorText').value=normalized.toLowerCase();
+     setDirty()
+   };
+
+   $('#scriptBackgroundColor').oninput=e=>{
+     saveBackgroundColor(e.target.value)
+   };
+
+   $('#scriptBackgroundColorText').onchange=e=>{
+     if(!/^#[0-9a-fA-F]{6}$/.test(e.target.value.trim())){
+       notice('背景顏色請使用 #RRGGBB 格式，例如 #080a0f',true);
+       e.target.value=script().settings.theme?.backgroundColor||'#080a0f';
+       return
+     }
+     saveBackgroundColor(e.target.value)
+   };
  }
 }
 
-function renderStory() {
-  const st = script().story;
-
-  st.prologue ||= [];
-  st.epilogue ||= [];
-  st.interludes ||= [];
-
-  const questions =
-    script().questions || [];
-
-  /*
-   * 將舊版單一物件格式轉為新版陣列格式。
-   * 每一個 transition index 都是一個動畫清單。
-   */
-  for (
-    let index = 0;
-    index < questions.length;
-    index += 1
-  ) {
-    const value =
-      st.interludes[index];
-
-    if (
-      value &&
-      !Array.isArray(value)
-    ) {
-      st.interludes[index] = [
-        value
-      ];
-    }
-
-    if (
-      !Array.isArray(
-        st.interludes[index]
-      )
-    ) {
-      st.interludes[index] = [];
-    }
-  }
-
-  const renderSceneFields = (
-    sectionKey,
-    scene,
-    sceneIndex
-  ) => `
-    <div class="list-item">
-      <div class="grid">
-        <div class="field">
-          <label>章節標題</label>
-          <input
-            data-scene-section="${sectionKey}"
-            data-scene-index="${sceneIndex}"
-            data-scene-key="chapter"
-            value="${esc(scene.chapter || '')}"
-          >
-        </div>
-
-        <div class="field">
-          <label>最短停留毫秒（4000 = 4 秒）</label>
-          <input
-            type="number"
-            min="0"
-            data-scene-section="${sectionKey}"
-            data-scene-index="${sceneIndex}"
-            data-scene-key="hold"
-            value="${Number(scene.hold || 900)}"
-          >
-        </div>
-      </div>
-
-      <div class="field">
-        <label>動畫文字，每行一段</label>
-        <textarea
-          data-scene-lines-section="${sectionKey}"
-          data-scene-index="${sceneIndex}"
-        >${esc((scene.lines || []).join('\n'))}</textarea>
-      </div>
-
-      <button
-        class="danger"
-        data-remove-scene-section="${sectionKey}"
-        data-scene-index="${sceneIndex}"
-        type="button"
-      >
-        刪除這段動畫
-      </button>
-    </div>
-  `;
-
-  const renderFixedSection = (
-    key,
-    title
-  ) => `
-    <div class="card">
-      <div class="row">
-        <div>
-          <h2>${title}</h2>
-          <small class="muted">
-            可以設定零段、一段或多段動畫。
-          </small>
-        </div>
-
-        <span class="spacer"></span>
-
-        <button
-          data-add-fixed-scene="${key}"
-          type="button"
-        >
-          ＋新增動畫
-        </button>
-      </div>
-
-      ${
-        st[key].length === 0
-          ? `
-            <div class="list-item">
-              <small class="muted">
-                目前沒有動畫，流程會直接進入下一畫面。
-              </small>
-            </div>
-          `
-          : st[key]
-              .map(
-                (scene, index) =>
-                  renderSceneFields(
-                    key,
-                    scene,
-                    index
-                  )
-              )
-              .join('')
-      }
-    </div>
-  `;
-
-  const transitionTitle = index => {
-    if (index === 0) {
-      return '選完角色路線 → 第 1 題';
-    }
-
-    return (
-      `第 ${index} 題 → ` +
-      `第 ${index + 1} 題`
-    );
-  };
-
-  const renderTransition = (
-    transitionIndex
-  ) => {
-    const scenes =
-      st.interludes[
-        transitionIndex
-      ];
-
-    return `
-      <div class="card">
-        <div class="row">
-          <div>
-            <h2>
-              ${transitionTitle(transitionIndex)}
-            </h2>
-
-            <small class="muted">
-              留空代表直接進下一題；也可以連續播放多段動畫。
-            </small>
-          </div>
-
-          <span class="spacer"></span>
-
-          <button
-            data-add-interlude="${transitionIndex}"
-            type="button"
-          >
-            ＋新增動畫
-          </button>
-        </div>
-
-        ${
-          scenes.length === 0
-            ? `
-              <div class="list-item">
-                <small class="muted">
-                  此轉場沒有動畫。
-                </small>
-              </div>
-            `
-            : scenes
-                .map(
-                  (scene, sceneIndex) => `
-                    <div class="list-item">
-                      <div class="row">
-                        <h3>
-                          動畫 ${sceneIndex + 1}
-                        </h3>
-
-                        <span class="spacer"></span>
-
-                        <button
-                          class="danger"
-                          data-remove-interlude="${transitionIndex}:${sceneIndex}"
-                          type="button"
-                        >
-                          刪除
-                        </button>
-                      </div>
-
-                      <div class="grid">
-                        <div class="field">
-                          <label>章節標題</label>
-                          <input
-                            data-interlude="${transitionIndex}:${sceneIndex}:chapter"
-                            value="${esc(scene.chapter || '')}"
-                          >
-                        </div>
-
-                        <div class="field">
-                          <label>最短停留毫秒</label>
-                          <input
-                            type="number"
-                            min="0"
-                            data-interlude="${transitionIndex}:${sceneIndex}:hold"
-                            value="${Number(scene.hold || 900)}"
-                          >
-                        </div>
-                      </div>
-
-                      <div class="field">
-                        <label>動畫文字，每行一段</label>
-                        <textarea
-                          data-interlude-lines="${transitionIndex}:${sceneIndex}"
-                        >${esc((scene.lines || []).join('\n'))}</textarea>
-                      </div>
-                    </div>
-                  `
-                )
-                .join('')
-        }
-      </div>
-    `;
-  };
-
-  $('#editor').innerHTML = `
-    <div class="card">
-      <h2>首頁第一句</h2>
-
-      <div class="field">
-        <label>每行一段</label>
-        <textarea id="openingQuote">${
-          esc(
-            (st.opening?.quote || [])
-              .join('\n')
-          )
-        }</textarea>
-      </div>
-
-      <div class="field">
-        <label>開始按鈕</label>
-        <input
-          id="openingButton"
-          value="${esc(st.opening?.button || '開始')}"
-        >
-      </div>
-    </div>
-
-    ${renderFixedSection(
-      'prologue',
-      '開場動畫'
-    )}
-
-    <div class="card">
-      <h2>題目間動畫</h2>
-
-      <p class="muted">
-        每個轉場都可以完全沒有動畫，也可以加入任意多段動畫。
-      </p>
-    </div>
-
-    ${
-      questions.length === 0
-        ? `
-          <div class="card">
-            <p class="muted">
-              目前沒有題目，新增題目後才會出現轉場設定。
-            </p>
-          </div>
-        `
-        : questions
-            .map(
-              (_, index) =>
-                renderTransition(index)
-            )
-            .join('')
-    }
-
-    ${renderFixedSection(
-      'epilogue',
-      '結果前動畫'
-    )}
-  `;
-
-  $('#openingQuote').oninput = event => {
-    st.opening ||= {};
-    st.opening.quote =
-      event.target.value.split('\n');
-    setDirty();
-  };
-
-  $('#openingButton').oninput = event => {
-    st.opening ||= {};
-    st.opening.button =
-      event.target.value;
-    setDirty();
-  };
-
-  bindInput(
-    '[data-scene-section]',
-    element => {
-      const section =
-        st[element.dataset.sceneSection];
-
-      const scene =
-        section[
-          Number(
-            element.dataset.sceneIndex
-          )
-        ];
-
-      const key =
-        element.dataset.sceneKey;
-
-      scene[key] =
-        key === 'hold'
-          ? Number(element.value)
-          : element.value;
-    }
-  );
-
-  bindInput(
-    '[data-scene-lines-section]',
-    element => {
-      const section =
-        st[
-          element.dataset
-            .sceneLinesSection
-        ];
-
-      section[
-        Number(
-          element.dataset.sceneIndex
-        )
-      ].lines =
-        element.value.split('\n');
-    }
-  );
-
-  document
-    .querySelectorAll(
-      '[data-add-fixed-scene]'
-    )
-    .forEach(button => {
-      button.onclick = () => {
-        st[
-          button.dataset.addFixedScene
-        ].push({
-          chapter: '',
-          lines: [
-            '新動畫'
-          ],
-          hold: 900
-        });
-
-        setDirty();
-        render();
-      };
-    });
-
-  document
-    .querySelectorAll(
-      '[data-remove-scene-section]'
-    )
-    .forEach(button => {
-      button.onclick = () => {
-        st[
-          button.dataset
-            .removeSceneSection
-        ].splice(
-          Number(
-            button.dataset.sceneIndex
-          ),
-          1
-        );
-
-        setDirty();
-        render();
-      };
-    });
-
-  bindInput(
-    '[data-interlude]',
-    element => {
-      const [
-        transitionIndex,
-        sceneIndex,
-        key
-      ] =
-        element.dataset.interlude
-          .split(':');
-
-      const scene =
-        st.interludes[
-          Number(transitionIndex)
-        ][
-          Number(sceneIndex)
-        ];
-
-      scene[key] =
-        key === 'hold'
-          ? Number(element.value)
-          : element.value;
-    }
-  );
-
-  bindInput(
-    '[data-interlude-lines]',
-    element => {
-      const [
-        transitionIndex,
-        sceneIndex
-      ] =
-        element.dataset
-          .interludeLines
-          .split(':')
-          .map(Number);
-
-      st.interludes[
-        transitionIndex
-      ][sceneIndex].lines =
-        element.value.split('\n');
-    }
-  );
-
-  document
-    .querySelectorAll(
-      '[data-add-interlude]'
-    )
-    .forEach(button => {
-      button.onclick = () => {
-        const transitionIndex =
-          Number(
-            button.dataset
-              .addInterlude
-          );
-
-        st.interludes[
-          transitionIndex
-        ].push({
-          chapter: '',
-          lines: [
-            '新動畫'
-          ],
-          hold: 900
-        });
-
-        setDirty();
-        render();
-      };
-    });
-
-  document
-    .querySelectorAll(
-      '[data-remove-interlude]'
-    )
-    .forEach(button => {
-      button.onclick = () => {
-        const [
-          transitionIndex,
-          sceneIndex
-        ] =
-          button.dataset
-            .removeInterlude
-            .split(':')
-            .map(Number);
-
-        st.interludes[
-          transitionIndex
-        ].splice(
-          sceneIndex,
-          1
-        );
-
-        setDirty();
-        render();
-      };
-    });
+function renderStory(){
+ const st=script().story;
+ const section=(key,title)=>`<div class="card"><div class="row"><h2>${title}</h2><span class="spacer"></span><button data-add-scene="${key}">＋新增段落</button></div>${(st[key]||[]).map((x,i)=>`<div class="list-item"><div class="grid"><div class="field"><label>章節標題</label><input data-story="${key}" data-i="${i}" data-k="chapter" value="${esc(x.chapter||'')}"></div><div class="field"><label>停留毫秒（4000 = 4 秒）</label><input type="number" data-story="${key}" data-i="${i}" data-k="hold" value="${Number(x.hold||900)}"></div></div><div class="field"><label>文字，每行一段</label><textarea data-story-lines="${key}" data-i="${i}">${esc((x.lines||[]).join('\n'))}</textarea></div><button class="danger" data-remove-scene="${key}" data-i="${i}">刪除段落</button></div>`).join('')}</div>`;
+ $('#editor').innerHTML=`<div class="card"><h2>首頁第一句</h2><div class="field"><label>每行一段</label><textarea id="openingQuote">${esc(st.opening.quote.join('\n'))}</textarea></div><div class="field"><label>開始按鈕</label><input id="openingButton" value="${esc(st.opening.button)}"></div></div>${section('prologue','開場動畫')}${section('interludes','題目間動畫')}${section('epilogue','結果前動畫')}`;
+ $('#openingQuote').oninput=e=>{st.opening.quote=e.target.value.split('\n');setDirty()};$('#openingButton').oninput=e=>{st.opening.button=e.target.value;setDirty()};
+ bindInput('[data-story]',el=>{st[el.dataset.story][el.dataset.i][el.dataset.k]=el.dataset.k==='hold'?Number(el.value):el.value});
+ bindInput('[data-story-lines]',el=>{st[el.dataset.story][el.dataset.i].lines=el.value.split('\n')});
+ document.querySelectorAll('[data-add-scene]').forEach(b=>b.onclick=()=>{st[b.dataset.addScene].push({chapter:'',lines:['新段落'],hold:4000});setDirty();render()});
+ document.querySelectorAll('[data-remove-scene]').forEach(b=>b.onclick=()=>{st[b.dataset.removeScene].splice(Number(b.dataset.i),1);setDirty();render()});
 }
 
 function renderQuestions() {
@@ -1154,13 +692,6 @@ function renderCharacters(){
  bindDropzones();
 }
 
-function renderHosts(){
- $('#editor').innerHTML=`<div class="card"><div class="row"><h2>主持人</h2><span class="spacer"></span><button id="addHost">＋新增主持人</button></div>${S.data.hosts.map((h,i)=>`<div class="list-item"><div class="grid three"><div class="field"><label>顯示名稱</label><input data-host="${i}:displayName" value="${esc(h.displayName||h.name)}"></div><div class="field"><label>主持人 ID</label><input data-host="${i}:id" value="${esc(h.id)}"></div><div class="field"><label>備註</label><input data-host="${i}:note" value="${esc(h.note||'')}"></div></div><button class="danger" data-remove-host="${i}">刪除</button></div>`).join('')}</div>`;
- bindInput('[data-host]',el=>{const [i,k]=el.dataset.host.split(':');S.data.hosts[Number(i)][k]=el.value});
- $('#addHost').onclick=()=>{S.data.hosts.push({id:`host-${Date.now()}`,displayName:'新主持人',note:''});setDirty();render()};
- document.querySelectorAll('[data-remove-host]').forEach(b=>b.onclick=()=>{S.data.hosts.splice(Number(b.dataset.removeHost),1);setDirty();render()});
-}
-
 function renderBgm(){
  const bgm=script().settings.bgm||={src:'',autoplay:false,loop:true,volume:.35};
  $('#editor').innerHTML=`<div class="card"><h2>劇本 BGM</h2>${bgm.src?`<audio controls src="/${esc(bgm.src)}"></audio><p><small>${esc(bgm.src)}</small></p>`:''}<div class="dropzone" data-upload="bgm">將 MP3 拖到這裡，或點擊選擇<input type="file" accept="audio/*" hidden></div><div class="grid three"><label><input id="bgmLoop" type="checkbox" ${bgm.loop?'checked':''}> 循環播放</label><label><input id="bgmAutoplay" type="checkbox" ${bgm.autoplay?'checked':''}> 自動播放</label><div class="field"><label>音量 0～1</label><input id="bgmVolume" type="number" min="0" max="1" step=".05" value="${bgm.volume}"></div></div></div>`;
@@ -1187,6 +718,6 @@ async function uploadFile(file,z){
 $('#loginForm').onsubmit=async e=>{e.preventDefault();try{await api('login',{method:'POST',body:JSON.stringify({password:$('#password').value})});showAdmin();await load()}catch(err){$('#loginStatus').textContent=err.message}};
 document.querySelectorAll('aside [data-tab]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render()});
 $('#reloadBtn').onclick=async()=>{if(S.dirty&&!confirm('尚未發布的修改會消失，繼續？'))return;await load();notice('已重新載入')};
-$('#publishBtn').onclick=async()=>{try{$('#publishBtn').disabled=true;await api('publish',{method:'POST',body:JSON.stringify(S.data)});S.dirty=false;$('#publishBtn').textContent='儲存並發布';notice('已 Commit 到 GitHub，等待 Cloudflare 部署')}catch(e){notice(e.message,true)}finally{$('#publishBtn').disabled=false}};
+$('#publishBtn').onclick=async()=>{try{$('#publishBtn').disabled=true;S.data.hosts=[];await api('publish',{method:'POST',body:JSON.stringify(S.data)});S.dirty=false;$('#publishBtn').textContent='儲存並發布';notice('已 Commit 到 GitHub，等待 Cloudflare 部署')}catch(e){notice(e.message,true)}finally{$('#publishBtn').disabled=false}};
 $('#logoutBtn').onclick=async()=>{await api('logout',{method:'POST'});showLogin()};
 session();

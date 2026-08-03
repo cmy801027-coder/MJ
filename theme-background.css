@@ -1,0 +1,30 @@
+
+/* 每個劇本的玩家端背景色 */
+:root {
+  --script-background: #080a0f;
+}
+
+html,
+body {
+  background-color: var(--script-background);
+}
+
+body::before,
+body::after {
+  background-color: var(--script-background);
+}
+
+/* 管理後台顏色欄位 */
+.color-setting-row {
+  display: grid;
+  grid-template-columns: 72px minmax(140px, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.color-setting-row input[type="color"] {
+  width: 72px;
+  min-height: 44px;
+  padding: 3px;
+  cursor: pointer;
+}
