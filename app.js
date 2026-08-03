@@ -57,10 +57,9 @@ function buildGoogleSheetPayload() {
     })),
     note: state.note || '',
     scores: [...state.scores],
-    questions: (DATA.questions || []).map(
-      question => String(question.question || '').trim()
-    ),
-    answers: [...state.answers]
+    answers: [...state.answers],
+    pageUrl: window.location.href,
+    userAgent: navigator.userAgent
   };
 }
 
@@ -448,7 +447,7 @@ function renderResult(p){
   p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><div class="result-card"><img src="${esc(top.image)}" alt="${esc(top.name)}">
   <div class="result-name"><h1>${esc(top.name)}</h1><p>${esc(top.kr||'')}</p></div></div><p class="desc">${esc(top.description||top.desc||'')}</p>
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
-  <div class="note"><textarea id="note" placeholder="${esc(s.notePlaceholder)}">${esc(state.note)}</textarea></div><div class="actions">
+  <div class="actions">
   <button class="btn" id="goShare">${esc(s.shareButton)}</button><button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
   if(top.music) new Audio(top.music).play().catch(()=>{});
 }
@@ -500,6 +499,17 @@ function renderShare(p) {
         </label>
         <input id="playDate" type="date" value="${esc(state.playDate)}">
       </div>
+    </div>
+
+    <div class="note">
+      <label for="note">
+        ${esc(shareSetting.noteLabel || '玩家留言 MESSAGE')}
+      </label>
+      <textarea
+        id="note"
+        maxlength="1000"
+        placeholder="${esc(DATA.setting.result?.notePlaceholder || '可以留下想對主持人說的話')}"
+      >${esc(state.note)}</textarea>
     </div>
 
     <div class="actions">
@@ -664,6 +674,9 @@ function saveForm() {
 
   state.playDate =
     document.querySelector('#playDate')?.value || '';
+
+  state.note =
+    document.querySelector('#note')?.value.trim() || '';
 }
 
 function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
@@ -859,7 +872,7 @@ function bind(){
       );
     });
 
-  document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
+  document.querySelector('#goShare')?.addEventListener('click',()=>{state.page='share';render()});
   document.querySelector('#submitToSheet')?.addEventListener('click',submitResultToSheet);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
