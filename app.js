@@ -67,18 +67,52 @@ async function postResultToGoogleSheet(payload) {
   const endpoint = getGoogleSheetEndpoint();
 
   if (!endpoint) {
-    throw new Error('尚未設定 Google Apps Script Web App URL');
+    throw new Error(
+      '尚未設定 Google Apps Script Web App URL'
+    );
   }
 
-  await fetch(endpoint, {
-    method: 'POST',
-    mode: 'no-cors',
-    cache: 'no-store',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
-    body: JSON.stringify(payload)
-  });
+  /*
+   * 不再使用 no-cors 直接送 Google。
+   * 改由同網域 Cloudflare Pages Function 代理，
+   * 才能確認 Apps Script 是否真的寫入成功。
+   */
+  const response = await fetch(
+    '/api/submit-result',
+    {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'Content-Type':
+          'application/json'
+      },
+      body: JSON.stringify({
+        endpoint,
+        payload
+      })
+    }
+  );
+
+  const resultData =
+    await response.json().catch(
+      () => ({})
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      resultData.error ||
+      `送出失敗（HTTP ${response.status}）`
+    );
+  }
+
+  if (resultData.ok !== true) {
+    throw new Error(
+      resultData.error ||
+      'Google Sheet 未確認寫入成功'
+    );
+  }
+
+  return resultData;
 }
 
 
