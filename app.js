@@ -654,7 +654,7 @@ async function createResultShareBlob() {
     document.createElement('canvas');
 
   canvas.width = 1080;
-  canvas.height = 1920;
+  canvas.height = 2160;
 
   const context =
     canvas.getContext('2d');
@@ -777,15 +777,6 @@ async function createResultShareBlob() {
   const imageWidth = 780;
   const imageHeight = 690;
 
-  context.strokeStyle = borderColor;
-  context.lineWidth = 5;
-  context.strokeRect(
-    imageX,
-    imageY,
-    imageWidth,
-    imageHeight
-  );
-
   try {
     const image =
       await loadShareImage(top.image);
@@ -793,10 +784,10 @@ async function createResultShareBlob() {
     drawContainImage(
       context,
       image,
-      imageX + 8,
-      imageY + 8,
-      imageWidth - 16,
-      imageHeight - 16,
+      imageX,
+      imageY,
+      imageWidth,
+      imageHeight,
       panelColor
     );
   } catch (error) {
@@ -809,10 +800,10 @@ async function createResultShareBlob() {
       hexToRgba(panelColor, .7);
 
     context.fillRect(
-      imageX + 8,
-      imageY + 8,
-      imageWidth - 16,
-      imageHeight - 16
+      imageX,
+      imageY,
+      imageWidth,
+      imageHeight
     );
 
     context.fillStyle = mutedColor;
@@ -825,7 +816,7 @@ async function createResultShareBlob() {
     );
   }
 
-  cursorY = imageY + imageHeight + 92;
+  cursorY = imageY + imageHeight + 172;
 
   context.fillStyle = titleColor;
   context.font =
@@ -871,7 +862,7 @@ async function createResultShareBlob() {
 
   const rankingY = Math.min(
     cursorY,
-    1880 - rankingHeight
+    canvas.height - 40 - rankingHeight
   );
 
   context.strokeStyle = borderColor;
