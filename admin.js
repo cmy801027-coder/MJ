@@ -62,14 +62,30 @@ function renderScripts(){
 
 ${[
   ['backgroundColor','背景顏色','#080a0f'],
+  ['backgroundSecondaryColor','第二背景','#151a25'],
+  ['panelColor','面板背景','#0d1016'],
+  ['cardColor','卡片背景','#0e1117'],
+  ['cardHoverColor','卡片 Hover','#131722'],
   ['titleColor','主標題文字','#f4efe2'],
+  ['subtitleColor','副標題文字','#b8b9bf'],
   ['textColor','一般內文','#d8d9de'],
   ['questionColor','題目文字','#f1ede4'],
   ['optionColor','選項文字','#d8d9de'],
   ['mutedColor','弱化文字','#8e949e'],
   ['accentColor','強調色','#d7c28b'],
+  ['accentSecondaryColor','第二強調色','#aeb9d7'],
+  ['borderColor','邊框顏色','#333842'],
   ['buttonTextColor','按鈕文字','#111318'],
-  ['buttonBackgroundColor','按鈕背景','#d7c28b']
+  ['buttonBackgroundColor','按鈕背景','#d7c28b'],
+  ['buttonHoverColor','按鈕 Hover','#f4efe2'],
+  ['progressBackgroundColor','進度條底色','#22262d'],
+  ['progressColor','進度條','#d7c28b'],
+  ['sliderStartColor','拉桿左側','#d5c38a'],
+  ['sliderMiddleColor','拉桿中央','#aabfac'],
+  ['sliderEndColor','拉桿右側','#9eacd1'],
+  ['sliderThumbColor','拉桿按鈕','#f2f4f1'],
+  ['bestColor','最喜歡','#d9c993'],
+  ['worstColor','最不喜歡','#aeb9d7']
 ].map(([key,label,fallback])=>`
   <div class="theme-color-item">
     <span>${label}</span>
@@ -167,15 +183,11 @@ base.settings.theme=structuredClone(
    };
 
    const themeDefaults={
-     backgroundColor:'#080a0f',
-     titleColor:'#f4efe2',
-     textColor:'#d8d9de',
-     questionColor:'#f1ede4',
-     optionColor:'#d8d9de',
-     mutedColor:'#8e949e',
-     accentColor:'#d7c28b',
-     buttonTextColor:'#111318',
-     buttonBackgroundColor:'#d7c28b'
+     backgroundColor:'#080a0f',backgroundSecondaryColor:'#151a25',panelColor:'#0d1016',cardColor:'#0e1117',cardHoverColor:'#131722',
+     titleColor:'#f4efe2',subtitleColor:'#b8b9bf',textColor:'#d8d9de',questionColor:'#f1ede4',optionColor:'#d8d9de',mutedColor:'#8e949e',
+     accentColor:'#d7c28b',accentSecondaryColor:'#aeb9d7',borderColor:'#333842',buttonTextColor:'#111318',buttonBackgroundColor:'#d7c28b',buttonHoverColor:'#f4efe2',
+     progressBackgroundColor:'#22262d',progressColor:'#d7c28b',sliderStartColor:'#d5c38a',sliderMiddleColor:'#aabfac',sliderEndColor:'#9eacd1',sliderThumbColor:'#f2f4f1',
+     bestColor:'#d9c993',worstColor:'#aeb9d7'
    };
 
    const saveThemeColor=(key,value)=>{

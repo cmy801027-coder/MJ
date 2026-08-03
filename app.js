@@ -14,7 +14,6 @@ let liffError = '';
 const resetState = () => ({
   page: 'scriptSelect', route: null, index: 0, scores: [0,0,0],
   answers: [], muted: false, note: '', playerName: '', playDate: '',
-  selectedHostId: ''
 });
 state = resetState();
 
@@ -226,59 +225,31 @@ function applyScriptTheme() {
     DATA.setting?.theme || {};
 
   const colors = {
-    '--script-background':
-      normalizeHexColor(
-        theme.backgroundColor,
-        '#080a0f'
-      ),
-
-    '--script-title':
-      normalizeHexColor(
-        theme.titleColor,
-        '#f4efe2'
-      ),
-
-    '--script-text':
-      normalizeHexColor(
-        theme.textColor,
-        '#d8d9de'
-      ),
-
-    '--script-question':
-      normalizeHexColor(
-        theme.questionColor,
-        '#f1ede4'
-      ),
-
-    '--script-option':
-      normalizeHexColor(
-        theme.optionColor,
-        '#d8d9de'
-      ),
-
-    '--script-muted':
-      normalizeHexColor(
-        theme.mutedColor,
-        '#8e949e'
-      ),
-
-    '--script-accent':
-      normalizeHexColor(
-        theme.accentColor,
-        '#d7c28b'
-      ),
-
-    '--script-button-text':
-      normalizeHexColor(
-        theme.buttonTextColor,
-        '#111318'
-      ),
-
-    '--script-button-background':
-      normalizeHexColor(
-        theme.buttonBackgroundColor,
-        '#d7c28b'
-      )
+    '--theme-background': normalizeHexColor(theme.backgroundColor, '#080a0f'),
+    '--theme-background-secondary': normalizeHexColor(theme.backgroundSecondaryColor, '#151a25'),
+    '--theme-panel': normalizeHexColor(theme.panelColor, '#0d1016'),
+    '--theme-card': normalizeHexColor(theme.cardColor, '#0e1117'),
+    '--theme-card-hover': normalizeHexColor(theme.cardHoverColor, '#131722'),
+    '--theme-title': normalizeHexColor(theme.titleColor, '#f4efe2'),
+    '--theme-subtitle': normalizeHexColor(theme.subtitleColor, '#b8b9bf'),
+    '--theme-text': normalizeHexColor(theme.textColor, '#d8d9de'),
+    '--theme-question': normalizeHexColor(theme.questionColor, '#f1ede4'),
+    '--theme-option': normalizeHexColor(theme.optionColor, '#d8d9de'),
+    '--theme-muted': normalizeHexColor(theme.mutedColor, '#8e949e'),
+    '--theme-accent': normalizeHexColor(theme.accentColor, '#d7c28b'),
+    '--theme-accent-secondary': normalizeHexColor(theme.accentSecondaryColor, '#aeb9d7'),
+    '--theme-border': normalizeHexColor(theme.borderColor, '#333842'),
+    '--theme-button-text': normalizeHexColor(theme.buttonTextColor, '#111318'),
+    '--theme-button-background': normalizeHexColor(theme.buttonBackgroundColor, '#d7c28b'),
+    '--theme-button-hover': normalizeHexColor(theme.buttonHoverColor, '#f4efe2'),
+    '--theme-progress-background': normalizeHexColor(theme.progressBackgroundColor, '#22262d'),
+    '--theme-progress': normalizeHexColor(theme.progressColor, '#d7c28b'),
+    '--theme-slider-start': normalizeHexColor(theme.sliderStartColor, '#d5c38a'),
+    '--theme-slider-middle': normalizeHexColor(theme.sliderMiddleColor, '#aabfac'),
+    '--theme-slider-end': normalizeHexColor(theme.sliderEndColor, '#9eacd1'),
+    '--theme-slider-thumb': normalizeHexColor(theme.sliderThumbColor, '#f2f4f1'),
+    '--theme-best': normalizeHexColor(theme.bestColor, '#d9c993'),
+    '--theme-worst': normalizeHexColor(theme.worstColor, '#aeb9d7')
   };
 
   Object.entries(colors).forEach(
@@ -293,13 +264,13 @@ function applyScriptTheme() {
   );
 
   document.body.style.background =
-    colors['--script-background'];
+    colors['--theme-background'];
 
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute(
       'content',
-      colors['--script-background']
+      colors['--theme-background']
     );
 }
 
@@ -571,20 +542,11 @@ async function createResultShareBlob() {
       canvas.height
     );
 
-  gradient.addColorStop(
-    0,
-    '#11151d'
-  );
+  gradient.addColorStop(0, normalizeHexColor(DATA.setting?.theme?.backgroundSecondaryColor, '#151a25'));
 
-  gradient.addColorStop(
-    0.55,
-    '#080a0f'
-  );
+  gradient.addColorStop(0.55, normalizeHexColor(DATA.setting?.theme?.backgroundColor, '#080a0f'));
 
-  gradient.addColorStop(
-    1,
-    '#17120e'
-  );
+  gradient.addColorStop(1, normalizeHexColor(DATA.setting?.theme?.panelColor, '#17120e'));
 
   context.fillStyle = gradient;
   context.fillRect(
@@ -658,7 +620,7 @@ async function createResultShareBlob() {
     1050
   );
 
-  context.fillStyle = '#f4efe2';
+  context.fillStyle = normalizeHexColor(DATA.setting?.theme?.titleColor, '#f4efe2');
   context.font =
     '700 86px sans-serif';
 
@@ -682,7 +644,7 @@ async function createResultShareBlob() {
     );
   }
 
-  context.fillStyle = '#d7c28b';
+  context.fillStyle = normalizeHexColor(DATA.setting?.theme?.accentColor, '#d7c28b');
   context.font =
     '700 48px sans-serif';
 
@@ -955,92 +917,6 @@ async function downloadResultImage() {
       button.disabled = false;
       button.textContent =
         '存成圖片';
-    }
-  }
-}
-
-async function shareResultToSocial() {
-  const button =
-    document.querySelector(
-      '#shareResultSocial'
-    );
-
-  if (button) {
-    button.disabled = true;
-    button.textContent =
-      '準備分享圖…';
-  }
-
-  try {
-    const blob =
-      await createResultShareBlob();
-
-    const file =
-      new File(
-        [blob],
-        resultImageFileName(),
-        {
-          type: 'image/png'
-        }
-      );
-
-    if (
-      navigator.share &&
-      navigator.canShare?.({
-        files: [file]
-      })
-    ) {
-      await navigator.share({
-        files: [file],
-        title:
-          `${DATA.setting.title || DATA.setting.name} 測驗結果`,
-        text:
-          `我的角色結果是 ${result().top.name}`
-      });
-
-      return;
-    }
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement('a');
-
-    link.href = url;
-    link.download =
-      resultImageFileName();
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    window.setTimeout(
-      () =>
-        URL.revokeObjectURL(url),
-      1500
-    );
-
-    window.alert(
-      '此瀏覽器無法開啟社群分享選單，圖片已下載。請從社群 App 選擇這張圖片。'
-    );
-  } catch (error) {
-    if (
-      error?.name !==
-      'AbortError'
-    ) {
-      console.error(error);
-
-      window.alert(
-        error?.message ||
-        '社群分享準備失敗'
-      );
-    }
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent =
-        '分享社群';
     }
   }
 }
