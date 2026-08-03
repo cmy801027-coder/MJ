@@ -57,9 +57,10 @@ function buildGoogleSheetPayload() {
     })),
     note: state.note || '',
     scores: [...state.scores],
-    answers: [...state.answers],
-    pageUrl: window.location.href,
-    userAgent: navigator.userAgent
+    questions: (DATA.questions || []).map(
+      question => String(question.question || '').trim()
+    ),
+    answers: [...state.answers]
   };
 }
 
@@ -343,6 +344,506 @@ function result(){
   const ranking=chars().map((c,i)=>({...c,score:state.scores[i]||0,pct:Math.round((state.scores[i]||0)/max*100)})).sort((a,b)=>b.score-a.score);
   return {ranking,top:ranking[0]};
 }
+
+function loadShareImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(
+      new Error(`無法載入分享圖片：${src}`)
+    );
+    image.src = src;
+  });
+}
+
+function drawCoverImage(
+  context,
+  image,
+  x,
+  y,
+  width,
+  height
+) {
+  const sourceRatio =
+    image.width / image.height;
+
+  const targetRatio =
+    width / height;
+
+  let sourceWidth =
+    image.width;
+
+  let sourceHeight =
+    image.height;
+
+  let sourceX = 0;
+  let sourceY = 0;
+
+  if (sourceRatio > targetRatio) {
+    sourceWidth =
+      image.height * targetRatio;
+
+    sourceX =
+      (image.width - sourceWidth) / 2;
+  } else {
+    sourceHeight =
+      image.width / targetRatio;
+
+    sourceY =
+      (image.height - sourceHeight) / 2;
+  }
+
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    x,
+    y,
+    width,
+    height
+  );
+}
+
+function wrapCanvasText(
+  context,
+  text,
+  maxWidth
+) {
+  const normalized =
+    String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  const lines = [];
+  let current = '';
+
+  for (const character of normalized) {
+    const next =
+      current + character;
+
+    if (
+      current &&
+      context.measureText(next).width >
+        maxWidth
+    ) {
+      lines.push(current);
+      current = character;
+    } else {
+      current = next;
+    }
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines;
+}
+
+async function createResultShareBlob() {
+  const { top } = result();
+
+  if (!top) {
+    throw new Error('找不到角色結果');
+  }
+
+  const canvas =
+    document.createElement('canvas');
+
+  canvas.width = 1080;
+  canvas.height = 1920;
+
+  const context =
+    canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('瀏覽器不支援圖片產生');
+  }
+
+  const gradient =
+    context.createLinearGradient(
+      0,
+      0,
+      0,
+      canvas.height
+    );
+
+  gradient.addColorStop(
+    0,
+    '#11151d'
+  );
+
+  gradient.addColorStop(
+    0.55,
+    '#080a0f'
+  );
+
+  gradient.addColorStop(
+    1,
+    '#17120e'
+  );
+
+  context.fillStyle = gradient;
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  try {
+    const image =
+      await loadShareImage(
+        top.image
+      );
+
+    drawCoverImage(
+      context,
+      image,
+      0,
+      0,
+      1080,
+      1150
+    );
+
+    const fade =
+      context.createLinearGradient(
+        0,
+        600,
+        0,
+        1220
+      );
+
+    fade.addColorStop(
+      0,
+      'rgba(8,10,15,0)'
+    );
+
+    fade.addColorStop(
+      1,
+      'rgba(8,10,15,1)'
+    );
+
+    context.fillStyle = fade;
+    context.fillRect(
+      0,
+      560,
+      1080,
+      700
+    );
+  } catch (error) {
+    console.warn(
+      '分享圖角色圖片載入失敗',
+      error
+    );
+  }
+
+  context.textAlign = 'center';
+
+  context.fillStyle =
+    'rgba(236,229,209,.8)';
+
+  context.font =
+    '500 28px sans-serif';
+
+  context.fillText(
+    String(
+      DATA.setting.subtitle ||
+      'ASSIGN ROLES'
+    ).toUpperCase(),
+    540,
+    1050
+  );
+
+  context.fillStyle = '#f4efe2';
+  context.font =
+    '700 86px sans-serif';
+
+  context.fillText(
+    top.name || '',
+    540,
+    1170
+  );
+
+  if (top.kr) {
+    context.fillStyle =
+      'rgba(244,239,226,.62)';
+
+    context.font =
+      '400 30px sans-serif';
+
+    context.fillText(
+      top.kr,
+      540,
+      1220
+    );
+  }
+
+  context.fillStyle = '#d7c28b';
+  context.font =
+    '700 48px sans-serif';
+
+  context.fillText(
+    `${top.pct}% 共鳴`,
+    540,
+    1310
+  );
+
+  context.textAlign = 'left';
+  context.fillStyle =
+    'rgba(244,239,226,.86)';
+
+  context.font =
+    '400 34px sans-serif';
+
+  const descriptionLines =
+    wrapCanvasText(
+      context,
+      top.description ||
+      top.desc ||
+      '',
+      820
+    ).slice(0, 6);
+
+  descriptionLines.forEach(
+    (line, index) => {
+      context.fillText(
+        line,
+        130,
+        1410 + index * 55
+      );
+    }
+  );
+
+  context.strokeStyle =
+    'rgba(215,194,139,.5)';
+
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(130, 1770);
+  context.lineTo(950, 1770);
+  context.stroke();
+
+  context.textAlign = 'center';
+  context.fillStyle =
+    'rgba(244,239,226,.72)';
+
+  context.font =
+    '400 28px sans-serif';
+
+  context.fillText(
+    DATA.setting.title ||
+      DATA.setting.name ||
+      'Assign Roles',
+    540,
+    1830
+  );
+
+  context.fillStyle =
+    'rgba(244,239,226,.42)';
+
+  context.font =
+    '400 22px sans-serif';
+
+  context.fillText(
+    '角色分配測驗',
+    540,
+    1875
+  );
+
+  return new Promise(
+    (resolve, reject) => {
+      canvas.toBlob(
+        blob => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(
+              new Error(
+                '圖片產生失敗'
+              )
+            );
+          }
+        },
+        'image/png',
+        1
+      );
+    }
+  );
+}
+
+function resultImageFileName() {
+  const { top } = result();
+
+  const safeName =
+    String(
+      top?.name ||
+      'result'
+    )
+      .replace(
+        /[\\/:*?"<>|]/g,
+        '-'
+      );
+
+  const safeScript =
+    String(
+      DATA.setting.title ||
+      DATA.setting.name ||
+      'Assign-Roles'
+    )
+      .replace(
+        /[\\/:*?"<>|]/g,
+        '-'
+      );
+
+  return (
+    `${safeScript}_${safeName}.png`
+  );
+}
+
+async function downloadResultImage() {
+  const button =
+    document.querySelector(
+      '#saveResultImage'
+    );
+
+  if (button) {
+    button.disabled = true;
+    button.textContent =
+      '圖片產生中…';
+  }
+
+  try {
+    const blob =
+      await createResultShareBlob();
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement('a');
+
+    link.href = url;
+    link.download =
+      resultImageFileName();
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(
+      () =>
+        URL.revokeObjectURL(url),
+      1500
+    );
+  } catch (error) {
+    console.error(error);
+
+    window.alert(
+      error?.message ||
+      '圖片產生失敗'
+    );
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent =
+        '存成圖片';
+    }
+  }
+}
+
+async function shareResultToInstagram() {
+  const button =
+    document.querySelector(
+      '#shareResultInstagram'
+    );
+
+  if (button) {
+    button.disabled = true;
+    button.textContent =
+      '準備分享圖…';
+  }
+
+  try {
+    const blob =
+      await createResultShareBlob();
+
+    const file =
+      new File(
+        [blob],
+        resultImageFileName(),
+        {
+          type: 'image/png'
+        }
+      );
+
+    if (
+      navigator.share &&
+      navigator.canShare?.({
+        files: [file]
+      })
+    ) {
+      await navigator.share({
+        files: [file],
+        title:
+          `${DATA.setting.title || DATA.setting.name} 測驗結果`,
+        text:
+          `我的角色結果是 ${result().top.name}`
+      });
+
+      return;
+    }
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement('a');
+
+    link.href = url;
+    link.download =
+      resultImageFileName();
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(
+      () =>
+        URL.revokeObjectURL(url),
+      1500
+    );
+
+    window.alert(
+      '此瀏覽器無法直接開啟 Instagram 分享選單，圖片已下載。請打開 Instagram 後選擇這張圖片。'
+    );
+  } catch (error) {
+    if (
+      error?.name !==
+      'AbortError'
+    ) {
+      console.error(error);
+
+      window.alert(
+        error?.message ||
+        'Instagram 分享準備失敗'
+      );
+    }
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent =
+        '放到 IG';
+    }
+  }
+}
 function selectedHost(){return (DATA.hosts||[]).find(h=>h.id===state.selectedHostId)}
 
 function renderScriptSelect(p){
@@ -501,8 +1002,11 @@ function renderResult(p){
   p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><div class="result-card"><img src="${esc(top.image)}" alt="${esc(top.name)}">
   <div class="result-name"><h1>${esc(top.name)}</h1><p>${esc(top.kr||'')}</p></div></div><p class="desc">${esc(top.description||top.desc||'')}</p>
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
-  <div class="note"><textarea id="note" placeholder="${esc(s.notePlaceholder)}">${esc(state.note)}</textarea></div><div class="actions">
-  <button class="btn" id="goShare">${esc(s.shareButton)}</button><button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
+  <div class="actions result-share-actions">
+  <button class="btn" id="goShare">${esc(s.shareButton)}</button>
+  <button class="ghost" id="saveResultImage">存成圖片</button>
+  <button class="ghost" id="shareResultInstagram">放到 IG</button>
+  <button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
   if(top.music) new Audio(top.music).play().catch(()=>{});
 }
 function renderShare(p) {
@@ -553,6 +1057,17 @@ function renderShare(p) {
         </label>
         <input id="playDate" type="date" value="${esc(state.playDate)}">
       </div>
+    </div>
+
+    <div class="note">
+      <label for="note">
+        ${esc(shareSetting.noteLabel || '玩家留言 MESSAGE')}
+      </label>
+      <textarea
+        id="note"
+        maxlength="1000"
+        placeholder="${esc(DATA.setting.result?.notePlaceholder || '可以留下想說的話')}"
+      >${esc(state.note)}</textarea>
     </div>
 
     <div class="actions">
@@ -716,6 +1231,9 @@ function saveForm() {
 
   state.playDate =
     document.querySelector('#playDate')?.value || '';
+
+  state.note =
+    document.querySelector('#note')?.value.trim() || '';
 }
 
 function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
@@ -911,7 +1429,9 @@ function bind(){
       );
     });
 
-  document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
+  document.querySelector('#goShare')?.addEventListener('click',()=>{state.page='share';render()});
+  document.querySelector('#saveResultImage')?.addEventListener('click',downloadResultImage);
+  document.querySelector('#shareResultInstagram')?.addEventListener('click',shareResultToInstagram);
   document.querySelector('#submitToSheet')?.addEventListener('click',submitResultToSheet);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
