@@ -43,8 +43,494 @@ async function load(){S.data=await api('repository');S.scriptId=S.scriptId||S.da
 function script(){return S.data.scripts[S.scriptId]}
 function setDirty(){S.dirty=true;$('#publishBtn').textContent='儲存並發布 *'}
 function bindInput(selector,handler){document.querySelectorAll(selector).forEach(el=>el.addEventListener('input',e=>{handler(e.target);setDirty()}))}
-function render(){document.querySelectorAll('aside [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));$('#pageTitle').textContent={scripts:'劇本',story:'開場動畫',questions:'題目',characters:'角色',bgm:'BGM'}[S.tab];$('#currentScriptLabel').textContent=script()?.settings?.name||'';({scripts:renderScripts,story:renderStory,questions:renderQuestions,characters:renderCharacters,bgm:renderBgm}[S.tab])();bindCommon()}
+function render(){document.querySelectorAll('aside [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));$('#pageTitle').textContent={scripts:'劇本',story:'開場動畫',questions:'題目',characters:'角色',bgm:'BGM'}[S.tab];$('#currentScriptLabel').textContent=script()?.settings?.name||'';({scripts:renderScripts,story:renderStory,questions:renderQuestions,characters:renderCharacters,bgm:renderBgm}[S.tab])();bindCommon();decorateTextStyleEditors()}
 function bindCommon(){document.querySelectorAll('[data-action=delete]').forEach(b=>b.onclick=()=>{if(confirm('確定刪除？')){const path=b.dataset.path.split('.');let obj=S.data;for(let i=0;i<path.length-1;i++)obj=obj[path[i]];obj.splice(Number(path.at(-1)),1);setDirty();render()}})}
+
+
+const TEXT_FONT_OPTIONS = [
+  ['notoSerif','Noto Serif TC'],
+  ['notoSans','Noto Sans TC'],
+  ['serif','Serif'],
+  ['sans','Sans Serif'],
+  ['mono','Monospace'],
+  ['cursive','Cursive']
+];
+
+function inferTextStyleKey(element) {
+  if (element.id === 'scriptName') {
+    return 'settings.name';
+  }
+
+  if (element.id === 'scriptTitle') {
+    return 'settings.title';
+  }
+
+  if (element.id === 'resultImagePreface') {
+    return 'settings.result.shareImagePreface';
+  }
+
+  if (element.id === 'openingQuote') {
+    return 'story.opening.quote';
+  }
+
+  if (element.id === 'openingButton') {
+    return 'story.opening.button';
+  }
+
+  if (element.dataset.story) {
+    return (
+      `story.${element.dataset.story}.` +
+      `${element.dataset.i}.` +
+      `${element.dataset.k}`
+    );
+  }
+
+  if (element.dataset.storyLines) {
+    return (
+      `story.${element.dataset.storyLines}.` +
+      `${element.dataset.i}.lines`
+    );
+  }
+
+  if (
+    element.dataset.q !== undefined &&
+    element.dataset.k
+  ) {
+    return (
+      `questions.${element.dataset.q}.` +
+      `${element.dataset.k}`
+    );
+  }
+
+  if (element.dataset.answerText) {
+    const [questionIndex, answerIndex] =
+      element.dataset.answerText.split(':');
+
+    return (
+      `questions.${questionIndex}.answers.` +
+      `${answerIndex}.text`
+    );
+  }
+
+  if (element.dataset.slider) {
+    const [questionIndex, key] =
+      element.dataset.slider.split(':');
+
+    if (
+      [
+        'leftLabel',
+        'centerLabel',
+        'rightLabel'
+      ].includes(key)
+    ) {
+      return (
+        `questions.${questionIndex}.slider.${key}`
+      );
+    }
+  }
+
+  if (element.dataset.char) {
+    const [group, index, key] =
+      element.dataset.char.split(':');
+
+    if (
+      [
+        'name',
+        'kr',
+        'description'
+      ].includes(key)
+    ) {
+      return (
+        `characters.${group}.${index}.${key}`
+      );
+    }
+  }
+
+  return '';
+}
+
+function getTextStyle(styleKey) {
+  script().settings.textStyles ||= {};
+
+  return (
+    script().settings.textStyles[styleKey] ||=
+      {
+        fontFamily: '',
+        fontSize: '',
+        color: '',
+        bold: false,
+        italic: false,
+        underline: false
+      }
+  );
+}
+
+function renderTextStyleToolbar(
+  styleKey
+) {
+  const style =
+    getTextStyle(styleKey);
+
+  return `
+    <div
+      class="text-style-toolbar"
+      data-text-style-toolbar="${esc(styleKey)}"
+    >
+      <label>
+        <span>字體</span>
+        <select data-style-prop="fontFamily">
+          <option value="">沿用主題</option>
+          ${
+            TEXT_FONT_OPTIONS.map(
+              ([value, label]) => `
+                <option
+                  value="${value}"
+                  ${
+                    style.fontFamily === value
+                      ? 'selected'
+                      : ''
+                  }
+                >
+                  ${label}
+                </option>
+              `
+            ).join('')
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>字級</span>
+        <input
+          type="number"
+          min="8"
+          max="160"
+          step="1"
+          data-style-prop="fontSize"
+          value="${esc(style.fontSize || '')}"
+          placeholder="預設"
+        >
+      </label>
+
+      <label>
+        <span>顏色</span>
+        <div class="text-style-color">
+          <input
+            type="color"
+            data-style-color-picker
+            value="${
+              /^#[0-9a-fA-F]{6}$/.test(
+                style.color || ''
+              )
+                ? style.color
+                : '#ffffff'
+            }"
+          >
+          <input
+            data-style-prop="color"
+            value="${esc(style.color || '')}"
+            placeholder="沿用主題"
+            maxlength="7"
+          >
+        </div>
+      </label>
+
+      <div class="text-style-toggles">
+        <button
+          type="button"
+          data-style-toggle="bold"
+          class="${style.bold ? 'active' : ''}"
+          title="粗體"
+        >
+          B
+        </button>
+
+        <button
+          type="button"
+          data-style-toggle="italic"
+          class="${style.italic ? 'active' : ''}"
+          title="斜體"
+        >
+          I
+        </button>
+
+        <button
+          type="button"
+          data-style-toggle="underline"
+          class="${style.underline ? 'active' : ''}"
+          title="底線"
+        >
+          U
+        </button>
+
+        <button
+          type="button"
+          data-style-reset
+          class="secondary"
+        >
+          清除格式
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function syncTextStylePreview(
+  field,
+  style
+) {
+  const fontMap = {
+    notoSerif:
+      '"Noto Serif TC", serif',
+    notoSans:
+      '"Noto Sans TC", sans-serif',
+    serif:
+      'serif',
+    sans:
+      'sans-serif',
+    mono:
+      'monospace',
+    cursive:
+      'cursive'
+  };
+
+  field.style.fontFamily =
+    fontMap[style.fontFamily] || '';
+
+  field.style.fontSize =
+    style.fontSize
+      ? `${style.fontSize}px`
+      : '';
+
+  field.style.color =
+    style.color || '';
+
+  field.style.fontWeight =
+    style.bold ? '700' : '';
+
+  field.style.fontStyle =
+    style.italic
+      ? 'italic'
+      : '';
+
+  field.style.textDecoration =
+    style.underline
+      ? 'underline'
+      : '';
+}
+
+function bindTextStyleToolbar(
+  toolbar,
+  field,
+  styleKey
+) {
+  const style =
+    getTextStyle(styleKey);
+
+  syncTextStylePreview(
+    field,
+    style
+  );
+
+  toolbar
+    .querySelectorAll(
+      '[data-style-prop]'
+    )
+    .forEach(control => {
+      const eventName =
+        control.tagName === 'SELECT'
+          ? 'change'
+          : 'input';
+
+      control.addEventListener(
+        eventName,
+        () => {
+          const property =
+            control.dataset.styleProp;
+
+          let value =
+            control.value;
+
+          if (
+            property === 'fontSize'
+          ) {
+            value =
+              value === ''
+                ? ''
+                : Math.max(
+                    8,
+                    Math.min(
+                      160,
+                      Number(value)
+                    )
+                  );
+          }
+
+          if (
+            property === 'color' &&
+            value !== '' &&
+            !/^#[0-9a-fA-F]{6}$/.test(
+              value
+            )
+          ) {
+            return;
+          }
+
+          style[property] = value;
+
+          if (property === 'color') {
+            const picker =
+              toolbar.querySelector(
+                '[data-style-color-picker]'
+              );
+
+            if (
+              picker &&
+              /^#[0-9a-fA-F]{6}$/.test(
+                value
+              )
+            ) {
+              picker.value = value;
+            }
+          }
+
+          syncTextStylePreview(
+            field,
+            style
+          );
+
+          setDirty();
+        }
+      );
+    });
+
+  toolbar
+    .querySelector(
+      '[data-style-color-picker]'
+    )
+    ?.addEventListener(
+      'input',
+      event => {
+        style.color =
+          event.target.value;
+
+        const textInput =
+          toolbar.querySelector(
+            '[data-style-prop="color"]'
+          );
+
+        if (textInput) {
+          textInput.value =
+            event.target.value;
+        }
+
+        syncTextStylePreview(
+          field,
+          style
+        );
+
+        setDirty();
+      }
+    );
+
+  toolbar
+    .querySelectorAll(
+      '[data-style-toggle]'
+    )
+    .forEach(button => {
+      button.onclick = () => {
+        const property =
+          button.dataset.styleToggle;
+
+        style[property] =
+          !style[property];
+
+        button.classList.toggle(
+          'active',
+          style[property]
+        );
+
+        syncTextStylePreview(
+          field,
+          style
+        );
+
+        setDirty();
+      };
+    });
+
+  toolbar
+    .querySelector(
+      '[data-style-reset]'
+    )
+    ?.addEventListener(
+      'click',
+      () => {
+        script().settings
+          .textStyles[styleKey] = {
+            fontFamily: '',
+            fontSize: '',
+            color: '',
+            bold: false,
+            italic: false,
+            underline: false
+          };
+
+        setDirty();
+        render();
+      }
+    );
+}
+
+function decorateTextStyleEditors() {
+  document
+    .querySelectorAll(
+      '#editor input:not([type]),' +
+      '#editor input[type="text"],' +
+      '#editor textarea'
+    )
+    .forEach(field => {
+      if (
+        field.disabled ||
+        field.readOnly ||
+        field.dataset.styleDecorated
+      ) {
+        return;
+      }
+
+      const styleKey =
+        inferTextStyleKey(field);
+
+      if (!styleKey) {
+        return;
+      }
+
+      field.dataset.styleDecorated =
+        'true';
+
+      const toolbar =
+        document.createElement('div');
+
+      toolbar.innerHTML =
+        renderTextStyleToolbar(
+          styleKey
+        );
+
+      const toolbarElement =
+        toolbar.firstElementChild;
+
+      field.insertAdjacentElement(
+        'afterend',
+        toolbarElement
+      );
+
+      bindTextStyleToolbar(
+        toolbarElement,
+        field,
+        styleKey
+      );
+    });
+}
 
 function renderScripts(){
  $('#editor').innerHTML=`<div class="card"><div class="row"><h2>劇本清單</h2><span class="spacer"></span><button id="addScript">＋ 新增劇本</button></div>
@@ -89,7 +575,7 @@ function renderScripts(){
     </div>
   </div>
 `).join('')}</div>
- ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div><div class="field theme-color-group">
+ ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>存成圖片：角色成果前言</label><textarea id="resultImagePreface" placeholder="例如：在醉凌雲的世界裡你是">${esc(script().settings.result?.shareImagePreface||'')}</textarea><small class="muted">顯示在分享圖片最上方，每個劇本可獨立設定。</small></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div><div class="field theme-color-group">
 <label>劇本主題顏色</label>
 
 <div class="theme-preset-panel">
@@ -284,6 +770,12 @@ base.settings.theme=structuredClone(
    };
    $('#scriptTitle').oninput=e=>{
      script().settings.title=e.target.value;
+     setDirty()
+   };
+
+   $('#resultImagePreface').oninput=e=>{
+     script().settings.result ||= {};
+     script().settings.result.shareImagePreface=e.target.value;
      setDirty()
    };
    $('#scriptStatus').onchange=e=>{

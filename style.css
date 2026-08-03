@@ -417,3 +417,15 @@ body{
     text-align: right;
   }
 }
+
+
+/* Rich text field styles are applied inline by app.js. */
+[data-text-style] {
+  color: inherit;
+}
+
+button [data-text-style],
+.answer [data-text-style],
+.choice-mark [data-text-style] {
+  pointer-events: none;
+}

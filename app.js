@@ -195,6 +195,243 @@ function showScriptNotFound(scriptId) {
 }
 const esc = (v='') => String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
+function getTextStyle(styleKey) {
+  return (
+    DATA.setting?.textStyles?.[styleKey] ||
+    {}
+  );
+}
+
+function textStyleCss(styleKey) {
+  const style =
+    getTextStyle(styleKey);
+
+  const declarations = [];
+
+  const fontMap = {
+    notoSerif:
+      '"Noto Serif TC", serif',
+    notoSans:
+      '"Noto Sans TC", sans-serif',
+    serif:
+      'serif',
+    sans:
+      'sans-serif',
+    mono:
+      'monospace',
+    cursive:
+      'cursive'
+  };
+
+  if (style.fontFamily) {
+    declarations.push(
+      `font-family:${
+        fontMap[style.fontFamily] ||
+        fontMap.notoSerif
+      }`
+    );
+  }
+
+  const fontSize =
+    Number(style.fontSize);
+
+  if (
+    Number.isFinite(fontSize) &&
+    fontSize >= 8 &&
+    fontSize <= 160
+  ) {
+    declarations.push(
+      `font-size:${fontSize}px`
+    );
+  }
+
+  if (
+    /^#[0-9a-fA-F]{6}$/.test(
+      String(style.color || '')
+    )
+  ) {
+    declarations.push(
+      `color:${style.color}`
+    );
+  }
+
+  declarations.push(
+    `font-weight:${
+      style.bold ? '700' : 'inherit'
+    }`
+  );
+
+  declarations.push(
+    `font-style:${
+      style.italic
+        ? 'italic'
+        : 'normal'
+    }`
+  );
+
+  declarations.push(
+    `text-decoration:${
+      style.underline
+        ? 'underline'
+        : 'none'
+    }`
+  );
+
+  return declarations.join(';');
+}
+
+function styledText(
+  value,
+  styleKey,
+  tagName = 'span'
+) {
+  return (
+    `<${tagName} ` +
+    `data-text-style="${esc(styleKey)}" ` +
+    `style="${esc(textStyleCss(styleKey))}">` +
+    `${esc(value)}` +
+    `</${tagName}>`
+  );
+}
+
+function styledLines(
+  lines,
+  styleKey,
+  tagName = 'p'
+) {
+  return (
+    (lines || [])
+      .map(
+        line =>
+          styledText(
+            line,
+            styleKey,
+            tagName
+          )
+      )
+      .join('')
+  );
+}
+
+function canvasTextStyle(
+  context,
+  styleKey,
+  defaults = {}
+) {
+  const style =
+    getTextStyle(styleKey);
+
+  const fontMap = {
+    notoSerif:
+      '"Noto Serif TC", serif',
+    notoSans:
+      '"Noto Sans TC", sans-serif',
+    serif:
+      'serif',
+    sans:
+      'sans-serif',
+    mono:
+      'monospace',
+    cursive:
+      'cursive'
+  };
+
+  const size =
+    Number(style.fontSize) ||
+    Number(defaults.fontSize) ||
+    34;
+
+  const weight =
+    style.bold
+      ? 700
+      : defaults.fontWeight || 400;
+
+  const italic =
+    style.italic
+      ? 'italic '
+      : '';
+
+  const family =
+    fontMap[style.fontFamily] ||
+    defaults.fontFamily ||
+    '"Noto Serif TC", serif';
+
+  context.font =
+    `${italic}${weight} ${size}px ${family}`;
+
+  context.fillStyle =
+    (
+      /^#[0-9a-fA-F]{6}$/.test(
+        String(style.color || '')
+      )
+        ? style.color
+        : defaults.color
+    ) || '#d8d9de';
+
+  return {
+    underline:
+      style.underline === true,
+    fontSize: size
+  };
+}
+
+function fillStyledCanvasText(
+  context,
+  text,
+  x,
+  y,
+  styleKey,
+  defaults = {}
+) {
+  const applied =
+    canvasTextStyle(
+      context,
+      styleKey,
+      defaults
+    );
+
+  context.fillText(
+    String(text || ''),
+    x,
+    y
+  );
+
+  if (
+    applied.underline &&
+    String(text || '')
+  ) {
+    const metrics =
+      context.measureText(
+        String(text)
+      );
+
+    const startX =
+      context.textAlign === 'center'
+        ? x - metrics.width / 2
+        : context.textAlign === 'right'
+          ? x - metrics.width
+          : x;
+
+    context.beginPath();
+    context.moveTo(
+      startX,
+      y + applied.fontSize * 0.12
+    );
+    context.lineTo(
+      startX + metrics.width,
+      y + applied.fontSize * 0.12
+    );
+    context.lineWidth =
+      Math.max(
+        1,
+        applied.fontSize / 24
+      );
+    context.strokeStyle =
+      context.fillStyle;
+    context.stroke();
+  }
+}
+
 async function loadJson(url) {
   const r = await fetch(url, {cache:'no-store'});
   if (!r.ok) throw new Error(`無法載入 ${url} (${r.status})`);
@@ -337,13 +574,13 @@ function waitForAdvance(el, hold){
   });
 }
 
-async function cinematic(items,next){
+async function cinematic(items,next,stylePrefix='story.scenes'){
   if(transitionLocked)return; transitionLocked=true;
   app.innerHTML='<section class="cinema-stage"></section>'; const stage=app.firstElementChild;
-  for(const item of items||[]){
+  for(const [itemIndex,item] of (items||[]).entries()){
     stage.classList.remove('visible'); await sleep(350);
-    stage.innerHTML=`${item.chapter?`<div class="chapter">${esc(item.chapter)}</div>`:''}
-      <div class="story-lines">${(item.lines||[]).map(x=>`<p>${esc(x)}</p>`).join('')}</div>
+    stage.innerHTML=`${item.chapter?`<div class="chapter">${styledText(item.chapter,`${stylePrefix}.${itemIndex}.chapter`)}</div>`:''}
+      <div class="story-lines">${styledLines(item.lines||[],`${stylePrefix}.${itemIndex}.lines`)}</div>
       <div class="continue-hint">點擊畫面繼續</div>`;
     requestAnimationFrame(()=>stage.classList.add('visible'));
     await waitForAdvance(stage, Number(item.hold||item.duration||900));
@@ -401,11 +638,21 @@ function goToQuizWithInterlude(
 
   cinematic(
     scenes,
-    'quiz'
+    'quiz',
+    `story.interludes.${transitionIndex}`
   );
 }
 
-function chars(){return DATA.characters?.[state.route]||[]}
+function chars(){
+  return (
+    DATA.characters?.[state.route] || []
+  ).map(
+    (character, index) => ({
+      ...character,
+      _sourceIndex: index
+    })
+  );
+}
 function result(){
   const max=Math.max(...state.scores,1);
   const ranking=chars().map((c,i)=>({...c,score:state.scores[i]||0,pct:Math.round((state.scores[i]||0)/max*100)})).sort((a,b)=>b.score-a.score);
@@ -851,17 +1098,35 @@ async function createResultShareBlob() {
   context.fillStyle =
     textColor;
 
-  context.font =
-    '500 38px "Noto Serif TC", serif';
+  canvasTextStyle(
+    context,
+    'settings.result.shareImagePreface',
+    {
+      fontSize: 38,
+      fontWeight: 500,
+      fontFamily:
+        '"Noto Serif TC", serif',
+      color: textColor
+    }
+  );
 
   prefaceLines.forEach(
     (line, index) => {
-      context.fillText(
+      fillStyledCanvasText(
+        context,
         line,
         540,
         cursorY +
           index *
-            prefaceLineHeight
+            prefaceLineHeight,
+        'settings.result.shareImagePreface',
+        {
+          fontSize: 38,
+          fontWeight: 500,
+          fontFamily:
+            '"Noto Serif TC", serif',
+          color: textColor
+        }
       );
     }
   );
@@ -936,13 +1201,19 @@ async function createResultShareBlob() {
   context.fillStyle =
     titleColor;
 
-  context.font =
-    '700 82px "Noto Serif TC", serif';
-
-  context.fillText(
+  fillStyledCanvasText(
+    context,
     top.name || '',
     540,
-    cursorY
+    cursorY,
+    `characters.${state.route}.${top._sourceIndex ?? 0}.name`,
+    {
+      fontSize: 82,
+      fontWeight: 700,
+      fontFamily:
+        '"Noto Serif TC", serif',
+      color: titleColor
+    }
   );
 
   cursorY +=
@@ -955,13 +1226,19 @@ async function createResultShareBlob() {
     context.fillStyle =
       mutedColor;
 
-    context.font =
-      '400 32px "Noto Serif TC", serif';
-
-    context.fillText(
+    fillStyledCanvasText(
+      context,
       top.kr,
       540,
-      cursorY
+      cursorY,
+      `characters.${state.route}.${top._sourceIndex ?? 0}.kr`,
+      {
+        fontSize: 32,
+        fontWeight: 400,
+        fontFamily:
+          '"Noto Serif TC", serif',
+        color: mutedColor
+      }
     );
 
     cursorY +=
@@ -980,17 +1257,23 @@ async function createResultShareBlob() {
   context.fillStyle =
     textColor;
 
-  context.font =
-    '400 34px "Noto Serif TC", serif';
-
   descriptionLines.forEach(
     (line, index) => {
-      context.fillText(
+      fillStyledCanvasText(
+        context,
         line,
         130,
         cursorY +
           index *
-            descriptionLineHeight
+            descriptionLineHeight,
+        `characters.${state.route}.${top._sourceIndex ?? 0}.description`,
+        {
+          fontSize: 34,
+          fontWeight: 400,
+          fontFamily:
+            '"Noto Serif TC", serif',
+          color: textColor
+        }
       );
     }
   );
@@ -1338,9 +1621,9 @@ function renderScriptSelect(p){
     <button class="script-card" data-script="${esc(s.id)}"><small>STORY</small><h3>${esc(s.name)}</h3><span>進入故事</span></button>`).join('')}</div>`;
 }
 function renderStart(p){
-  p.innerHTML=`<div class="eyebrow">${esc(DATA.setting.subtitle)}</div><h1 class="title">${esc(DATA.setting.title||DATA.setting.name)}</h1>
-  <div class="opening-quote">${DATA.story.opening.quote.map(x=>`<p>${esc(x)}</p>`).join('')}</div>
-  <button class="btn" id="startBtn">${esc(DATA.story.opening.button||'開始')}</button>`;
+  p.innerHTML=`<div class="eyebrow">${styledText(DATA.setting.subtitle,'settings.subtitle')}</div><h1 class="title">${styledText(DATA.setting.title||DATA.setting.name,'settings.title')}</h1>
+  <div class="opening-quote">${styledLines(DATA.story.opening.quote,'story.opening.quote')}</div>
+  <button class="btn" id="startBtn">${styledText(DATA.story.opening.button||'開始','story.opening.button')}</button>`;
 }
 function renderRoute(p){
   const r=DATA.setting.routeSelection;
@@ -1365,7 +1648,7 @@ function renderQuiz(p) {
           <div class="best-worst-option" data-bw-option="${index}">
             <div class="best-worst-text">
               <span>${String(index + 1).padStart(2, '0')}</span>
-              <strong>${esc(answer.text)}</strong>
+              <strong>${styledText(answer.text,`questions.${state.index}.answers.${index}.text`)}</strong>
             </div>
 
             <div class="best-worst-actions">
@@ -1428,9 +1711,9 @@ function renderQuiz(p) {
         >
 
         <div class="slider-labels">
-          <span>${esc(slider.leftLabel || '偏左')}</span>
-          <span>${esc(slider.centerLabel || '彼此平衡')}</span>
-          <span>${esc(slider.rightLabel || '偏右')}</span>
+          <span>${styledText(slider.leftLabel || '偏左',`questions.${state.index}.slider.leftLabel`)}</span>
+          <span>${styledText(slider.centerLabel || '彼此平衡',`questions.${state.index}.slider.centerLabel`)}</span>
+          <span>${styledText(slider.rightLabel || '偏右',`questions.${state.index}.slider.rightLabel`)}</span>
         </div>
       </div>
 
@@ -1452,7 +1735,7 @@ function renderQuiz(p) {
             type="button"
           >
             <span>${String(index + 1).padStart(2, '0')}</span>
-            <span>${esc(answer.text)}</span>
+            <span>${styledText(answer.text,`questions.${state.index}.answers.${index}.text`)}</span>
           </button>
         `).join('')}
       </div>
@@ -1491,7 +1774,7 @@ function renderQuiz(p) {
 function renderResult(p){
   const {ranking,top}=result(), s=DATA.setting.result;
   p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><div class="result-card"><img src="${esc(top.image)}" alt="${esc(top.name)}">
-  <div class="result-name"><h1>${esc(top.name)}</h1><p>${esc(top.kr||'')}</p></div></div><p class="desc">${esc(top.description||top.desc||'')}</p>
+  <div class="result-name"><h1>${styledText(top.name,`characters.${state.route}.${top._sourceIndex ?? 0}.name`)}</h1><p>${styledText(top.kr||'',`characters.${state.route}.${top._sourceIndex ?? 0}.kr`)}</p></div></div><p class="desc">${styledText(top.description||top.desc||'',`characters.${state.route}.${top._sourceIndex ?? 0}.description`)}</p>
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
   <div class="actions result-share-actions">
   <button class="btn" id="goShare">${esc(s.shareButton)}</button>
@@ -1763,7 +2046,8 @@ function finishQuestion(answerRecord) {
   if (state.index >= DATA.questions.length) {
     cinematic(
       DATA.story.epilogue,
-      'result'
+      'result',
+      'story.epilogue'
     );
   } else {
     goToQuizWithInterlude(
@@ -1937,7 +2221,7 @@ function bind(){
       render();
     };
   });
-  document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
+  document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route','story.prologue')});
   document.querySelector('#previousQuestion')?.addEventListener('click',goToPreviousQuestion);
   document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];goToQuizWithInterlude(0)});
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));

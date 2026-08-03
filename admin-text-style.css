@@ -1,0 +1,97 @@
+
+/* ===== Per-field text style editor ===== */
+
+.text-style-toolbar {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1fr)
+    minmax(90px, 120px)
+    minmax(180px, 1fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #d7dde3;
+  border-radius: 10px;
+  background: #f6f8fa;
+}
+
+.text-style-toolbar label {
+  display: grid;
+  gap: 5px;
+}
+
+.text-style-toolbar label > span {
+  font-size: 11px;
+  color: #6c7580;
+}
+
+.text-style-toolbar select,
+.text-style-toolbar input {
+  min-height: 36px;
+}
+
+.text-style-color {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 7px;
+}
+
+.text-style-color input[type="color"] {
+  width: 48px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.text-style-toggles {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.text-style-toggles button {
+  min-width: 38px;
+  min-height: 36px;
+  padding: 6px 9px;
+}
+
+.text-style-toggles button:nth-child(1) {
+  font-weight: 800;
+}
+
+.text-style-toggles button:nth-child(2) {
+  font-style: italic;
+}
+
+.text-style-toggles button:nth-child(3) {
+  text-decoration: underline;
+}
+
+.text-style-toggles button.active {
+  background: #263746;
+  color: #fff;
+  border-color: #263746;
+}
+
+@media (max-width: 900px) {
+  .text-style-toolbar {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .text-style-toggles {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .text-style-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .text-style-toggles {
+    grid-column: auto;
+    flex-wrap: wrap;
+  }
+}
