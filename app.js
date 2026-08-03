@@ -18,6 +18,84 @@ const resetState = () => ({
 state = resetState();
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function getRequestedScriptId() {
+  const queryId = new URLSearchParams(
+    window.location.search
+  ).get('script');
+
+  if (queryId) {
+    return queryId.trim();
+  }
+
+  const match = window.location.pathname.match(
+    /\/play\/([^/?#]+)\/?$/
+  );
+
+  return match
+    ? decodeURIComponent(match[1])
+    : '';
+}
+
+function getScriptMeta(scriptId) {
+  return (DATA.index?.scripts || []).find(
+    item => item.id === scriptId
+  ) || null;
+}
+
+function setScriptUrl(scriptId, replace = false) {
+  const url =
+    `/play/${encodeURIComponent(scriptId)}`;
+
+  if (replace) {
+    window.history.replaceState(
+      { scriptId },
+      '',
+      url
+    );
+  } else {
+    window.history.pushState(
+      { scriptId },
+      '',
+      url
+    );
+  }
+}
+
+function showScriptNotFound(scriptId) {
+  state.page = 'scriptSelect';
+
+  app.innerHTML = `
+    <section class="panel">
+      <div class="eyebrow">STORY NOT FOUND</div>
+      <h1 class="section-title">找不到這個劇本</h1>
+      <p class="desc">
+        入口 ID「${esc(scriptId)}」不存在、
+        尚未發布，或已被刪除。
+      </p>
+      <button
+        class="btn"
+        id="showStoryList"
+        type="button"
+      >
+        查看可用劇本
+      </button>
+    </section>
+  `;
+
+  document
+    .querySelector('#showStoryList')
+    ?.addEventListener('click', () => {
+      window.history.replaceState(
+        {},
+        '',
+        '/'
+      );
+
+      state.page = 'scriptSelect';
+      render();
+    });
+}
 const esc = (v='') => String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
 async function loadJson(url) {
@@ -186,10 +264,31 @@ async function send(){
   try{const r=await liff.shareTargetPicker([{type:'text',text:shareMessage()}],{isMultiple:false});if(r){state.page='success';render()}else status('已取消分享')}
   catch(e){status(`分享失敗：${e?.message||'未知錯誤'}`)}
 }
-function restart(){const muted=state.muted;state=resetState();state.muted=muted;render()}
+function restart() {
+  const muted = state.muted;
+  const currentScriptId = activeScriptId;
+
+  state = resetState();
+  state.muted = muted;
+
+  if (currentScriptId) {
+    state.page = 'start';
+  }
+
+  render();
+}
 
 function bind(){
-  document.querySelectorAll('[data-script]').forEach(b=>b.onclick=async()=>{await loadScript(b.dataset.script);state.page='start';render()});
+  document.querySelectorAll('[data-script]').forEach(button => {
+    button.onclick = async () => {
+      const scriptId = button.dataset.script;
+
+      await loadScript(scriptId);
+      setScriptUrl(scriptId);
+      state.page = 'start';
+      render();
+    };
+  });
   document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
   document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];cinematic([DATA.story.interludes[0]||{}],'quiz')});
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
@@ -199,5 +298,71 @@ function bind(){
   document.querySelector('#shareAgain')?.addEventListener('click',()=>{state.page='share';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
 }
-async function boot(){try{await loadGlobalData();state.page='scriptSelect';render();initLiff()}catch(e){app.innerHTML=`<section class="panel"><h1>資料載入失敗</h1><p>${esc(e.message)}</p></section>`}}
+async function boot() {
+  try {
+    await loadGlobalData();
+
+    const requestedScriptId =
+      getRequestedScriptId();
+
+    if (requestedScriptId) {
+      const meta =
+        getScriptMeta(requestedScriptId);
+
+      if (
+        !meta ||
+        meta.status === 'draft'
+      ) {
+        showScriptNotFound(
+          requestedScriptId
+        );
+
+        initLiff();
+        return;
+      }
+
+      await loadScript(
+        requestedScriptId
+      );
+
+      /*
+       * 支援舊式網址：
+       * /?script=plastic-greenhouse
+       *
+       * 載入後自動轉成乾淨入口：
+       * /play/plastic-greenhouse
+       */
+      setScriptUrl(
+        requestedScriptId,
+        true
+      );
+
+      state.page = 'start';
+      render();
+      initLiff();
+      return;
+    }
+
+    state.page = 'scriptSelect';
+    render();
+    initLiff();
+  } catch (error) {
+    console.error(error);
+
+    app.innerHTML = `
+      <section class="panel">
+        <div class="eyebrow">LOAD ERROR</div>
+        <h1 class="section-title">資料載入失敗</h1>
+        <p class="desc">${esc(error.message)}</p>
+      </section>
+    `;
+  }
+}
+
+window.addEventListener(
+  'popstate',
+  () => {
+    window.location.reload();
+  }
+);
 musicBtn.addEventListener('click',toggleAudio);boot();

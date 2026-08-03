@@ -16,9 +16,84 @@ function bindCommon(){document.querySelectorAll('[data-action=delete]').forEach(
 
 function renderScripts(){
  $('#editor').innerHTML=`<div class="card"><div class="row"><h2>劇本清單</h2><span class="spacer"></span><button id="addScript">＋ 新增劇本</button></div>
- ${(S.data.index.scripts||[]).map(x=>`<div class="script-card ${x.id===S.scriptId?'selected':''}"><div><strong>${esc(x.name)}</strong><br><small class="muted">${esc(x.id)} · ${esc(x.status)}</small></div><div class="row"><button class="secondary" data-open="${esc(x.id)}">編輯</button>${x.id!==S.data.index.defaultScriptId?`<button class="danger" data-remove-script="${esc(x.id)}">刪除</button>`:''}</div></div>`).join('')}</div>
+ ${(S.data.index.scripts||[]).map(x=>`
+  <div class="script-card ${x.id===S.scriptId?'selected':''}">
+    <div>
+      <strong>${esc(x.name)}</strong><br>
+      <small class="muted">${esc(x.id)} · ${esc(x.status)}</small><br>
+      <small class="muted">${esc(`${location.origin}/play/${x.id}`)}</small>
+    </div>
+    <div class="row">
+      <button
+        class="secondary"
+        data-copy-entry="${esc(x.id)}"
+        type="button"
+      >
+        複製入口網址
+      </button>
+      <button
+        class="secondary"
+        data-preview-entry="${esc(x.id)}"
+        type="button"
+      >
+        開啟測驗
+      </button>
+      <button
+        class="secondary"
+        data-open="${esc(x.id)}"
+        type="button"
+      >
+        編輯
+      </button>
+      ${x.id!==S.data.index.defaultScriptId?`
+        <button
+          class="danger"
+          data-remove-script="${esc(x.id)}"
+          type="button"
+        >
+          刪除
+        </button>
+      `:''}
+    </div>
+  </div>
+`).join('')}</div>
  ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div></div></div>`:''}`;
- document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{S.scriptId=b.dataset.open;render()});
+ document.querySelectorAll('[data-open]').forEach(button => {
+   button.onclick = () => {
+     S.scriptId = button.dataset.open;
+     render();
+   };
+ });
+
+ document.querySelectorAll('[data-copy-entry]').forEach(button => {
+   button.onclick = async () => {
+     const url =
+       `${window.location.origin}/play/${button.dataset.copyEntry}`;
+
+     try {
+       await navigator.clipboard.writeText(url);
+       notice(`已複製入口網址：${url}`);
+     } catch {
+       window.prompt(
+         '請複製劇本入口網址',
+         url
+       );
+     }
+   };
+ });
+
+ document.querySelectorAll('[data-preview-entry]').forEach(button => {
+   button.onclick = () => {
+     const url =
+       `${window.location.origin}/play/${button.dataset.previewEntry}`;
+
+     window.open(
+       url,
+       '_blank',
+       'noopener,noreferrer'
+     );
+   };
+ });
  $('#addScript').onclick=()=>{const name=prompt('新劇本名稱');if(!name)return;let id=(prompt('網址 ID（英文、數字、連字號）',`story-${Date.now()}`)||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');if(!id||S.data.scripts[id])return notice('ID 無效或已存在',true);const base=structuredClone(script());base.settings.id=id;base.settings.name=name;base.settings.title=name;base.meta={id,name,status:'draft',cover:''};S.data.scripts[id]=base;S.data.index.scripts.push(base.meta);S.scriptId=id;setDirty();render()};
  document.querySelectorAll('[data-remove-script]').forEach(b=>b.onclick=()=>{if(!confirm('將刪除整個劇本資料與素材，確定？'))return;const id=b.dataset.removeScript;delete S.data.scripts[id];S.data.index.scripts=S.data.index.scripts.filter(x=>x.id!==id);S.scriptId=S.data.index.defaultScriptId;setDirty();render()});
  if($('#scriptName')){$('#scriptName').oninput=e=>{script().settings.name=e.target.value;script().meta.name=e.target.value;setDirty()};$('#scriptTitle').oninput=e=>{script().settings.title=e.target.value;setDirty()};$('#scriptStatus').onchange=e=>{script().meta.status=e.target.value;setDirty()}}
