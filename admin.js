@@ -21,7 +21,7 @@ function renderScripts(){
     <div>
       <strong>${esc(x.name)}</strong><br>
       <small class="muted">${esc(x.id)} · ${esc(x.status)}</small><br>
-      <small class="muted">${esc(`${location.origin}/play/${x.id}`)}</small>
+      <small class="muted">${esc(`${location.origin}/?script=${encodeURIComponent(x.id)}`)}</small>
     </div>
     <div class="row">
       <button
@@ -68,7 +68,7 @@ function renderScripts(){
  document.querySelectorAll('[data-copy-entry]').forEach(button => {
    button.onclick = async () => {
      const url =
-       `${window.location.origin}/play/${button.dataset.copyEntry}`;
+       `${window.location.origin}/?script=${encodeURIComponent(button.dataset.copyEntry)}`;
 
      try {
        await navigator.clipboard.writeText(url);
@@ -85,7 +85,7 @@ function renderScripts(){
  document.querySelectorAll('[data-preview-entry]').forEach(button => {
    button.onclick = () => {
      const url =
-       `${window.location.origin}/play/${button.dataset.previewEntry}`;
+       `${window.location.origin}/?script=${encodeURIComponent(button.dataset.previewEntry)}`;
 
      window.open(
        url,

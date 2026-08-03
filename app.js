@@ -45,7 +45,7 @@ function getScriptMeta(scriptId) {
 
 function setScriptUrl(scriptId, replace = false) {
   const url =
-    `/play/${encodeURIComponent(scriptId)}`;
+    `/?script=${encodeURIComponent(scriptId)}`;
 
   if (replace) {
     window.history.replaceState(
@@ -326,11 +326,10 @@ async function boot() {
       );
 
       /*
-       * 支援舊式網址：
+       * 所有直接入口統一使用：
        * /?script=plastic-greenhouse
        *
-       * 載入後自動轉成乾淨入口：
-       * /play/plastic-greenhouse
+       * 不依賴 Cloudflare 的 /play/* rewrite。
        */
       setScriptUrl(
         requestedScriptId,
