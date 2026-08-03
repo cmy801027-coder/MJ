@@ -106,7 +106,7 @@
       "bold": false,
       "italic": false,
       "underline": false,
-      "animation": "",
+      "animation": "typewriter",
       "animationDuration": ""
     },
     "story.opening.button": {
@@ -126,7 +126,7 @@
       "bold": false,
       "italic": false,
       "underline": false,
-      "animation": "",
+      "animation": "typewriter",
       "animationDuration": ""
     },
     "story.prologue.0.lines": {
@@ -156,7 +156,7 @@
       "bold": false,
       "italic": false,
       "underline": false,
-      "animation": "",
+      "animation": "typewriter",
       "animationDuration": ""
     },
     "story.prologue.2.chapter": {
@@ -166,7 +166,7 @@
       "bold": false,
       "italic": false,
       "underline": false,
-      "animation": "",
+      "animation": "typewriter",
       "animationDuration": ""
     },
     "story.prologue.2.lines": {
