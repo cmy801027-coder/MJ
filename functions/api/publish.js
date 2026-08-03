@@ -1,162 +1,170 @@
-import { json } from '../lib/response.js';
-import { verifySession } from '../lib/auth.js';
 import {
-  putFile,
-  putBinary
+  json
+} from '../lib/response.js';
+
+import {
+  verifySession
+} from '../lib/auth.js';
+
+import {
+  commitFiles
 } from '../lib/github.js';
 
-async function publishPendingUploads(env, message) {
+async function collectPendingUploads(
+  env
+) {
   if (!env.ADMIN_UPLOADS) {
     throw new Error(
       'Cloudflare 尚未綁定 ADMIN_UPLOADS KV Namespace'
     );
   }
 
+  const files = [];
+  const keysToDelete = [];
+
   let cursor;
-  let uploadedCount = 0;
 
   do {
-    /*
-     * KVNamespace.list() 回傳：
-     * {
-     *   keys: [...],
-     *   list_complete: boolean,
-     *   cursor?: string
-     * }
-     *
-     * 不是 uploads.objects。
-     */
-    const page = await env.ADMIN_UPLOADS.list(
-      cursor
-        ? { cursor }
-        : undefined
-    );
+    const page =
+      await env.ADMIN_UPLOADS.list(
+        cursor
+          ? { cursor }
+          : undefined
+      );
 
-    const keys = Array.isArray(page.keys)
-      ? page.keys
-      : [];
+    const keys =
+      Array.isArray(page.keys)
+        ? page.keys
+        : [];
 
     for (const keyInfo of keys) {
-      /*
-       * list() 的 keyInfo 可能已包含 metadata，
-       * 但仍使用 getWithMetadata() 取得最完整資料。
-       */
       const entry =
         await env.ADMIN_UPLOADS.getWithMetadata(
           keyInfo.name,
           'text'
         );
 
-      const contentBase64 = entry?.value;
+      const contentBase64 =
+        entry?.value;
 
       const metadata =
         entry?.metadata ||
         keyInfo.metadata ||
         {};
 
-      const path = metadata.path;
-
-      if (!contentBase64) {
-        console.warn(
-          `KV 暫存檔案內容不存在：${keyInfo.name}`
-        );
-
-        await env.ADMIN_UPLOADS.delete(
+      /*
+       * 壞掉或舊版格式的暫存資料，不應卡住整次發布。
+       * 稍後直接從 KV 清除。
+       */
+      if (
+        !contentBase64 ||
+        !metadata.path
+      ) {
+        keysToDelete.push(
           keyInfo.name
         );
 
         continue;
       }
 
-      if (!path) {
-        console.warn(
-          `KV 暫存檔案缺少 path metadata：${keyInfo.name}`
-        );
+      files.push({
+        path: metadata.path,
+        content: contentBase64,
+        encoding: 'base64'
+      });
 
-        /*
-         * 舊版 customMetadata 寫入的資料無法正確讀到 path。
-         * 直接清除，避免每次發布都卡在同一筆壞資料。
-         */
-        await env.ADMIN_UPLOADS.delete(
-          keyInfo.name
-        );
-
-        continue;
-      }
-
-      await putBinary(
-        env,
-        path,
-        contentBase64,
-        message
-      );
-
-      await env.ADMIN_UPLOADS.delete(
+      keysToDelete.push(
         keyInfo.name
       );
-
-      uploadedCount += 1;
     }
 
-    cursor = page.list_complete
-      ? undefined
-      : page.cursor;
+    cursor =
+      page.list_complete
+        ? undefined
+        : page.cursor;
   } while (cursor);
 
-  return uploadedCount;
+  return {
+    files,
+    keysToDelete
+  };
+}
+
+function makeJsonFile(
+  path,
+  value
+) {
+  return {
+    path,
+    content:
+      JSON.stringify(
+        value,
+        null,
+        2
+      ) + '\n',
+    encoding: 'utf-8'
+  };
 }
 
 export async function onRequestPost({
   request,
   env
 }) {
-  if (!await verifySession(request, env)) {
-    return json({ error: '未登入' }, 401);
+  if (
+    !await verifySession(
+      request,
+      env
+    )
+  ) {
+    return json({
+      error: '未登入'
+    }, 401);
   }
 
   try {
-    const data = await request.json();
+    const data =
+      await request.json();
 
     if (
       !data ||
       !data.index ||
       !data.settings ||
       !Array.isArray(data.hosts) ||
-      !data.scripts
+      !data.scripts ||
+      typeof data.scripts !== 'object'
     ) {
       return json({
-        error: '發布資料格式不完整'
+        error:
+          '發布資料格式不完整'
       }, 400);
     }
 
-    const message =
-      'content: update Assign Roles CMS ' +
-      new Date().toISOString();
-
-    await putFile(
-      env,
-      'data/index.json',
-      JSON.stringify(data.index, null, 2),
-      message
-    );
-
-    await putFile(
-      env,
-      'data/settings.json',
-      JSON.stringify(data.settings, null, 2),
-      message
-    );
-
-    await putFile(
-      env,
-      'data/hosts.json',
-      JSON.stringify(data.hosts, null, 2),
-      message
-    );
+    /*
+     * 所有 JSON 先放進同一個檔案陣列，
+     * 不再逐檔呼叫 GitHub Contents API。
+     */
+    const files = [
+      makeJsonFile(
+        'data/index.json',
+        data.index
+      ),
+      makeJsonFile(
+        'data/settings.json',
+        data.settings
+      ),
+      makeJsonFile(
+        'data/hosts.json',
+        data.hosts
+      )
+    ];
 
     for (
-      const [scriptId, scriptData]
-      of Object.entries(data.scripts)
+      const [
+        scriptId,
+        scriptData
+      ] of Object.entries(
+        data.scripts
+      )
     ) {
       if (!scriptData) {
         continue;
@@ -165,66 +173,90 @@ export async function onRequestPost({
       const base =
         `data/scripts/${scriptId}`;
 
-      await putFile(
-        env,
-        `${base}/settings.json`,
-        JSON.stringify(
-          scriptData.settings || {},
-          null,
-          2
+      files.push(
+        makeJsonFile(
+          `${base}/settings.json`,
+          scriptData.settings || {}
         ),
-        message
-      );
-
-      await putFile(
-        env,
-        `${base}/story.json`,
-        JSON.stringify(
-          scriptData.story || {},
-          null,
-          2
+        makeJsonFile(
+          `${base}/story.json`,
+          scriptData.story || {}
         ),
-        message
-      );
-
-      await putFile(
-        env,
-        `${base}/questions.json`,
-        JSON.stringify(
-          scriptData.questions || [],
-          null,
-          2
+        makeJsonFile(
+          `${base}/questions.json`,
+          scriptData.questions || []
         ),
-        message
-      );
-
-      await putFile(
-        env,
-        `${base}/characters.json`,
-        JSON.stringify(
+        makeJsonFile(
+          `${base}/characters.json`,
           scriptData.characters || {
             male: [],
             female: []
-          },
-          null,
-          2
-        ),
-        message
+          }
+        )
       );
     }
 
-    const uploadedCount =
-      await publishPendingUploads(
+    /*
+     * 圖片與 MP3 也一起加入相同 Commit。
+     */
+    const pendingUploads =
+      await collectPendingUploads(
+        env
+      );
+
+    files.push(
+      ...pendingUploads.files
+    );
+
+    const message =
+      'content: publish Assign Roles CMS ' +
+      new Date().toISOString();
+
+    /*
+     * 無論幾個 JSON、幾張圖、幾首 MP3，
+     * 此處最多只會建立一個 Git commit。
+     */
+    const result =
+      await commitFiles(
         env,
+        files,
         message
       );
 
+    /*
+     * GitHub 批次作業成功後才清除 KV。
+     * 即使內容完全相同、沒有建立 Commit，
+     * 暫存檔也已確認存在於生成後的 tree 或內容相同，
+     * 因此可以安全清除。
+     */
+    for (
+      const key
+      of pendingUploads.keysToDelete
+    ) {
+      await env.ADMIN_UPLOADS.delete(
+        key
+      );
+    }
+
     return json({
       ok: true,
-      uploadedCount
+      changed: result.changed,
+      commitSha:
+        result.commitSha || null,
+      fileCount:
+        result.fileCount || 0,
+      uploadedCount:
+        pendingUploads.files.length,
+      message:
+        result.changed
+          ? '已建立 1 個 Commit'
+          : '內容沒有變更，未建立 Commit'
     });
   } catch (error) {
-    console.error('publish error', error);
+    console.error(
+      'publish error',
+      error
+    );
 
     return json({
       error:
