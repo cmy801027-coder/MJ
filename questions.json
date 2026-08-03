@@ -1,0 +1,20 @@
+[
+  {
+    "id": "host-1",
+    "name": "小明",
+    "displayName": "小明主持人",
+    "note": "情感沉浸線"
+  },
+  {
+    "id": "host-2",
+    "name": "阿哲",
+    "displayName": "阿哲主持人",
+    "note": "推理還原線"
+  },
+  {
+    "id": "host-3",
+    "name": "小雨",
+    "displayName": "小雨主持人",
+    "note": "新手引導線"
+  }
+]
