@@ -67,5 +67,37 @@
     "sliderThumbColor": "#fff4cc",
     "bestColor": "#d9bd69",
     "worstColor": "#8c6b24"
+  },
+  "textStyles": {
+    "settings.name": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "settings.title": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "settings.result.shareImagePreface": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    }
   }
 }

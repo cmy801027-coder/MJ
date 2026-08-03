@@ -67,5 +67,297 @@
     "sliderThumbColor": "#fff0dc",
     "bestColor": "#c39a58",
     "worstColor": "#7b294d"
+  },
+  "textStyles": {
+    "settings.name": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "settings.title": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "settings.result.shareImagePreface": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.opening.quote": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.opening.button": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "typewriter",
+      "animationDuration": ""
+    },
+    "story.prologue.0.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.prologue.0.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "typewriter",
+      "animationDuration": ""
+    },
+    "story.prologue.1.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "typewriter",
+      "animationDuration": ""
+    },
+    "story.prologue.1.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.prologue.2.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.prologue.2.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.0.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.0.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.1.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.1.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.2.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.2.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.3.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.3.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.4.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.4.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.5.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.5.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.6.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.6.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.7.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.interludes.7.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.epilogue.0.chapter": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    },
+    "story.epilogue.0.lines": {
+      "fontFamily": "",
+      "fontSize": "",
+      "color": "",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "animation": "",
+      "animationDuration": ""
+    }
   }
 }
