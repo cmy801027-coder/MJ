@@ -226,5 +226,64 @@
         ]
       }
     ]
+  },
+  {
+    "type": "bestWorst",
+    "scene": "你看到了大便",
+    "question": "最想做什麼",
+    "answers": [
+      {
+        "text": "踩他",
+        "mostScore": [
+          -10,
+          10,
+          0
+        ],
+        "leastScore": [
+          10,
+          -10,
+          0
+        ]
+      },
+      {
+        "text": "吃他",
+        "mostScore": [
+          -20,
+          0,
+          20
+        ],
+        "leastScore": [
+          20,
+          0,
+          -20
+        ]
+      },
+      {
+        "text": "舔他",
+        "mostScore": [
+          -15,
+          15,
+          0
+        ],
+        "leastScore": [
+          15,
+          -15,
+          0
+        ]
+      },
+      {
+        "text": "略過他",
+        "mostScore": [
+          10,
+          -5,
+          -5
+        ],
+        "leastScore": [
+          -10,
+          5,
+          5
+        ]
+      }
+    ]
   }
 ]
