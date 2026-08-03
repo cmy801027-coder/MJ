@@ -10,15 +10,12 @@ let transitionLocked = false;
 let liffReady = false;
 let liffError = '';
 
-const LIFF_RETURN_STATE_KEY =
-  'assignRolesV2LiffReturnState';
+const LIFF_SAVED_STATE_KEY =
+  'assignRolesV2SavedState';
 
-const LIFF_AUTO_SHARE_KEY =
-  'assignRolesV2AutoShare';
-
-function saveLiffReturnState() {
+function saveStateBeforeLineLogin() {
   const payload = {
-    activeScriptId,
+    scriptId: activeScriptId,
     state: {
       ...state,
       page: 'share'
@@ -26,86 +23,60 @@ function saveLiffReturnState() {
     savedAt: Date.now()
   };
 
-  sessionStorage.setItem(
-    LIFF_RETURN_STATE_KEY,
+  localStorage.setItem(
+    LIFF_SAVED_STATE_KEY,
     JSON.stringify(payload)
-  );
-
-  sessionStorage.setItem(
-    LIFF_AUTO_SHARE_KEY,
-    '1'
   );
 }
 
-function readLiffReturnState() {
-  const serialized =
-    sessionStorage.getItem(
-      LIFF_RETURN_STATE_KEY
+function loadSavedLineState() {
+  const raw =
+    localStorage.getItem(
+      LIFF_SAVED_STATE_KEY
     );
 
-  if (!serialized) {
+  if (!raw) {
     return null;
   }
 
   try {
     const payload =
-      JSON.parse(serialized);
+      JSON.parse(raw);
 
-    /*
-     * 超過 30 分鐘的登入返回資料不再使用。
-     */
     if (
-      !payload?.savedAt ||
-      Date.now() - payload.savedAt >
-        30 * 60 * 1000
+      !payload?.scriptId ||
+      !payload?.state ||
+      !payload?.savedAt
     ) {
-      clearLiffReturnState();
+      clearSavedLineState();
+      return null;
+    }
+
+    if (
+      Date.now() - payload.savedAt >
+      30 * 60 * 1000
+    ) {
+      clearSavedLineState();
       return null;
     }
 
     return payload;
   } catch {
-    clearLiffReturnState();
+    clearSavedLineState();
     return null;
   }
 }
 
-function clearLiffReturnState() {
-  sessionStorage.removeItem(
-    LIFF_RETURN_STATE_KEY
-  );
-
-  sessionStorage.removeItem(
-    LIFF_AUTO_SHARE_KEY
+function clearSavedLineState() {
+  localStorage.removeItem(
+    LIFF_SAVED_STATE_KEY
   );
 }
 
-function shouldAutoShareAfterLogin() {
-  return (
-    sessionStorage.getItem(
-      LIFF_AUTO_SHARE_KEY
-    ) === '1'
+function buildLineLoginRedirectUrl() {
+  const url = new URL(
+    window.location.origin + '/'
   );
-}
-
-function buildLoginRedirectUrl() {
-  const url =
-    new URL(
-      window.location.href
-    );
-
-  /*
-   * 避免把 LINE 登入回傳參數再次塞回 redirectUri。
-   */
-  [
-    'code',
-    'state',
-    'friendship_status_changed',
-    'liffClientId',
-    'liffRedirectUri'
-  ].forEach(key => {
-    url.searchParams.delete(key);
-  });
 
   if (activeScriptId) {
     url.searchParams.set(
@@ -322,140 +293,12 @@ function renderRoute(p){
   <button class="route" data-route="male"><small>${esc(r.maleEyebrow)}</small><h3>${esc(r.maleLabel)}</h3><p>${DATA.characters.male.map(c=>esc(c.name)).join('<br>')}</p></button>
   <button class="route" data-route="female"><small>${esc(r.femaleEyebrow)}</small><h3>${esc(r.femaleLabel)}</h3><p>${DATA.characters.female.map(c=>esc(c.name)).join('<br>')}</p></button></div>`;
 }
-function renderQuiz(p) {
-  const q = DATA.questions[state.index];
-  const type = q.type || 'single';
-  const progress =
-    (state.index + 1) /
-    DATA.questions.length *
-    100;
-
-  let controlHtml = '';
-
-  if (type === 'bestWorst') {
-    controlHtml = `
-      <div class="best-worst-help">
-        <span>先選最喜歡</span>
-        <span>再選最不喜歡</span>
-      </div>
-
-      <div class="best-worst-options">
-        ${(q.answers || []).map((answer, index) => `
-          <div class="best-worst-option" data-bw-option="${index}">
-            <div class="best-worst-text">
-              <span>${String(index + 1).padStart(2, '0')}</span>
-              <strong>${esc(answer.text)}</strong>
-            </div>
-
-            <div class="best-worst-actions">
-              <button
-                class="choice-mark most"
-                data-most="${index}"
-                type="button"
-              >
-                最喜歡
-              </button>
-
-              <button
-                class="choice-mark least"
-                data-least="${index}"
-                type="button"
-              >
-                最不喜歡
-              </button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-
-      <p class="question-hint" id="questionHint">
-        請各選一個選項，兩者不能相同。
-      </p>
-
-      <button
-        class="btn question-submit"
-        id="submitBestWorst"
-        type="button"
-        disabled
-      >
-        確認選擇
-      </button>
-    `;
-  } else if (type === 'slider') {
-    const slider = q.slider || {};
-    const min = Number(slider.min ?? 0);
-    const max = Number(slider.max ?? 100);
-    const step = Number(slider.step ?? 1);
-    const defaultValue = Number(
-      slider.default ?? ((min + max) / 2)
-    );
-
-    controlHtml = `
-      <div class="slider-question-card">
-        <div class="slider-value" id="sliderValue">
-          ${defaultValue}
-        </div>
-
-        <input
-          class="degree-slider"
-          id="degreeSlider"
-          type="range"
-          min="${min}"
-          max="${max}"
-          step="${step}"
-          value="${defaultValue}"
-        >
-
-        <div class="slider-labels">
-          <span>${esc(slider.leftLabel || '偏左')}</span>
-          <span>${esc(slider.centerLabel || '彼此平衡')}</span>
-          <span>${esc(slider.rightLabel || '偏右')}</span>
-        </div>
-      </div>
-
-      <button
-        class="btn question-submit"
-        id="submitSlider"
-        type="button"
-      >
-        確認程度
-      </button>
-    `;
-  } else {
-    controlHtml = `
-      <div class="answers">
-        ${(q.answers || []).map((answer, index) => `
-          <button
-            class="answer"
-            data-answer="${index}"
-            type="button"
-          >
-            <span>${String(index + 1).padStart(2, '0')}</span>
-            <span>${esc(answer.text)}</span>
-          </button>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  p.innerHTML = `
-    <div class="question">
-      <div class="qnum">
-        QUESTION ${String(state.index + 1).padStart(2, '0')}
-        /
-        ${String(DATA.questions.length).padStart(2, '0')}
-      </div>
-
-      <p class="scene-text">${esc(q.scene || '')}</p>
-      <h2>${esc(q.question || '')}</h2>
-
-      ${controlHtml}
-
-      <div class="progress">
-        <i style="width:${progress}%"></i>
-      </div>
-    </div>
-  `;
+function renderQuiz(p){
+  const q=DATA.questions[state.index];
+  p.innerHTML=`<div class="question"><div class="qnum">QUESTION ${String(state.index+1).padStart(2,'0')} / ${String(DATA.questions.length).padStart(2,'0')}</div>
+  <p class="scene-text">${esc(q.scene)}</p><h2>${esc(q.question)}</h2><div class="answers">${q.answers.map((a,i)=>`
+  <button class="answer" data-answer="${i}"><span>${String(i+1).padStart(2,'0')}</span><span>${esc(a.text)}</span></button>`).join('')}</div>
+  <div class="progress"><i style="width:${(state.index+1)/DATA.questions.length*100}%"></i></div></div>`;
 }
 function renderResult(p){
   const {ranking,top}=result(), s=DATA.setting.result;
@@ -484,120 +327,11 @@ function render(){
   app.appendChild(p); bind();
 }
 
-function addScores(scoreArray) {
-  state.scores = state.scores.map(
-    (current, index) =>
-      current + Number(scoreArray?.[index] || 0)
-  );
-}
-
-function finishQuestion(answerRecord) {
-  state.answers.push({
-    questionIndex: state.index,
-    type:
-      DATA.questions[state.index].type ||
-      'single',
-    ...answerRecord
-  });
-
-  state.index += 1;
-
-  if (state.index >= DATA.questions.length) {
-    cinematic(
-      DATA.story.epilogue,
-      'result'
-    );
-  } else {
-    cinematic(
-      [DATA.story.interludes[state.index] || {}],
-      'quiz'
-    );
-  }
-}
-
-function answer(i) {
-  const q = DATA.questions[state.index];
-  const a = q.answers[i];
-
-  addScores(a.score);
-
-  finishQuestion({
-    answerIndex: i,
-    answer: a.text
-  });
-}
-
-function answerBestWorst(
-  mostIndex,
-  leastIndex
-) {
-  const q = DATA.questions[state.index];
-  const most = q.answers[mostIndex];
-  const least = q.answers[leastIndex];
-
-  addScores(
-    most.mostScore ||
-    most.score
-  );
-
-  addScores(
-    least.leastScore
-  );
-
-  finishQuestion({
-    mostIndex,
-    leastIndex,
-    mostAnswer: most.text,
-    leastAnswer: least.text
-  });
-}
-
-function answerSlider(value) {
-  const q = DATA.questions[state.index];
-  const slider = q.slider || {};
-
-  const min = Number(slider.min ?? 0);
-  const max = Number(slider.max ?? 100);
-  const numericValue = Number(value);
-
-  const ratio =
-    max === min
-      ? 0
-      : Math.max(
-          0,
-          Math.min(
-            1,
-            (numericValue - min) /
-              (max - min)
-          )
-        );
-
-  const minScore =
-    slider.minScore || [0, 0, 0];
-
-  const maxScore =
-    slider.maxScore || [0, 0, 0];
-
-  const interpolated =
-    state.scores.map((_, index) => {
-      const low =
-        Number(minScore[index] || 0);
-
-      const high =
-        Number(maxScore[index] || 0);
-
-      return (
-        low +
-        (high - low) * ratio
-      );
-    });
-
-  addScores(interpolated);
-
-  finishQuestion({
-    value: numericValue,
-    ratio
-  });
+function answer(i){
+  const q=DATA.questions[state.index],a=q.answers[i];
+  state.scores=state.scores.map((x,j)=>x+Number(a.score[j]||0));state.index++;
+  if(state.index>=DATA.questions.length)cinematic(DATA.story.epilogue,'result');
+  else cinematic([DATA.story.interludes[state.index]||{}],'quiz');
 }
 function saveForm(){state.playerName=document.querySelector('#playerName')?.value.trim()||'';state.playDate=document.querySelector('#playDate')?.value||'';state.selectedHostId=document.querySelector('input[name=host]:checked')?.value||state.selectedHostId}
 function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
@@ -605,9 +339,7 @@ function shareMessage(){
   const {ranking,top}=result(),h=selectedHost();
   return [`【${DATA.setting.title}｜角色測驗結果】`,'',`指定主持人：${h?.displayName||h?.name||'未指定'}`,`玩家：${state.playerName}`,`遊玩日期：${state.playDate}`,`結果角色：${top.name}`,`最高共鳴度：${top.pct}%`,'','角色共鳴排行：',...ranking.map((c,i)=>`${i+1}. ${c.name} ${c.pct}%`),'','玩家留言：',state.note.trim()||'無'].join('\n');
 }
-async function send({
-  resumedAfterLogin = false
-} = {}) {
+async function send() {
   saveForm();
 
   if (!state.playerName) {
@@ -634,25 +366,20 @@ async function send({
       status(
         `LINE 初始化失敗：${liffError}`
       );
-
       return;
     }
   }
 
   if (!liff.isLoggedIn()) {
-    /*
-     * LINE Login 會重新載入整個頁面。
-     * 先保存測驗結果與分享表單，返回後再還原。
-     */
-    saveLiffReturnState();
+    saveStateBeforeLineLogin();
 
     status(
-      '正在前往 LINE 登入，完成後會自動返回傳送頁。'
+      '正在前往 LINE 登入。完成後會回到目前傳送頁。'
     );
 
     liff.login({
       redirectUri:
-        buildLoginRedirectUrl()
+        buildLineLoginRedirectUrl()
     });
 
     return;
@@ -664,9 +391,8 @@ async function send({
     )
   ) {
     status(
-      '目前開啟方式不支援 LINE 聊天室選擇器。請用 LIFF 網址在 LINE 中開啟。'
+      '目前環境不支援 LINE 聊天室選擇器，請從 LINE App 的 LIFF 連結開啟。'
     );
-
     return;
   }
 
@@ -680,16 +406,10 @@ async function send({
   }
 
   status(
-    resumedAfterLogin
-      ? '登入完成，正在開啟 LINE 聊天室選擇器…'
-      : '正在開啟 LINE 聊天室選擇器…'
+    '正在開啟 LINE 聊天室選擇器…'
   );
 
   try {
-    /*
-     * 成功時 Promise 可能不帶回傳值。
-     * 不能用 if (result) 判斷成功或取消。
-     */
     await liff.shareTargetPicker(
       [
         {
@@ -702,34 +422,22 @@ async function send({
       }
     );
 
-    clearLiffReturnState();
+    clearSavedLineState();
 
     state.page = 'success';
     render();
   } catch (error) {
     console.error(
-      'shareTargetPicker failed',
+      'shareTargetPicker error',
       error
     );
 
-    const code =
-      error?.code || '';
-
-    if (
-      code === 'USER_CANCEL' ||
-      code === 'CANCEL'
-    ) {
-      status(
-        '你取消了分享，測驗結果仍保留。'
-      );
-    } else {
-      status(
-        `分享失敗：${
-          error?.message ||
-          '未知錯誤'
-        }`
-      );
-    }
+    status(
+      `分享失敗：${
+        error?.message ||
+        '未知錯誤'
+      }`
+    );
   } finally {
     if (button) {
       button.disabled = false;
@@ -764,126 +472,6 @@ function bind(){
   document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route')});
   document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];cinematic([DATA.story.interludes[0]||{}],'quiz')});
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
-  let mostIndex = null;
-  let leastIndex = null;
-
-  const updateBestWorst = () => {
-    document
-      .querySelectorAll('[data-most]')
-      .forEach(button => {
-        button.classList.toggle(
-          'selected',
-          Number(button.dataset.most) === mostIndex
-        );
-      });
-
-    document
-      .querySelectorAll('[data-least]')
-      .forEach(button => {
-        button.classList.toggle(
-          'selected',
-          Number(button.dataset.least) === leastIndex
-        );
-      });
-
-    const submit =
-      document.querySelector('#submitBestWorst');
-
-    if (submit) {
-      submit.disabled =
-        mostIndex === null ||
-        leastIndex === null ||
-        mostIndex === leastIndex;
-    }
-
-    const hint =
-      document.querySelector('#questionHint');
-
-    if (
-      hint &&
-      mostIndex !== null &&
-      leastIndex !== null &&
-      mostIndex === leastIndex
-    ) {
-      hint.textContent =
-        '最喜歡和最不喜歡不能選同一個選項。';
-    } else if (hint) {
-      hint.textContent =
-        '請各選一個選項，兩者不能相同。';
-    }
-  };
-
-  document
-    .querySelectorAll('[data-most]')
-    .forEach(button => {
-      button.addEventListener('click', () => {
-        mostIndex =
-          Number(button.dataset.most);
-
-        updateBestWorst();
-      });
-    });
-
-  document
-    .querySelectorAll('[data-least]')
-    .forEach(button => {
-      button.addEventListener('click', () => {
-        leastIndex =
-          Number(button.dataset.least);
-
-        updateBestWorst();
-      });
-    });
-
-  document
-    .querySelector('#submitBestWorst')
-    ?.addEventListener('click', () => {
-      if (
-        mostIndex === null ||
-        leastIndex === null ||
-        mostIndex === leastIndex
-      ) {
-        return;
-      }
-
-      answerBestWorst(
-        mostIndex,
-        leastIndex
-      );
-    });
-
-  const degreeSlider =
-    document.querySelector('#degreeSlider');
-
-  if (degreeSlider) {
-    const valueLabel =
-      document.querySelector('#sliderValue');
-
-    const updateSliderValue = () => {
-      if (valueLabel) {
-        valueLabel.textContent =
-          degreeSlider.value;
-      }
-    };
-
-    degreeSlider.addEventListener(
-      'input',
-      updateSliderValue
-    );
-
-    updateSliderValue();
-  }
-
-  document
-    .querySelector('#submitSlider')
-    ?.addEventListener('click', () => {
-      answerSlider(
-        document
-          .querySelector('#degreeSlider')
-          ?.value
-      );
-    });
-
   document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
   document.querySelector('#sendToLine')?.addEventListener('click',send);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
@@ -894,11 +482,18 @@ async function boot() {
   try {
     await loadGlobalData();
 
-    const savedReturnState =
-      readLiffReturnState();
+    const resumeRequested =
+      new URLSearchParams(
+        window.location.search
+      ).get('resumeShare') === '1';
+
+    const savedLineState =
+      resumeRequested
+        ? loadSavedLineState()
+        : null;
 
     const requestedScriptId =
-      savedReturnState?.activeScriptId ||
+      savedLineState?.scriptId ||
       getRequestedScriptId();
 
     if (requestedScriptId) {
@@ -911,7 +506,7 @@ async function boot() {
         !meta ||
         meta.status === 'draft'
       ) {
-        clearLiffReturnState();
+        clearSavedLineState();
 
         showScriptNotFound(
           requestedScriptId
@@ -930,12 +525,10 @@ async function boot() {
         true
       );
 
-      if (
-        savedReturnState?.state
-      ) {
+      if (savedLineState) {
         state = {
           ...resetState(),
-          ...savedReturnState.state,
+          ...savedLineState.state,
           page: 'share'
         };
       } else {
@@ -943,30 +536,14 @@ async function boot() {
       }
 
       render();
-
       await initLiff();
 
-      /*
-       * LINE 登入返回後，恢復結果頁並自動再次開啟 picker。
-       * 等一個事件循環，確保分享頁按鈕已渲染完成。
-       */
-      if (
-        savedReturnState &&
-        shouldAutoShareAfterLogin() &&
-        liffReady &&
-        liff.isLoggedIn()
-      ) {
-        sessionStorage.removeItem(
-          LIFF_AUTO_SHARE_KEY
-        );
-
-        window.setTimeout(
-          () => {
-            send({
-              resumedAfterLogin: true
-            });
-          },
-          300
+      if (savedLineState) {
+        status(
+          liffReady &&
+          liff.isLoggedIn()
+            ? 'LINE 登入完成。請再按一次「開啟 LINE 選擇聊天室」。'
+            : '已恢復測驗結果，請再按一次傳送。'
         );
       }
 
@@ -983,17 +560,9 @@ async function boot() {
 
     app.innerHTML = `
       <section class="panel">
-        <div class="eyebrow">
-          LOAD ERROR
-        </div>
-
-        <h1 class="section-title">
-          資料載入失敗
-        </h1>
-
-        <p class="desc">
-          ${esc(error.message)}
-        </p>
+        <div class="eyebrow">LOAD ERROR</div>
+        <h1 class="section-title">資料載入失敗</h1>
+        <p class="desc">${esc(error.message)}</p>
       </section>
     `;
   }
