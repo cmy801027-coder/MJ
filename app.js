@@ -106,12 +106,12 @@ async function loadJson(url) {
 
 async function loadGlobalData() {
   [DATA.index, DATA.global, DATA.hosts] = await Promise.all([
-    loadJson('./data/index.json'), loadJson('./data/settings.json'), loadJson('./data/hosts.json')
+    loadJson('/data/index.json'), loadJson('/data/settings.json'), loadJson('/data/hosts.json')
   ]);
 }
 
 async function loadScript(id) {
-  const base = `./data/scripts/${id}`;
+  const base = `/data/scripts/${id}`;
   [DATA.setting, DATA.story, DATA.questions, DATA.characters] = await Promise.all([
     loadJson(`${base}/settings.json`), loadJson(`${base}/story.json`),
     loadJson(`${base}/questions.json`), loadJson(`${base}/characters.json`)
