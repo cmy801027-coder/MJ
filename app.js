@@ -57,6 +57,9 @@ function buildGoogleSheetPayload() {
     })),
     note: state.note || '',
     scores: [...state.scores],
+    questions: (DATA.questions || []).map(
+      question => String(question.question || '').trim()
+    ),
     answers: [...state.answers]
   };
 }
