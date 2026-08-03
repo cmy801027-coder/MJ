@@ -10,88 +10,6 @@ let transitionLocked = false;
 let liffReady = false;
 let liffError = '';
 
-const LIFF_SAVED_STATE_KEY =
-  'assignRolesV2SavedState';
-
-function saveStateBeforeLineLogin() {
-  const payload = {
-    scriptId: activeScriptId,
-    state: {
-      ...state,
-      page: 'share'
-    },
-    savedAt: Date.now()
-  };
-
-  localStorage.setItem(
-    LIFF_SAVED_STATE_KEY,
-    JSON.stringify(payload)
-  );
-}
-
-function loadSavedLineState() {
-  const raw =
-    localStorage.getItem(
-      LIFF_SAVED_STATE_KEY
-    );
-
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const payload =
-      JSON.parse(raw);
-
-    if (
-      !payload?.scriptId ||
-      !payload?.state ||
-      !payload?.savedAt
-    ) {
-      clearSavedLineState();
-      return null;
-    }
-
-    if (
-      Date.now() - payload.savedAt >
-      30 * 60 * 1000
-    ) {
-      clearSavedLineState();
-      return null;
-    }
-
-    return payload;
-  } catch {
-    clearSavedLineState();
-    return null;
-  }
-}
-
-function clearSavedLineState() {
-  localStorage.removeItem(
-    LIFF_SAVED_STATE_KEY
-  );
-}
-
-function buildLineLoginRedirectUrl() {
-  const url = new URL(
-    window.location.origin + '/'
-  );
-
-  if (activeScriptId) {
-    url.searchParams.set(
-      'script',
-      activeScriptId
-    );
-  }
-
-  url.searchParams.set(
-    'resumeShare',
-    '1'
-  );
-
-  return url.toString();
-}
 
 const resetState = () => ({
   page: 'scriptSelect', route: null, index: 0, scores: [0,0,0],
@@ -101,6 +19,68 @@ const resetState = () => ({
 state = resetState();
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function getGoogleSheetEndpoint() {
+  return String(DATA.setting?.googleSheets?.webAppUrl || '').trim();
+}
+
+function createSubmissionId() {
+  return window.crypto?.randomUUID
+    ? window.crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function buildGoogleSheetPayload() {
+  const { ranking, top } = result();
+
+  return {
+    submissionId: createSubmissionId(),
+    submittedAt: new Date().toISOString(),
+    scriptId: activeScriptId || '',
+    scriptName: DATA.setting?.name || DATA.setting?.title || '',
+    playerName: state.playerName,
+    playDate: state.playDate,
+    route:
+      state.route === 'male'
+        ? '男角路線'
+        : state.route === 'female'
+          ? '女角路線'
+          : '',
+    resultCharacterId: top?.id || '',
+    resultCharacter: top?.name || '',
+    resultPercentage: Number(top?.pct || 0),
+    ranking: ranking.map(character => ({
+      id: character.id || '',
+      name: character.name || '',
+      score: Number(character.score || 0),
+      percentage: Number(character.pct || 0)
+    })),
+    note: state.note || '',
+    scores: [...state.scores],
+    answers: [...state.answers],
+    pageUrl: window.location.href,
+    userAgent: navigator.userAgent
+  };
+}
+
+async function postResultToGoogleSheet(payload) {
+  const endpoint = getGoogleSheetEndpoint();
+
+  if (!endpoint) {
+    throw new Error('尚未設定 Google Apps Script Web App URL');
+  }
+
+  await fetch(endpoint, {
+    method: 'POST',
+    mode: 'no-cors',
+    cache: 'no-store',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
 
 function getRequestedScriptId() {
   const queryId = new URLSearchParams(
@@ -437,17 +417,90 @@ function renderResult(p){
   <button class="btn" id="goShare">${esc(s.shareButton)}</button><button class="ghost" id="restart">${esc(s.restartButton)}</button></div>`;
   if(top.music) new Audio(top.music).play().catch(()=>{});
 }
-function renderShare(p){
-  const {top}=result(), s=DATA.setting.share; if(!state.playDate)state.playDate=todayValue(); p.classList.add('share-panel');
-  p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><h2 class="section-title">${esc(s.title)}</h2>
-  <div class="share-result-mini"><img src="${esc(top.image)}"><div><small>你的結果</small><strong>${esc(top.name)}</strong><span>${top.pct}% 共鳴</span></div></div>
-  <div class="fields"><div class="field"><label>${esc(s.playerNameLabel)}</label><input id="playerName" value="${esc(state.playerName)}"></div>
-  <div class="field"><label>${esc(s.dateLabel)}</label><input id="playDate" type="date" value="${esc(state.playDate)}"></div></div>
-  <div class="eyebrow host-heading">${esc(s.hostLabel)}</div><div class="host-grid">${DATA.hosts.map(h=>`<label class="host-card"><input type="radio" name="host" value="${esc(h.id)}" ${h.id===state.selectedHostId?'checked':''}><strong>${esc(h.displayName||h.name)}</strong><span>${esc(h.note||'')}</span></label>`).join('')}</div>
-  <div class="actions"><button class="btn" id="sendToLine">${esc(s.button)}</button><button class="ghost" id="backToResult">${esc(s.backButton)}</button></div>
-  <p class="share-status" id="shareStatus">按下按鈕後才會開啟 LINE 分享視窗。</p>`;
+function renderShare(p) {
+  const { top } = result();
+  const shareSetting = DATA.setting.share || {};
+
+  if (!state.playDate) {
+    state.playDate = todayValue();
+  }
+
+  p.classList.add('share-panel');
+
+  p.innerHTML = `
+    <div class="eyebrow">
+      ${esc(shareSetting.eyebrow || 'SUBMIT YOUR RESULT')}
+    </div>
+
+    <h2 class="section-title">
+      ${esc(shareSetting.title || '留下你的測驗結果')}
+    </h2>
+
+    <div class="share-result-mini">
+      <img src="${esc(top.image)}" alt="${esc(top.name)}">
+      <div>
+        <small>你的結果</small>
+        <strong>${esc(top.name)}</strong>
+        <span>${top.pct}% 共鳴</span>
+      </div>
+    </div>
+
+    <div class="fields">
+      <div class="field">
+        <label for="playerName">
+          ${esc(shareSetting.playerNameLabel || '玩家姓名 PLAYER NAME')}
+        </label>
+        <input
+          id="playerName"
+          maxlength="40"
+          autocomplete="name"
+          value="${esc(state.playerName)}"
+          placeholder="請輸入姓名或稱呼"
+        >
+      </div>
+
+      <div class="field">
+        <label for="playDate">
+          ${esc(shareSetting.dateLabel || '遊玩日期 PLAY DATE')}
+        </label>
+        <input id="playDate" type="date" value="${esc(state.playDate)}">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="submitToSheet" type="button">確認送出</button>
+      <button class="ghost" id="backToResult" type="button">返回測驗結果</button>
+    </div>
+
+    <p class="share-status" id="shareStatus">
+      確認後會將姓名、日期與完整測驗結果送至登記表。
+    </p>
+  `;
 }
-function renderSuccess(p){p.innerHTML=`<div class="eyebrow">MESSAGE DELIVERED</div><h2 class="section-title">分享流程已完成</h2><p class="desc">請確認訊息已送到正確的主持人聊天室。</p><div class="actions"><button class="btn" id="shareAgain">再次分享</button><button class="ghost" id="restart">重新測驗</button></div>`}
+
+function renderSuccess(p) {
+  const { top } = result();
+
+  p.innerHTML = `
+    <div class="eyebrow">RESULT SUBMITTED</div>
+    <h2 class="section-title">測驗結果已送出</h2>
+
+    <div class="share-result-mini">
+      <img src="${esc(top.image)}" alt="${esc(top.name)}">
+      <div>
+        <small>角色結果</small>
+        <strong>${esc(top.name)}</strong>
+        <span>${top.pct}% 共鳴</span>
+      </div>
+    </div>
+
+    <p class="desc">姓名、日期與完整測驗結果已送至登記表。</p>
+
+    <div class="actions">
+      <button class="ghost" id="restart" type="button">重新測驗</button>
+    </div>
+  `;
+}
 
 function render(){
   app.innerHTML=''; const p=document.createElement('section');p.className='panel';
@@ -570,117 +623,59 @@ function answerSlider(value) {
     ratio
   });
 }
-function saveForm(){state.playerName=document.querySelector('#playerName')?.value.trim()||'';state.playDate=document.querySelector('#playDate')?.value||'';state.selectedHostId=document.querySelector('input[name=host]:checked')?.value||state.selectedHostId}
-function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
-function shareMessage(){
-  const {ranking,top}=result(),h=selectedHost();
-  return [`【${DATA.setting.title}｜角色測驗結果】`,'',`指定主持人：${h?.displayName||h?.name||'未指定'}`,`玩家：${state.playerName}`,`遊玩日期：${state.playDate}`,`結果角色：${top.name}`,`最高共鳴度：${top.pct}%`,'','角色共鳴排行：',...ranking.map((c,i)=>`${i+1}. ${c.name} ${c.pct}%`),'','玩家留言：',state.note.trim()||'無'].join('\n');
+function saveForm() {
+  state.playerName =
+    document.querySelector('#playerName')?.value.trim() || '';
+
+  state.playDate =
+    document.querySelector('#playDate')?.value || '';
 }
-async function send() {
+
+function status(t){const e=document.querySelector('#shareStatus');if(e)e.textContent=t}
+async function submitResultToSheet() {
   saveForm();
 
   if (!state.playerName) {
-    status('請填寫玩家姓名');
+    status('請先填寫玩家姓名。');
+    document.querySelector('#playerName')?.focus();
     return;
   }
 
   if (!state.playDate) {
-    status('請選擇日期');
+    status('請先選擇遊玩日期。');
+    document.querySelector('#playDate')?.focus();
     return;
   }
 
-  if (!selectedHost()) {
-    status('請選擇主持人');
+  if (!getGoogleSheetEndpoint()) {
+    status('尚未設定 Google Sheet 接收網址，請聯絡管理員。');
     return;
   }
 
-  if (!liffReady) {
-    status('正在連接 LINE…');
-
-    await initLiff();
-
-    if (!liffReady) {
-      status(
-        `LINE 初始化失敗：${liffError}`
-      );
-      return;
-    }
-  }
-
-  if (!liff.isLoggedIn()) {
-    saveStateBeforeLineLogin();
-
-    status(
-      '正在前往 LINE 登入。完成後會回到目前傳送頁。'
-    );
-
-    liff.login({
-      redirectUri:
-        buildLineLoginRedirectUrl()
-    });
-
-    return;
-  }
-
-  if (
-    !liff.isApiAvailable(
-      'shareTargetPicker'
-    )
-  ) {
-    status(
-      '目前環境不支援 LINE 聊天室選擇器，請從 LINE App 的 LIFF 連結開啟。'
-    );
-    return;
-  }
-
-  const button =
-    document.querySelector(
-      '#sendToLine'
-    );
+  const button = document.querySelector('#submitToSheet');
 
   if (button) {
     button.disabled = true;
+    button.textContent = '送出中…';
   }
 
-  status(
-    '正在開啟 LINE 聊天室選擇器…'
-  );
+  status('正在送出測驗結果…');
 
   try {
-    await liff.shareTargetPicker(
-      [
-        {
-          type: 'text',
-          text: shareMessage()
-        }
-      ],
-      {
-        isMultiple: false
-      }
-    );
-
-    clearSavedLineState();
-
+    await postResultToGoogleSheet(buildGoogleSheetPayload());
     state.page = 'success';
     render();
   } catch (error) {
-    console.error(
-      'shareTargetPicker error',
-      error
-    );
-
-    status(
-      `分享失敗：${
-        error?.message ||
-        '未知錯誤'
-      }`
-    );
+    console.error('Google Sheet submit failed', error);
+    status(`送出失敗：${error?.message || '請檢查網路後重試'}`);
   } finally {
     if (button) {
       button.disabled = false;
+      button.textContent = '確認送出';
     }
   }
 }
+
 function restart() {
   const muted = state.muted;
   const currentScriptId = activeScriptId;
@@ -830,9 +825,8 @@ function bind(){
     });
 
   document.querySelector('#goShare')?.addEventListener('click',()=>{state.note=document.querySelector('#note')?.value||'';state.page='share';render()});
-  document.querySelector('#sendToLine')?.addEventListener('click',send);
+  document.querySelector('#submitToSheet')?.addEventListener('click',submitResultToSheet);
   document.querySelector('#backToResult')?.addEventListener('click',()=>{saveForm();state.page='result';render()});
-  document.querySelector('#shareAgain')?.addEventListener('click',()=>{state.page='share';render()});
   document.querySelector('#restart')?.addEventListener('click',restart);
 }
 async function boot() {
@@ -869,7 +863,7 @@ async function boot() {
           requestedScriptId
         );
 
-        await initLiff();
+        
         return;
       }
 
@@ -893,7 +887,7 @@ async function boot() {
       }
 
       render();
-      await initLiff();
+      
 
       if (savedLineState) {
         status(
@@ -911,7 +905,7 @@ async function boot() {
       'scriptSelect';
 
     render();
-    await initLiff();
+    
   } catch (error) {
     console.error(error);
 

@@ -57,7 +57,7 @@ function renderScripts(){
     </div>
   </div>
 `).join('')}</div>
- ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div></div></div>`:''}`;
+ ${script()?`<div class="card"><h2>目前劇本設定</h2><div class="grid"><div class="field"><label>劇本名稱</label><input id="scriptName" value="${esc(script().settings.name)}"></div><div class="field"><label>網址 ID</label><input value="${esc(S.scriptId)}" disabled></div><div class="field"><label>狀態</label><select id="scriptStatus"><option value="published" ${script().meta.status==='published'?'selected':''}>公開</option><option value="draft" ${script().meta.status==='draft'?'selected':''}>草稿</option></select></div><div class="field"><label>網站標題</label><input id="scriptTitle" value="${esc(script().settings.title||'')}"></div><div class="field"><label>Google Apps Script Web App URL</label><input id="googleSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(script().settings.googleSheets?.webAppUrl||'')}"></div></div></div>`:''}`;
  document.querySelectorAll('[data-open]').forEach(button => {
    button.onclick = () => {
      S.scriptId = button.dataset.open;
@@ -96,7 +96,26 @@ function renderScripts(){
  });
  $('#addScript').onclick=()=>{const name=prompt('新劇本名稱');if(!name)return;let id=(prompt('網址 ID（英文、數字、連字號）',`story-${Date.now()}`)||'').trim().toLowerCase().replace(/[^a-z0-9-]/g,'-');if(!id||S.data.scripts[id])return notice('ID 無效或已存在',true);const base=structuredClone(script());base.settings.id=id;base.settings.name=name;base.settings.title=name;base.meta={id,name,status:'draft',cover:''};S.data.scripts[id]=base;S.data.index.scripts.push(base.meta);S.scriptId=id;setDirty();render()};
  document.querySelectorAll('[data-remove-script]').forEach(b=>b.onclick=()=>{if(!confirm('將刪除整個劇本資料與素材，確定？'))return;const id=b.dataset.removeScript;delete S.data.scripts[id];S.data.index.scripts=S.data.index.scripts.filter(x=>x.id!==id);S.scriptId=S.data.index.defaultScriptId;setDirty();render()});
- if($('#scriptName')){$('#scriptName').oninput=e=>{script().settings.name=e.target.value;script().meta.name=e.target.value;setDirty()};$('#scriptTitle').oninput=e=>{script().settings.title=e.target.value;setDirty()};$('#scriptStatus').onchange=e=>{script().meta.status=e.target.value;setDirty()}}
+ if($('#scriptName')){
+   $('#scriptName').oninput=e=>{
+     script().settings.name=e.target.value;
+     script().meta.name=e.target.value;
+     setDirty()
+   };
+   $('#scriptTitle').oninput=e=>{
+     script().settings.title=e.target.value;
+     setDirty()
+   };
+   $('#scriptStatus').onchange=e=>{
+     script().meta.status=e.target.value;
+     setDirty()
+   };
+   $('#googleSheetUrl').oninput=e=>{
+     script().settings.googleSheets ||= {};
+     script().settings.googleSheets.webAppUrl=e.target.value.trim();
+     setDirty()
+   };
+ }
 }
 
 function renderStory(){
