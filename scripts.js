@@ -10,7 +10,34 @@
         youtube 劇本介紹影片（選填）：影片 ID 或網址，有填劇本頁才會出現「▶ 介紹影片」
    ========================================================== */
 window.SCRIPTS = [
-  ];
+  {
+    "id": "drunk",
+    "name": "醉凌雲",
+    "players": 6,
+    "playersLabel": "2男4女/3男3女",
+    "time": 9,
+    "timeLabel": "9小時",
+    "difficulty": 0,
+    "types": [
+      "情感",
+      "古風"
+    ],
+    "allowCrossGender": false,
+    "characters": [
+      "方逆",
+      "蘇淺雨",
+      "蘇溫言",
+      "冷寂",
+      "慕歸",
+      "白未染"
+    ],
+    "poster": "img/劇本/drunk/poster.jpg",
+    "theme": "default",
+    "reviewKey": "醉凌雲",
+    "youtube": "",
+    "file": "script.html?id=drunk"
+  }
+];
 
 // scripts.js 會在首頁 DOM 完成後載入；立刻同步初始數量。
 (function syncInitialScriptCount() {

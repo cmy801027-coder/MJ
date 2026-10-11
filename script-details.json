@@ -1,1 +1,43 @@
-{}
+{
+  "drunk": {
+    "tagline": "厲害厲害",
+    "story": "",
+    "features": "",
+    "notice": "",
+    "bookingNote": "",
+    "allowCrossGender": false,
+    "characters": [
+      {
+        "name": "方逆",
+        "subtitle": "攝政王",
+        "image": "img/劇本/drunk/character-1.jpg"
+      },
+      {
+        "name": "蘇淺雨",
+        "subtitle": "長公主",
+        "image": "img/劇本/drunk/character-2.jpg"
+      },
+      {
+        "name": "蘇溫言",
+        "subtitle": "小公主",
+        "image": "img/劇本/drunk/character-3.jpg"
+      },
+      {
+        "name": "冷寂",
+        "subtitle": "罪犯",
+        "image": "img/劇本/drunk/character-4.jpg"
+      },
+      {
+        "name": "慕歸",
+        "subtitle": "少莊主",
+        "image": "img/劇本/drunk/character-5.jpg"
+      },
+      {
+        "name": "白未染",
+        "subtitle": "大師兄",
+        "image": "img/劇本/drunk/character-6.jpg"
+      }
+    ],
+    "hosts": []
+  }
+}
