@@ -333,7 +333,7 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function goToScript(scriptId) {
         const script = scripts.find(s => s.id === scriptId);
         if (script && script.file) {
-            window.location.href = script.file;
+            window.location.href = 'script.html?id=' + encodeURIComponent(script.id);
         } else {
             console.error('找不到ID為 ' + scriptId + ' 的劇本檔案。');
             alert('抱歉，找不到該劇本的詳細介紹頁面。');
@@ -366,7 +366,7 @@ function renderCards() {
                     ? `<img src="${img}" alt="${s.name}" class="script-image" loading="lazy">`
                     : `<div class="script-image" role="img" aria-label="${s.name}（海報準備中）" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;text-align:center;font-weight:800;letter-spacing:.08em;line-height:1.5;color:rgba(255,255,255,.82);background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.12),transparent 60%)"><span style="font-size:2.4rem">🎭</span><span>${s.name}</span><span style="font-size:.78rem;font-weight:600;opacity:.65">海報準備中</span></div>`}
                 <span class="corner-diff">${s.players}人</span>
-                ${hasVideo(s) ? `<a class="video-badge" href="${s.file}#video" aria-label="觀看${s.name}介紹影片">▶ 影片</a>` : ''}
+                ${hasVideo(s) ? `<a class="video-badge" href="script.html?id=${encodeURIComponent(s.id)}#video" aria-label="觀看${s.name}介紹影片">▶ 影片</a>` : ''}
             </div>
             <div class="card-body">
                 <h3 class="script-title">${s.name}</h3>
