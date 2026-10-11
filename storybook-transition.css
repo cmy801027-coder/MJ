@@ -1,9 +1,8 @@
 
 #storybook{position:fixed;inset:0;z-index:999999;background:#160e19;color:#56341f;font-family:"Noto Serif TC",serif;overflow:hidden;isolation:isolate}
 #storybook *{box-sizing:border-box}
-#storybook .library-art {
-    display: none;
-}
+#storybook .library-art{position:absolute;inset:-2%;background:url('storybook/library-scene.png') center/cover no-repeat;filter:saturate(1.12) brightness(.78);transform:scale(1.06);animation:library-enter 1.7s ease-out both}
+#storybook .library-art:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#160e1966,transparent 35%,#160e1944),linear-gradient(0deg,#100a17ad,transparent 42%)}
 #storybook .dust{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,#ffe0a4 1.2px,transparent 2.5px),radial-gradient(circle,#fff0bd 1px,transparent 2px);background-size:91px 113px,131px 137px;animation:dust-drift 9s linear infinite;opacity:.6}
 #storybook .library-label{position:absolute;top:5%;width:100%;text-align:center;color:#ffe6ae;font-size:clamp(18px,3vw,32px);letter-spacing:.2em;text-shadow:0 2px 12px #100716,0 0 18px #ffd486}
 #storybook .library-shelf{position:absolute;width:min(58vw,580px);height:min(37vw,380px);bottom:8%;left:50%;transform:translateX(-50%);background:url('storybook/library-shelf.png') center/cover;border:7px ridge #b98b56;border-radius:12px;box-shadow:0 30px 55px #100915e8,0 0 0 3px #452c33;animation:shelf-appear .8s ease both}
@@ -83,4 +82,52 @@
   #storybook .page .char-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   #storybook .book-actions{bottom:10px}
   #storybook .book-actions button{font-size:13px;padding:9px 13px}
+}
+
+/* V4: ornamental Chinese fantasy book, styled after the approved reference. */
+#storybook .library-art{display:none!important}
+#storybook.open .magic-book{width:min(97vw,1540px);height:min(89vh,920px);top:51%;filter:drop-shadow(0 25px 25px #070407a8)}
+#storybook.open .reading{
+  border:12px solid #60331e;
+  border-radius:22px 25px 29px 24px;
+  background:
+    radial-gradient(ellipse at 18% 24%,#fff3d7 0%,transparent 47%),
+    radial-gradient(ellipse at 85% 76%,#e2b88e 0%,transparent 53%),
+    repeating-linear-gradient(0deg,transparent 0px,#986b3b08 3px,transparent 6px),
+    linear-gradient(90deg,#8d5736 0%,#c89d6b 1%,#f7dfb6 4%,#f5e2c1 45%,#b88c5e 49%,#67402a 49.8%,#6b432e 50.2%,#c49b6c 51%,#f8e3bd 55%,#f4dfbb 96%,#c79b6c 99%,#805131 100%);
+  box-shadow:inset 0 0 0 3px #edc17c,inset 0 0 0 9px #9c663c,inset 0 0 45px #9e6e3d7a,0 10px 0 #4c2d21,0 17px 0 #a2784d,0 28px 30px #0b0711ad;
+}
+#storybook.open .reading:before{left:49.2%;width:1.6%;z-index:2;background:linear-gradient(90deg,#5e392a,#a87950 25%,#efc88d 50%,#825335 80%,#4b3026);box-shadow:-7px 0 13px #5b321d70,7px 0 13px #5b321d70}
+#storybook .book-spine{position:absolute;z-index:5;top:0;bottom:0;left:49.65%;width:.7%;pointer-events:none;background:linear-gradient(90deg,#5b3325,#c18c55,#5c3827);opacity:.75}
+#storybook .page{position:relative;z-index:3;padding:clamp(30px,4vw,72px) clamp(28px,4.1vw,78px) 82px;background:radial-gradient(ellipse at 50% 38%,#fff8df44,transparent 78%);color:#4d3025}
+#storybook .page.left{box-shadow:inset -16px 0 25px #8d573b24}
+#storybook .page.right{box-shadow:inset 16px 0 25px #8d573b24}
+#storybook .page:before{content:"";position:absolute;pointer-events:none;inset:23px;border:1px solid #b9875480;border-radius:3px}
+#storybook .page:after{content:"✦  ❀  ✦";display:block;text-align:center;color:#a36b3b;font-size:17px;letter-spacing:.8em;margin-top:28px}
+#storybook .page h2,#storybook .page h3{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;color:#5c291f;font-weight:700;letter-spacing:.13em;text-shadow:0 1px #fff4d2}
+#storybook .page h3{display:table;margin:0 auto 28px;padding:10px 45px;background:linear-gradient(100deg,#54251e,#8e4830 50%,#54251e);border:2px solid #d6a96b;border-radius:5px;color:#ffe7b9;box-shadow:0 3px 0 #b88b55,0 6px 10px #593a2840;font-size:clamp(22px,2.5vw,35px)}
+#storybook .page p{color:#4d3027;line-height:2.05;letter-spacing:.035em}
+#storybook .page .chapter{color:#9a6038;letter-spacing:.28em;font-weight:700}
+#storybook .page .story-tags span{background:linear-gradient(120deg,#78402c,#a96b45);border:1px solid #d9b178;box-shadow:0 2px 5px #5b352a30;color:#ffedc9}
+#storybook .page .char img,#storybook .page .char .placeholder{border:3px double #a77845;box-shadow:0 3px 10px #71452755;background:#c3a17b}
+#storybook .page .char{color:#633c29;font-weight:600}
+#storybook .book-actions{z-index:12;bottom:25px}
+#storybook .book-actions button{background:linear-gradient(#8e5639,#5c3328);border:2px solid #cfa46c;box-shadow:inset 0 1px #f2d5a1,0 3px 7px #4a2a2377;border-radius:6px;color:#ffedce;font-family:inherit;letter-spacing:.08em}
+#storybook .book-actions button:hover:not(:disabled){filter:brightness(1.15)}
+#storybook .ornate-corner{position:absolute;z-index:7;pointer-events:none;width:clamp(48px,8vw,110px);height:clamp(48px,8vw,110px);background-image:url('storybook/gold-corner.svg');background-size:contain;background-repeat:no-repeat;filter:drop-shadow(0 2px 2px #68401f77)}
+#storybook .ornate-corner.tl{top:0;left:0}
+#storybook .ornate-corner.tr{top:0;right:0;transform:scaleX(-1)}
+#storybook .ornate-corner.bl{bottom:0;left:0;transform:scaleY(-1)}
+#storybook .ornate-corner.br{bottom:0;right:0;transform:scale(-1)}
+#storybook .reading .page-turn{z-index:9;background:linear-gradient(90deg,#bd8b5c,#fff0d2 35%,#e2bc8a 65%,#8b593b)}
+@media(max-width:650px){
+ #storybook.open .magic-book{width:99vw;height:87dvh}
+ #storybook.open .reading{border-width:6px;border-radius:10px}
+ #storybook .page{padding:40px 12px 68px}
+ #storybook .page:before{inset:10px}
+ #storybook .page h3{font-size:17px;padding:7px 10px;margin-bottom:12px}
+ #storybook .page p{font-size:14px;line-height:1.75}
+ #storybook .ornate-corner{width:38px;height:38px}
+ #storybook .book-actions{bottom:8px}
+ #storybook .page .char-grid{gap:6px}
 }

@@ -9,7 +9,7 @@ const chapter=(name,html)=>({name,html});
 function showChapter(){
   const a=chapters[chap]||chapters[0],b=chapters[chap+1]||null;
   active.querySelector('.page.left').innerHTML=a.html;
-  active.querySelector('.page.right').innerHTML=b?b.html:'<h2>故事未完待續 ✦</h2><p>點擊下方「完整劇本介紹」繼續探索。</p>';
+  active.querySelector('.page.right').innerHTML=b?b.html:'<h2>故事未完待續 ✦</h2><p>每一段故事，都藏著等待揭曉的秘密。</p>';
   active.querySelector('.prev').disabled=chap===0;
   active.querySelector('.next').disabled=chap>=chapters.length-2;
 }
@@ -21,7 +21,7 @@ function makeChapters(s,d){
  const tagline=d.tagline||'翻開這一頁，走進另一個世界。';
  const characters=(d.characters||s.characters||[]).map(c=>typeof c==='string'?{name:c}:c);
  const charHtml=characters.map(c=>'<div class="char">'+(safe(c.image)?'<img src="'+safe(c.image)+'" alt="'+esc(c.name)+'">':'<div class="placeholder">✦</div>')+'<div>'+esc(c.name)+'</div></div>').join('');
- const story=esc(d.story||'更多故事內容，請進入完整劇本介紹。');
+ const story=esc(d.story||'翻開書頁，探索這段故事。');
  const features=esc(d.features||'精彩故事，等待探索。');
  const notice=esc(d.notice||'');
  return [
@@ -39,7 +39,7 @@ window.playStorybookTransition=async function(s,url){
  active=el;
  const poster=safe(s.poster);
  el.innerHTML='<div class="library-art"></div><div class="dust"></div><div class="library-label">✦ 敏捷私團 · STORYLAB ✦</div>'+
- '<div class="library-shelf"></div><div class="magic-book"><div class="book-block"><div class="book-pages"><div class="book-inside"><strong>'+esc(s.name)+'</strong><span>✧ 故事，即將展開 ✧</span></div></div><div class="book-cover">'+(poster?'<img src="'+poster+'" alt="'+esc(s.name)+' 海報">':'<div class="no-poster">'+esc(s.name)+'</div>')+'</div></div><div class="reading"><div class="page left"></div><div class="page right"></div><div class="page-turn"></div><div class="book-actions"><button class="prev" type="button">← 上一頁</button><button class="next" type="button">下一頁 →</button></div></div></div>'+
+ '<div class="library-shelf"></div><div class="magic-book"><div class="book-block"><div class="book-pages"><div class="book-inside"><strong>'+esc(s.name)+'</strong><span>✧ 故事，即將展開 ✧</span></div></div><div class="book-cover">'+(poster?'<img src="'+poster+'" alt="'+esc(s.name)+' 海報">':'<div class="no-poster">'+esc(s.name)+'</div>')+'</div></div><div class="reading"><div class="ornate-corner tl"></div><div class="ornate-corner tr"></div><div class="ornate-corner bl"></div><div class="ornate-corner br"></div><div class="book-spine"></div><div class="page left"></div><div class="page right"></div><div class="page-turn"></div><div class="book-actions"><button class="prev" type="button">← 上一頁</button><button class="next" type="button">下一頁 →</button></div></div></div>'+
  '<div class="hint">✦ 魔法書正在從書架取出 ✦</div><button class="close" type="button">✕ 返回總覽</button>';
  document.body.appendChild(el);
  el.querySelector('.close').onclick=close;
