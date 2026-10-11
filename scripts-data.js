@@ -333,7 +333,12 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function goToScript(scriptId) {
         const script = scripts.find(s => s.id === scriptId);
         if (script && script.file) {
-            window.location.href = 'script.html?id=' + encodeURIComponent(script.id);
+            const destination = 'script.html?id=' + encodeURIComponent(script.id);
+            if (typeof window.playStorybookTransition === 'function') {
+                window.playStorybookTransition(script, destination);
+            } else {
+                window.location.href = destination;
+            }
         } else {
             console.error('找不到ID為 ' + scriptId + ' 的劇本檔案。');
             alert('抱歉，找不到該劇本的詳細介紹頁面。');
