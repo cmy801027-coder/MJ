@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>劇本殺榮譽牆 (數據連動版)</title>
+    <!-- 一律 defer／async：不擋住頁面繪製。defer 依序執行、且在 DOMContentLoaded 之前跑完 -->
+    <!-- 引入 PapaParse 用於正確解析 CSV（載不到時有內建解析器） -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Tone.js 只負責點擊音效，用 async 背景載入，第一次點擊時才建立音效 -->
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <!-- 劇本資料單一來源（與 index.html 共用） -->
+    <script defer src="scripts.js?v=20261006-tags4"></script>
+    <script defer src="play-record-config.js?v=20261006-fast"></script>
+    <script defer src="points.js?v=20261007-load"></script>
+    <style>
+        /* --- 網頁整體樣式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 1rem; /* 手機版優化 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- 容器樣式 --- */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- 新增按鈕區塊 --- */
+        .header-actions {
+            margin-bottom: 1.5rem;
+            display: flex; /* 讓按鈕並排 */
+            gap: 10px; /* 按鈕間距 */
+        }
+
+        .header-btn {
+            display: inline-block;
+            padding: 10px 18px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .add-record-btn {
+            background-color: #007bff;
+        }
+
+        .add-record-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .back-btn {
+            background-color: #6c757d; /* 灰色 */
+        }
+        
+        .back-btn:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        /* --- 標題樣式 --- */
+        .main-title {
+            text-align: center;
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            color: #ffffff;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.4);
+        }
+        
+        /* --- 新增介紹區塊 --- */
+        .intro-container {
+            background-color: #2b2b2b;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 0 auto 2rem auto;
+            max-width: 600px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .intro-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .intro-title {
+            font-size: 1.5rem;
+            color: #eee;
+            margin: 0 0 15px 0;
+        }
+        
+        .intro-container .toggle-arrow {
+            color: #eee;
+        }
+        
+        .intro-body {
+            max-height: 300px;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.4s ease-in-out;
+            opacity: 1;
+            margin-top: 0;
+        }
+        
+        .intro-container.collapsed .intro-body {
+            max-height: 0;
+            opacity: 0;
+            margin-top: -15px; /* 收合時移除間距 */
+        }
+        
+        .intro-list {
+            list-style-position: inside;
+            padding-left: 0;
+            line-height: 1.8;
+            color: #ccc;
+            margin: 0;
+        }
+        
+        /* --- 玩家選擇區 --- */
+        .player-selector-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap; /* 在小螢幕上換行 */
+        }
+
+        .player-selector-container label {
+            font-size: 1.2rem;
+            color: #ccc;
+        }
+
+        #playerSelector, #playerSearch {
+            padding: 10px 15px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #fff;
+            min-width: 180px; /* 手機版優化 */
+            flex-grow: 1; /* 手機版優化 */
+            max-width: 250px;
+        }
+        
+        #playerSelector {
+             cursor: pointer;
+        }
+        
+        /* --- 全新排行榜樣式 --- */
+        .leaderboard-container {
+            background-color: #2b2b2b;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 0 auto 2.5rem auto;
+            max-width: 600px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .leaderboard-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none; /* 防止選取文字 */
+        }
+
+        .leaderboard-title {
+            text-align: center;
+            margin: 0 0 15px 0;
+            font-size: 1.5rem;
+            color: #ffd700;
+        }
+
+        .toggle-arrow {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-left: 10px;
+            margin-bottom: 12px;
+            transition: transform 0.4s ease;
+        }
+        
+        .leaderboard-container.collapsed .toggle-arrow,
+        .intro-container.collapsed .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .leaderboard-body {
+            max-height: 300px; /* 預設展開高度 */
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
+            opacity: 1;
+        }
+        
+        .leaderboard-container.collapsed .leaderboard-body {
+            max-height: 0;
+            opacity: 0;
+        }
+        
+        .leaderboard-search {
+            margin-bottom: 10px;
+        }
+
+        #leaderboardSearch {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        
+        #leaderboardList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 265px; /* 約 5 個項目的高度 */
+            overflow-y: auto; /* 啟用垂直捲動 */
+            padding-right: 5px; /* 預留捲軸空間 */
+        }
+        
+        /* 自訂捲軸樣式 */
+        #leaderboardList::-webkit-scrollbar {
+            width: 8px;
+        }
+        #leaderboardList::-webkit-scrollbar-track {
+            background: #2b2b2b;
+            border-radius: 4px;
+        }
+        #leaderboardList::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        #leaderboardList::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+        #leaderboardList li {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #444;
+            font-size: 1.1rem;
+        }
+        
+        #leaderboardList li:last-child {
+            border-bottom: none;
+        }
+        
+        .rank {
+            font-weight: bold;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .player-name {
+            flex-grow: 1;
+            padding: 0 15px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .player-name:hover {
+            text-decoration: underline;
+        }
+        
+        .play-count {
+            font-weight: bold;
+        }
+        
+        /* 前三名特殊樣式 */
+        .rank-1 .rank, .rank-1 .player-name { color: #FFD700; } /* 金色 */
+        .rank-2 .rank, .rank-2 .player-name { color: #C0C0C0; } /* 銀色 */
+        .rank-3 .rank, .rank-3 .player-name { color: #CD7F32; } /* 銅色 */
+
+        /* --- 榮譽牆網格排版 --- */
+        .honor-wall {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* 手機版優化 */
+            gap: 15px; /* 手機版優化 */
+        }
+
+        /* --- 單一劇本卡片 --- */
+        .script-card {
+            background: #2b2b2b;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 隱藏未玩過的劇本 */
+        .script-card.hidden {
+            display: none;
+        }
+
+        /* 收藏冊模式：未玩過的劇本壓成剪影。
+           留著空格比直接藏起來更能催人補滿，這是收藏冊的重點。 */
+        .script-card.silhouette img {
+            filter: grayscale(1) brightness(0.22) contrast(1.15);
+        }
+
+        .script-card.silhouette .script-title {
+            color: #5f584f;
+        }
+
+        .script-card.silhouette .image-container::after {
+            content: '🔒';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .script-card.silhouette:hover img {
+            filter: grayscale(0.55) brightness(0.5) contrast(1.05);
+        }
+
+        .script-card.silhouette:hover .image-container::after {
+            opacity: 0.15;
+        }
+
+        .script-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
+        }
+        
+        /* 卡片點擊特效 */
+        .script-card.clicked {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+        }
+
+        /* --- 卡片圖片區域 --- */
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 141.4%; 
+            background-color: #333;
+            cursor: pointer; /* 新增游標 */
+        }
+
+        .script-card img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: filter 0.4s ease;
+        }
+        
+        /* --- 卡片資訊區塊 --- */
+        .script-info {
+            padding: 15px;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 讓標題垂直置中 */
+        }
+
+        .script-title {
+            margin: 0;
+            font-size: 1.1em; /* 手機版優化 */
+            color: #ffffff;
+            min-height: 2.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* --- 當卡片被標記為 "played" 時的樣式變化 --- */
+        .script-card.played .image-container img {
+            filter: grayscale(50%) brightness(0.8);
+        }
+        
+        /* --- 印章疊加層 (容器) --- */
+        .stamp-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        /* --- 參考圖紋理橡皮章風格 --- */
+        .stamp-content {
+            position: absolute;
+            width: 120px; /* 手機版優化 */
+            height: 120px; /* 手機版優化 */
+            box-sizing: border-box;
+            
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            
+            color: #a9844f; /* 復古棕金色 */
+            background-color: #fdfbf5; /* 米白紙基底 */
+            /* 模擬紙張紋理 */
+            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4"%3E%3Cpath fill="%23d2c9b7" fill-opacity="0.05" d="M1 3h1v1H1V3zm2-2h1v1H3V1z"%3E%3C/path%3E%3C/svg%3E');
+            
+            border-radius: 50%; /* 圓形 */
+            
+            /* 使用 box-shadow 創造雙圈效果 */
+            border: 2px solid #a9844f;
+            box-shadow: 0 0 0 4px #fdfbf5, 0 0 0 6px #a9844f;
+
+            /* 動畫初始狀態 */
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.8);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .stamp-character {
+            font-size: 1.2rem; /* 手機版優化 */
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .stamp-date {
+            font-size: 0.8rem; /* 手機版優化 */
+            font-weight: 500;
+        }
+        
+        .stamp-rating {
+            font-size: 0.9rem; /* 手機版優化 */
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        
+        /* 印章分隔線 */
+        .stamp-divider {
+            width: 60%;
+            height: 2px;
+            background-color: #a9844f;
+            margin: 4px 0; /* 手機版優化 */
+            background-image: linear-gradient(90deg, #a9844f 70%, transparent 70%, transparent 80%, #a9844f 80%);
+            background-size: 10px 100%;
+        }
+
+        /* 當卡片有 .played 類別時，觸發蓋章動畫 */
+        .script-card.played .stamp-content {
+            opacity: 0.9;
+            transform: translate(-50%, -50%) scale(1); /* 恢復正常大小 */
+        }
+        
+        /* --- 便利貼容器樣式 --- */
+        .comment-bubble-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 讓滑鼠可以穿透容器 */
+            z-index: 1000;
+            overflow: hidden; /* 防止便利貼超出視窗 */
+        }
+        
+        /* 便利貼外層容器 */
+        .comment-bubble-wrapper {
+            position: absolute;
+            cursor: pointer;
+            pointer-events: auto;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            /* JS 會動態設定 left, top, width, height, transform */
+        }
+
+        /* 便利貼本體 */
+        .comment-bubble {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            color: #1a1a1a;
+            padding: 18px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-weight: 500;
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow: hidden;
+            position: relative;
+            transform: translateZ(0);
+        }
+        
+        /* 便利貼內容容器 */
+        .sticky-note-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 便利貼星星評分 */
+        .sticky-note-rating {
+            font-size: 1.3rem;
+            color: #ff6b00;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 4px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        
+        /* 便利貼評論文字 */
+        .sticky-note-comment {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            
+            /* 不規則邊緣 - 使用 clip-path 創造自然形狀 */
+            clip-path: polygon(
+                2% 0%, 
+                98% 0%, 
+                100% 3%, 
+                99% 8%, 
+                100% 15%, 
+                98% 20%, 
+                100% 30%, 
+                98% 40%, 
+                100% 50%, 
+                98% 60%, 
+                100% 70%, 
+                98% 80%, 
+                100% 90%, 
+                98% 95%, 
+                100% 100%, 
+                2% 100%, 
+                0% 95%, 
+                1% 90%, 
+                0% 80%, 
+                2% 70%, 
+                0% 60%, 
+                2% 50%, 
+                0% 40%, 
+                2% 30%, 
+                0% 20%, 
+                1% 15%, 
+                0% 8%, 
+                1% 3%
+            );
+            
+            /* 便利貼質感 - 基礎顏色（會被 JavaScript 覆蓋） */
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 240, 0.98) 0%, 
+                rgba(255, 252, 235, 0.96) 50%,
+                rgba(255, 250, 230, 0.95) 100%);
+            
+            /* 紙張紋理效果 - 基礎樣式（會被 JavaScript 覆蓋） */
+            background-image: 
+                repeating-linear-gradient(0deg, 
+                    transparent, 
+                    transparent 1px, 
+                    rgba(0, 0, 0, 0.015) 1px, 
+                    rgba(0, 0, 0, 0.015) 2px
+                ),
+                repeating-linear-gradient(90deg, 
+                    transparent, 
+                    transparent 1px, 
+                    rgba(0, 0, 0, 0.015) 1px, 
+                    rgba(0, 0, 0, 0.015) 2px
+                );
+            
+            /* 更立體的陰影效果 */
+            box-shadow: 
+                0 3px 12px rgba(0, 0, 0, 0.2),
+                0 6px 20px rgba(0, 0, 0, 0.15),
+                0 1px 3px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+            
+            /* 輕微的邊框，模擬紙張邊緣 */
+            border: none;
+        }
+        
+        /* 便利貼頂部膠帶效果 - 更真實 */
+        .comment-bubble::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 10%;
+            right: 10%;
+            height: 12px;
+            background: linear-gradient(90deg, 
+                transparent 0%,
+                rgba(255, 255, 255, 0.4) 10%,
+                rgba(255, 255, 255, 0.6) 20%,
+                rgba(255, 255, 255, 0.7) 30%,
+                rgba(255, 255, 255, 0.75) 40%,
+                rgba(255, 255, 255, 0.75) 60%,
+                rgba(255, 255, 255, 0.7) 70%,
+                rgba(255, 255, 255, 0.6) 80%,
+                rgba(255, 255, 255, 0.4) 90%,
+                transparent 100%
+            );
+            opacity: 0.7;
+            pointer-events: none;
+            border-radius: 0 0 3px 3px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 便利貼底部輕微捲曲效果 */
+        .comment-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                rgba(0, 0, 0, 0.05) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.05) 100%
+            );
+            pointer-events: none;
+        }
+
+        /* 便利貼撕下動畫 */
+        .comment-bubble-wrapper.ripped {
+            animation: ripOff 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes ripOff {
+            0% {
+                transform: translate(0, 0) rotate(var(--initial-rotate, 0deg)) scale(1) translateZ(0);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(var(--rip-x, 50px), var(--rip-y, -100px)) rotate(calc(var(--initial-rotate, 0deg) + 45deg)) scale(0.9) translateZ(0);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(var(--rip-x, 100px), var(--rip-y, -200px)) rotate(calc(var(--initial-rotate, 0deg) + 90deg)) scale(0.3) translateZ(0);
+                opacity: 0;
+            }
+        }
+        
+        /* 便利貼出現動畫 */
+        .comment-bubble-wrapper {
+            animation: stickOn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+        }
+        
+        @keyframes stickOn {
+            0% {
+                transform: translate(0, -20px) rotate(var(--initial-rotate, 0deg)) scale(0.8) translateZ(0);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(0, 0) rotate(var(--initial-rotate, 0deg)) scale(1) translateZ(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== 稱號系統 ===== */
+        .player-title {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 9px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+            letter-spacing: 0.5px;
+        }
+        .title-legend   { background: rgba(255,215,0,0.2); color: #ffd700; border: 1px solid rgba(255,215,0,0.5); }
+        .title-master   { background: rgba(180,100,255,0.2); color: #d580ff; border: 1px solid rgba(180,100,255,0.5); }
+        .title-expert   { background: rgba(80,180,255,0.2); color: #60c8ff; border: 1px solid rgba(80,180,255,0.5); }
+        .title-senior   { background: rgba(100,220,140,0.2); color: #60e890; border: 1px solid rgba(100,220,140,0.5); }
+        .title-beginner { background: rgba(200,200,200,0.15); color: #ccc; border: 1px solid rgba(200,200,200,0.3); }
+        .title-novice   { background: rgba(180,180,180,0.1); color: #aaa; border: 1px solid rgba(180,180,180,0.25); }
+
+        /* ===== 卡片徽章 ===== */
+        .card-badges {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .recommend-badge {
+            background: rgba(80, 80, 80, 0.85);
+            color: #ccc;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .recommend-badge.silver {
+            background: rgba(192,192,192,0.85);
+            color: #333;
+            border-color: rgba(255,255,255,0.4);
+        }
+        .recommend-badge.gold {
+            background: rgba(255,200,0,0.9);
+            color: #333;
+            border-color: rgba(255,215,0,0.8);
+            box-shadow: 0 0 8px rgba(255,200,0,0.4);
+        }
+
+        .rare-badge {
+            background: rgba(220, 40, 0, 0.88);
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            animation: rarePulse 2.5s ease-in-out infinite;
+            cursor: help;
+        }
+
+        @keyframes rarePulse {
+            0%, 100% { box-shadow: 0 0 4px rgba(255,60,0,0.5); }
+            50%       { box-shadow: 0 0 14px rgba(255,60,0,0.9); }
+        }
+
+        /* ===== 排行榜排序切換 ===== */
+        .leaderboard-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 22px;
+            margin: 0 0 14px;
+        }
+
+        .leaderboard-sort {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .wall-view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 0 0 20px;
+        }
+
+        .wall-view-toggle[hidden] { display: none; }
+
+        .sort-btn {
+            padding: 6px 16px;
+            border: 1px solid rgba(233, 185, 79, 0.28);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #b9aa91;
+            font-family: '微軟正黑體', sans-serif;
+            font-size: 0.86rem;
+            cursor: pointer;
+            transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+        }
+
+        .sort-btn:hover { color: #f7ead0; border-color: rgba(233, 185, 79, 0.55); }
+
+        .sort-btn.active {
+            border-color: #e9b94f;
+            background: linear-gradient(145deg, rgba(141, 91, 26, 0.55), rgba(70, 43, 13, 0.72));
+            color: #ffd978;
+        }
+
+        .player-points {
+            color: #ffd978;
+            font-variant-numeric: tabular-nums;
+            font-size: 0.9rem;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+
+        .leaderboard-empty {
+            padding: 22px 12px;
+            text-align: center;
+            color: #b9aa91;
+            font-size: 0.92rem;
+        }
+
+        /* ===== 成就統計區（排行榜下方） ===== */
+        .achievement-section {
+            text-align: center;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="header-actions">
+            <a href="index.html" class="header-btn back-btn">回到首頁</a>
+            <a href="新增玩本記錄.html" class="header-btn add-record-btn">新增玩本記錄</a>
+        </div>
+
+        <h1 class="main-title">劇本殺榮譽牆</h1>
+        
+        <!-- 新增的使用導覽區塊 -->
+        <div class="intro-container collapsed">
+            <div class="intro-header">
+                <h2 class="intro-title">🧭 使用導覽 🧭</h2>
+                <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="intro-body">
+                <ol class="intro-list">
+                    <li>玩家填寫"新增玩本記錄"</li>
+                    <li>根據登記姓名找到自己的玩本記錄</li>
+                    <li>點選排行榜的玩家名字，只顯示已玩過的劇本</li>
+                    <li>點選劇本可以看到歷史玩家評論</li>
+                    <li>點擊便利貼可以撕下來</li>
+                    <li>有建議可以跟海星說，畢竟是我第一次寫網站</li>
+                </ol>
+            </div>
+        </div>
+
+        <p class="pts-collective" id="collectiveBanner" hidden></p>
+        <p class="pts-double" id="doubleDayBanner" hidden></p>
+
+        <div class="player-selector-container">
+            <label for="playerSelector">選擇玩家:</label>
+            <select id="playerSelector">
+                <option value="">-- 讀取資料中 --</option>
+            </select>
+            <input type="text" id="playerSearch" placeholder="搜尋玩家...">
+        </div>
+
+        <div class="wall-view-toggle" id="wallViewToggle" role="group" aria-label="劇本牆顯示方式" hidden>
+            <button type="button" class="sort-btn active" data-view="collection">收藏冊</button>
+            <button type="button" class="sort-btn" data-view="played">只看玩過</button>
+        </div>
+
+        <div class="pts-card" id="pointsCard" hidden></div>
+
+        <div class="leaderboard-container collapsed">
+            <div class="leaderboard-header">
+                <h2 class="leaderboard-title">🏆 榮譽排行榜 🏆</h2>
+                <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="leaderboard-body">
+                <div class="leaderboard-search">
+                    <input type="text" id="leaderboardSearch" placeholder="搜尋玩家...">
+                </div>
+                <div class="leaderboard-controls">
+                    <div class="leaderboard-sort" role="group" aria-label="榜單範圍">
+                        <button type="button" class="sort-btn active" data-scope="all">總榜</button>
+                        <button type="button" class="sort-btn" data-scope="month">本月榜</button>
+                    </div>
+                    <div class="leaderboard-sort" role="group" aria-label="排行榜排序方式">
+                        <button type="button" class="sort-btn active" data-sort="plays">依場次</button>
+                        <button type="button" class="sort-btn" data-sort="points">依點數</button>
+                    </div>
+                </div>
+                <ol id="leaderboardList">
+                    <!-- 排行榜項目將由 JavaScript 動態生成 -->
+                </ol>
+            </div>
+        </div>
+
+        <div class="pts-hall" id="legendHall" hidden></div>
+
+        <div class="honor-wall" id="honorWall">
+            <!-- 劇本卡片將由 JavaScript 動態生成 -->
+        </div>
+    </div>
+    
+    <!-- 新增的評論泡泡區塊 -->
+    <div id="commentBubbleContainer" class="comment-bubble-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // --- 資料區 ---
+            // 從單一資料來源 window.SCRIPTS 產生（reviewKey 為榮譽牆/CSV「劇本」鍵）
+            const scriptsData = (window.SCRIPTS || []).map(s => ({
+                id: s.reviewKey || s.name,
+                title: s.name,
+                imgSrc: s.poster || ''
+            }));
+            
+            const bubbleColors = [
+                { bg: 'rgba(70, 130, 180, 0.85)', border: 'rgba(70, 130, 180, 1)', text: '#ffffff' }, // 鋼藍色
+                { bg: 'rgba(34, 139, 34, 0.85)', border: 'rgba(34, 139, 34, 1)', text: '#ffffff' }, // 森林綠
+                { bg: 'rgba(199, 21, 133, 0.85)', border: 'rgba(199, 21, 133, 1)', text: '#ffffff' }, // 中紫紅
+                { bg: 'rgba(255, 140, 0, 0.85)', border: 'rgba(255, 140, 0, 1)', text: '#ffffff' }, // 深橙色
+                { bg: 'rgba(138, 43, 226, 0.85)', border: 'rgba(138, 43, 226, 1)', text: '#ffffff' }, // 藍紫色
+                { bg: 'rgba(220, 20, 60, 0.85)', border: 'rgba(220, 20, 60, 1)', text: '#ffffff' }, // 深紅色
+                { bg: 'rgba(0, 128, 128, 0.85)', border: 'rgba(0, 128, 128, 1)', text: '#ffffff' }, // 深青色
+                { bg: 'rgba(160, 82, 45, 0.85)', border: 'rgba(160, 82, 45, 1)', text: '#ffffff' }, // 馬鞍棕色
+                { bg: 'rgba(75, 0, 130, 0.85)', border: 'rgba(75, 0, 130, 1)', text: '#ffffff' }  // 靛青色
+            ];
+
+            // --- 資料來源設定 ---
+            // Google Sheet 發布到網路的 CSV 網址
+            const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR36D_er_9eC5E2l551e9d09nj4puUiAQUqXbeX_o-c-6FO5AY3jTJ_WX33Xu0SReW06RmSmzzKgNqk/pub?output=csv';
+            // 選填：自建 Google Apps Script 代理網址。多數情況不需要——
+            // 直接請求 Google Sheet 已經可行（見下方 fetchPlayData 的說明），
+            // 只有在直接請求被公司網路、瀏覽器擴充套件等環境擋下時才需要這個備援。
+            // 部署方式可比照 GoogleAppsScript_玩本記錄.gs，另開一支 doGet 回傳 CSV 內容。
+            const GAS_PROXY_URL = '';  // 例：'https://script.google.com/macros/s/你的部署ID/exec'
+            // Google 的發布 CSV 平常 1 秒內回來，但偶爾單一請求會卡十幾秒。
+            // 所以超過 HEDGE_DELAY_MS 還沒回來就再補發一次、誰先到用誰；
+            // 全部加起來超過 FETCH_TIMEOUT_MS 才算失敗。
+            const HEDGE_DELAY_MS = 3500;
+            const FETCH_TIMEOUT_MS = 20000;
+            // 上次成功讀到的 CSV 存在瀏覽器裡，下次打開先秒開舊資料，背景再換新的
+            const CSV_CACHE_KEY = 'starfishlarp-honor-csv';
+            // 資料來源：直接請求為主，GAS_PROXY_URL 有設定時當作額外備援。
+            //
+            // 這裡曾經還有三個公共 CORS 代理（corsproxy.io / allorigins.win / codetabs.com）
+            // 當直接請求失敗時依序頂上，已經移除：
+            //   - 直接請求在修正 preflight 問題後就能成功，代理已無用武之地
+            //   - 三個代理都不受海星控制，玩家的暱稱、心得、遊玩日期會先經過它們才到瀏覽器，
+            //     是不必要的第三方資料暴露面
+            //   - 代理逾時或掛掉時，使用者要多等最多 18 秒才看到錯誤，體感更差
+            // 若直接請求真的被環境擋下，設定 GAS_PROXY_URL 是更安全的備援
+            // （資料只會經過自己部署的 Apps Script，不會流向不受控的第三方）。
+            const CORS_SOURCES = [
+                () => GOOGLE_SHEET_URL
+            ];
+
+
+            // --- DOM 元素 ---
+            const honorWall = document.getElementById('honorWall');
+            const playerSelector = document.getElementById('playerSelector');
+            const playerSearch = document.getElementById('playerSearch');
+            const leaderboardList = document.getElementById('leaderboardList');
+            const leaderboardContainer = document.querySelector('.leaderboard-container');
+            const leaderboardHeader = document.querySelector('.leaderboard-header');
+            const leaderboardSearch = document.getElementById('leaderboardSearch');
+            const introContainer = document.querySelector('.intro-container');
+            const introHeader = document.querySelector('.intro-header');
+            const commentBubbleContainer = document.getElementById('commentBubbleContainer');
+            const wallViewToggle = document.getElementById('wallViewToggle');
+            
+            // --- 音效設定 ---
+            // Tone.js 只負責點擊音效。CDN 載不到時降級為無聲，
+            // 不可以讓裝飾性的音效庫中斷整頁初始化。
+            const SILENT_SOUND = { triggerAttackRelease: function () {} };
+            let isToneStarted = false;
+            let soundsReady = false;
+            let clickSound = SILENT_SOUND;
+            let popSound = SILENT_SOUND;
+
+            // Tone.js 是 async 載入（約 300KB），不能擋住資料讀取，
+            // 所以等第一次點擊、而且它已經載好了才建立音效。還沒載好就先無聲。
+            function initSounds() {
+                if (soundsReady || !window.Tone) return;
+                soundsReady = true;
+                try {
+                    clickSound = new Tone.MembraneSynth({
+                        pitchDecay: 0.01,
+                        octaves: 2,
+                        envelope: { attack: 0.001, decay: 0.2, sustain: 0 }
+                    }).toDestination();
+
+                    popSound = new Tone.Synth({
+                        oscillator: { type: 'sine' },
+                        envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }
+                    }).toDestination();
+                } catch (error) {
+                    clickSound = popSound = SILENT_SOUND;
+                    console.warn('音效初始化失敗，改以無音效模式運作：', error);
+                }
+            }
+
+            async function startAudio() {
+                initSounds();  // 同步建立，讓呼叫端緊接著的 triggerAttackRelease 就有聲音
+                if (isToneStarted || !window.Tone) return;
+                try {
+                    await Tone.start();
+                    isToneStarted = true;
+                } catch (_) { /* 使用者未互動或音訊被封鎖，不影響其他功能 */ }
+            }
+
+            // --- 共用工具 ---
+            // 玩家名稱、角色、日期都來自公開表單，插入 HTML 前一律轉義。
+            function escapeHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            }
+
+            // PapaParse 的最小替代品，CDN 載不到時接手。
+            // 回傳格式刻意與 Papa.parse(text, { header: true }) 一致。
+            function parseCsvFallback(text) {
+                const rows = [];
+                let row = [], field = '', inQuotes = false;
+
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    if (inQuotes) {
+                        if (char === '"') {
+                            if (text[i + 1] === '"') { field += '"'; i++; }
+                            else inQuotes = false;
+                        } else field += char;
+                    } else if (char === '"') inQuotes = true;
+                    else if (char === ',') { row.push(field); field = ''; }
+                    else if (char === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                    else if (char !== '\r') field += char;
+                }
+                if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+                if (!rows.length) return { data: [], errors: [] };
+
+                const headers = rows[0].map(header => String(header).trim());
+                const data = rows.slice(1)
+                    .filter(cells => cells.some(cell => cell && cell.trim()))
+                    .map(cells => {
+                        const record = {};
+                        headers.forEach((header, index) => {
+                            record[header] = cells[index] != null ? cells[index] : '';
+                        });
+                        return record;
+                    });
+                return { data, errors: [] };
+            }
+
+            function parseCsv(text) {
+                if (window.Papa && typeof window.Papa.parse === 'function') {
+                    return Papa.parse(text, {
+                        header: true,
+                        skipEmptyLines: true,
+                        transformHeader: (header) => header.trim()
+                    });
+                }
+                console.warn('PapaParse 未載入，改用內建 CSV 解析。');
+                return parseCsvFallback(text);
+            }
+
+            // --- 函式區 ---
+
+            function readCachedCsv() {
+                try { return localStorage.getItem(CSV_CACHE_KEY) || ''; } catch (_) { return ''; }
+            }
+
+            function saveCachedCsv(text) {
+                try { localStorage.setItem(CSV_CACHE_KEY, text); } catch (_) { /* 無痕模式或空間不足，不影響顯示 */ }
+            }
+
+            // 1a. 下載 CSV：依序（間隔 HEDGE_DELAY_MS，或前一個失敗就立刻）發出請求，
+            // 第一個拿到有效 CSV 的勝出，其餘取消。
+            function downloadCsv() {
+                // 所有來源都只用 cache:'no-store'，不加任何自訂標頭。
+                //
+                // 這裡曾經對「直接請求」加上 Cache-Control / Pragma / Expires，
+                // 但這三個不是 CORS 安全標頭，會讓瀏覽器先送 preflight(OPTIONS)，
+                // 而 Google Sheets 的「發布到網路」CSV 端點不支援 preflight，
+                // 結果直接請求 100% 失敗、每次都被迫走公共代理，
+                // 代理再慢或掛掉整頁就讀不到資料。
+                // cache:'no-store' 本身就能繞過 HTTP 快取，且屬於簡單請求。
+                const attempts = [];
+                if (GAS_PROXY_URL && GAS_PROXY_URL.trim()) {
+                    const base = GAS_PROXY_URL.trim().replace(/\?.*$/, '');
+                    attempts.push({ label: 'GAS 代理', url: base + '?url=' + encodeURIComponent(GOOGLE_SHEET_URL) });
+                }
+                // 直接請求排兩次：第二次是給「第一次卡住」準備的補發
+                CORS_SOURCES.forEach((fn) => {
+                    attempts.push({ label: '直接請求', url: fn() });
+                    attempts.push({ label: '直接請求（補發）', url: fn() });
+                });
+
+                return new Promise((resolve, reject) => {
+                    const controllers = [];
+                    let next = 0, running = 0, settled = false, lastError = null, hedgeTimer = null;
+
+                    const finish = (error, text) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(hedgeTimer);
+                        clearTimeout(overallTimer);
+                        controllers.forEach((controller) => controller.abort());
+                        if (error) reject(error); else resolve(text);
+                    };
+
+                    const launch = () => {
+                        clearTimeout(hedgeTimer);
+                        if (settled || next >= attempts.length) return;
+                        const { label, url } = attempts[next++];
+                        const controller = new AbortController();
+                        controllers.push(controller);
+                        running++;
+                        console.log(`🔄 讀取資料 (${label})...`);
+                        fetch(url, { cache: 'no-store', signal: controller.signal })
+                            .then((response) => {
+                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                return response.text();
+                            })
+                            .then((text) => {
+                                if (text.trim().startsWith('<')) throw new Error('回應為 HTML，非 CSV');
+                                console.log(`📥 收到資料長度: ${text.length} 字元 (${label})`);
+                                finish(null, text);
+                            })
+                            .catch((error) => {
+                                running--;
+                                if (settled) return;
+                                lastError = error;
+                                console.warn(`⚠️ ${label} 失敗:`, error.message);
+                                if (next < attempts.length) launch();          // 失敗就馬上換下一個
+                                else if (!running) finish(lastError);          // 全部都失敗了
+                            });
+                        if (next < attempts.length) hedgeTimer = setTimeout(launch, HEDGE_DELAY_MS);
+                    };
+
+                    const overallTimer = setTimeout(() => {
+                        finish(new Error('連線逾時（Google 試算表回應太慢）'));
+                    }, FETCH_TIMEOUT_MS);
+
+                    launch();
+                });
+            }
+
+            // 1b. 解析 CSV 成 { playRecords, playerNames }（Excel 儲存格內換行已由 PapaParse 正確處理）
+            function parsePlayData(csvText) {
+                try {
+
+                    // 正確解析 CSV（支援引號內的換行）；PapaParse 不可用時自動降級
+                    const parseResult = parseCsv(csvText);
+
+                    if (parseResult.errors.length > 0) {
+                        console.warn('CSV 解析警告:', parseResult.errors);
+                    }
+                    
+                    const playRecords = {};
+                    const playerNames = new Set();
+                    
+                    // 處理每一行資料
+                    parseResult.data.forEach(row => {
+                        const name = row['怎麼稱呼你呢']?.trim();
+                        const date = row['日期']?.trim();
+                        // 確保劇本名稱為字串，處理數字或其他類型
+                        const script = row['劇本'] ? String(row['劇本']).trim() : '';
+                        let comment = row['50字以內的心得推薦']?.trim() || '';
+                        const rating = row['給予評價']?.trim();
+
+                        // 收集所有角色欄位
+                        const characters = [];
+                        for (let key in row) {
+                            if (key.startsWith('角色')) {
+                                const char = row[key]?.trim();
+                                if (char) characters.push(char);
+                            }
+                        }
+                        const character = characters.join(', ');
+                        
+                        if (name && script) {
+                            playerNames.add(name);
+                            if (!playRecords[name]) {
+                                playRecords[name] = {};
+                            }
+                            if (!playRecords[name][script]) {
+                                playRecords[name][script] = [];
+                            }
+                            playRecords[name][script].push({ date, character, rating, comment });
+                        }
+                    });
+
+                    return { playRecords, playerNames: Array.from(playerNames).sort() };
+                } catch (error) {
+                    console.error('❌ CSV 解析失敗:', error);
+                    return { playRecords: {}, playerNames: [] };
+                }
+            }
+
+            // 2. 根據資料生成卡片 HTML
+            function createScriptCard(script) {
+                const card = document.createElement('div');
+                card.className = 'script-card';
+                card.dataset.scriptId = script.id;
+
+                const placeholderUrl = `https://placehold.co/400x566/2b2b2b/eeeeee?text=${encodeURIComponent(script.title)}`;
+                const imageOnError = `this.onerror=null; this.src='${placeholderUrl}';`;
+
+                const safeTitle = escapeHtml(script.title);
+                card.innerHTML = `
+                    <div class="image-container">
+                        <img src="${escapeHtml(script.imgSrc)}" alt="${safeTitle} 劇本封面" loading="lazy" onerror="${escapeHtml(imageOnError)}">
+                        <div class="stamp-overlay">
+                            <!-- 印章將會動態生成於此 -->
+                        </div>
+                        <div class="card-badges">
+                            <!-- 推薦徽章與稀有標記將由 updateScriptBadges 動態生成 -->
+                        </div>
+                    </div>
+                    <div class="script-info">
+                        <h3 class="script-title">${safeTitle}</h3>
+                    </div>
+                `;
+                return card;
+            }
+            
+            // 輔助函式：產生星星字串
+            function generateStars(ratingStr) {
+                const rating = parseInt(ratingStr, 10);
+                if (isNaN(rating) || rating < 1 || rating > 5) {
+                    return '無評價';
+                }
+                const filled = '★'.repeat(rating);
+                const empty = '☆'.repeat(5 - rating);
+                return filled + empty;
+            }
+
+            // ===== 稱號系統 =====
+            function calculateTitle(playCount) {
+                if (playCount >= 30) return { text: '👑 傳奇旅人', cls: 'title-legend' };
+                if (playCount >= 20) return { text: '🧠 推理大師', cls: 'title-master' };
+                if (playCount >= 15) return { text: '✨ 劇本殺達人', cls: 'title-expert' };
+                if (playCount >= 10) return { text: '🕵️ 資深偵探', cls: 'title-senior' };
+                if (playCount >= 5)  return { text: '🔍 入門探案師', cls: 'title-beginner' };
+                if (playCount >= 1)  return { text: '🌱 初入江湖', cls: 'title-novice' };
+                return null;
+            }
+
+            // ===== 推薦徽章 & 稀有標記 =====
+            function updateScriptBadges(playRecords) {
+                const scriptStats = {};
+
+                for (const playerName in playRecords) {
+                    for (const scriptId in playRecords[playerName]) {
+                        if (!scriptStats[scriptId]) {
+                            scriptStats[scriptId] = { uniquePlayers: 0, recommendCount: 0, firstPlayer: null, firstDate: null };
+                        }
+                        scriptStats[scriptId].uniquePlayers++;
+
+                        playRecords[playerName][scriptId].forEach(record => {
+                            if (parseInt(record.rating, 10) >= 4) {
+                                scriptStats[scriptId].recommendCount++;
+                            }
+                            // 找最早遊玩者
+                            if (record.date) {
+                                const parts = record.date.split(/[\/\-]/);
+                                const d = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+                                if (!scriptStats[scriptId].firstDate || d < scriptStats[scriptId].firstDate) {
+                                    scriptStats[scriptId].firstDate = d;
+                                    scriptStats[scriptId].firstPlayer = playerName;
+                                }
+                            }
+                        });
+                    }
+                }
+
+                document.querySelectorAll('.script-card').forEach(card => {
+                    const scriptId = card.dataset.scriptId;
+                    const stats = scriptStats[scriptId];
+                    const badgeContainer = card.querySelector('.card-badges');
+                    if (!badgeContainer) return;
+                    badgeContainer.innerHTML = '';
+                    if (!stats) return;
+
+                    // 推薦徽章
+                    if (stats.recommendCount >= 1) {
+                        const badge = document.createElement('div');
+                        let cls = 'recommend-badge';
+                        if (stats.recommendCount >= 5) cls += ' gold';
+                        else if (stats.recommendCount >= 3) cls += ' silver';
+                        badge.className = cls;
+                        badge.textContent = `👍 ${stats.recommendCount} 人推薦`;
+                        badgeContainer.appendChild(badge);
+                    }
+
+                    // 稀有標記（≤ 2 人玩過）
+                    if (stats.uniquePlayers <= 2) {
+                        const rareBadge = document.createElement('div');
+                        rareBadge.className = 'rare-badge';
+                        const firstInfo = stats.firstPlayer ? `首位探索者：${stats.firstPlayer}` : '幾乎無人涉足';
+                        rareBadge.title = firstInfo;
+                        rareBadge.textContent = `🔥 稀有`;
+                        badgeContainer.appendChild(rareBadge);
+                    }
+                });
+            }
+
+            // 3. 根據選擇的玩家更新榮譽牆
+            // 收藏冊模式：未玩的壓成剪影；只看玩過：直接隱藏
+            let wallViewMode = 'collection';
+
+            function updateWallForPlayer(selectedPlayer, playRecords, filterMode = false) {
+                const stampPositions = [
+                    { top: '35%', left: '35%', rotate: -18 },
+                    { top: '65%', left: '65%', rotate: 15 },
+                    { top: '35%', left: '65%', rotate: 10 },
+                    { top: '65%', left: '35%', rotate: -12 },
+                    { top: '50%', left: '50%', rotate: 5 }
+                ];
+
+                const allCards = document.querySelectorAll('.script-card');
+                allCards.forEach(card => {
+                    const scriptId = card.dataset.scriptId;
+                    const playerRecords = playRecords[selectedPlayer] || {};
+                    // 確保 scriptId 比對時使用字串
+                    const records = playerRecords[scriptId] || playerRecords[String(scriptId)] || [];
+                    
+                    const stampOverlay = card.querySelector('.stamp-overlay');
+                    stampOverlay.innerHTML = ''; 
+
+                    if (records.length > 0) {
+                        card.classList.add('played');
+                        card.classList.remove('hidden'); // 移除隱藏類別
+                        card.classList.remove('silhouette');
+                        
+                        records.forEach((record, index) => {
+                            const stamp = document.createElement('div');
+                            stamp.className = 'stamp-content';
+                            
+                            stamp.innerHTML = `
+                                <span class="stamp-character">${escapeHtml(record.character)}</span>
+                                <div class="stamp-divider"></div>
+                                <div class="stamp-rating">${generateStars(record.rating)}</div>
+                                <div class="stamp-divider"></div>
+                                <span class="stamp-date">${escapeHtml(record.date)}</span>
+                            `;
+                            
+                            const pos = stampPositions[index % stampPositions.length];
+                            
+                            setTimeout(() => {
+                                stamp.style.top = pos.top;
+                                stamp.style.left = pos.left;
+                                stamp.style.transform = `translate(-50%, -50%) scale(1) rotate(${pos.rotate}deg)`;
+                            }, index * 120);
+
+                            stampOverlay.appendChild(stamp);
+                        });
+
+                    } else {
+                        card.classList.remove('played');
+
+                        // 未玩過的劇本有三種呈現方式，由 wallViewMode 決定
+                        const isFiltering = filterMode && selectedPlayer;
+                        card.classList.toggle('hidden', isFiltering && wallViewMode === 'played');
+                        card.classList.toggle('silhouette', isFiltering && wallViewMode === 'collection');
+                    }
+                });
+            }
+            
+            // 4. 更新排行榜
+            // 稱號維持看場次（沿用原本的六級制），點數是獨立的另一條軌道，
+            // 兩者互不影響，兌換扣點也不會讓稱號退級。
+            let leaderboardSortMode = 'plays';
+            let leaderboardScope = 'all';
+
+            function updateLeaderboard(playRecords) {
+                const points = window.StarfishPoints;
+                const playerCounts = [];
+
+                for (const playerName in playRecords) {
+                    let totalPlays = 0;
+                    for (const scriptName in playRecords[playerName]) {
+                        totalPlays += playRecords[playerName][scriptName].length;
+                    }
+
+                    const stats = points ? points.getPlayer(playerName) : null;
+                    const monthPlays = points ? points.monthlyPlays(playerName, playRecords) : 0;
+
+                    playerCounts.push({
+                        name: playerName,
+                        // 稱號永遠看生涯場次，不受本月榜影響
+                        careerPlays: totalPlays,
+                        count: leaderboardScope === 'month' ? monthPlays : totalPlays,
+                        // 排行榜用「累積獲得」而不是餘額：換過獎勵不該讓人掉名次
+                        points: stats
+                            ? (leaderboardScope === 'month' ? (stats.monthEarned || 0) : stats.earned)
+                            : null,
+                        // 榮耀軌：玩家用點數換來的裝飾
+                        gilded: !!(stats && stats.gilded),
+                        legend: !!(stats && stats.legend),
+                        customTitle: (stats && stats.title) || ''
+                    });
+                }
+
+                // 本月榜只留這個月有動靜的人
+                const ranked = leaderboardScope === 'month'
+                    ? playerCounts.filter((player) => player.count > 0 || (player.points || 0) > 0)
+                    : playerCounts;
+
+                if (leaderboardSortMode === 'points') {
+                    ranked.sort((a, b) => (b.points ?? -1) - (a.points ?? -1) || b.count - a.count);
+                } else {
+                    ranked.sort((a, b) => b.count - a.count || (b.points ?? -1) - (a.points ?? -1));
+                }
+
+                leaderboardList.innerHTML = '';
+
+                if (!ranked.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'leaderboard-empty';
+                    empty.textContent = '這個月還沒有人留下記錄，第一個就是你了。';
+                    leaderboardList.appendChild(empty);
+                    return;
+                }
+
+                const topPlayers = ranked.slice(0, 20);
+
+                topPlayers.forEach((player, index) => {
+                    const rank = index + 1;
+                    const li = document.createElement('li');
+                    li.classList.add(`rank-${rank}`);
+
+                    let rankDisplay = rank;
+                    if (rank === 1) rankDisplay = '👑';
+
+                    const title = calculateTitle(player.careerPlays);
+                    const titleHtml = title ? `<span class="player-title ${title.cls}">${title.text}</span>` : '';
+
+                    const pointsHtml = player.points === null
+                        ? ''
+                        : `<span class="player-points">${player.points} 點</span>`;
+
+                    const safePlayerName = escapeHtml(player.name);
+                    const nameInner = player.gilded
+                        ? `<span class="pts-gilded">${safePlayerName}</span>`
+                        : safePlayerName;
+                    const legendHtml = player.legend
+                        ? '<span class="pts-legend-mark">👑</span>' : '';
+                    const customHtml = player.customTitle
+                        ? `<span class="pts-custom-title">${escapeHtml(player.customTitle)}</span>` : '';
+
+                    li.innerHTML = `
+                        <span class="rank">${rankDisplay}</span>
+                        <span class="player-name" data-player="${safePlayerName}">${nameInner}${legendHtml}${customHtml}${titleHtml}</span>
+                        <span class="play-count">${player.count} 次${pointsHtml}</span>
+                    `;
+
+                    // 為玩家名字添加點擊事件
+                    const playerNameSpan = li.querySelector('.player-name');
+                    playerNameSpan.addEventListener('click', () => {
+                        startAudio();
+                        clickSound.triggerAttackRelease('C2', '8n');
+
+                        selectPlayer(player.name, playRecords);
+                    });
+
+                    leaderboardList.appendChild(li);
+                });
+            }
+
+            // 4b. 我的探員檔案（點數、兌換清單、彩蛋徽章）
+            function showPointsProfile(playerName, playRecords) {
+                if (!window.StarfishPoints) return;
+                window.StarfishPoints.renderProfile(
+                    document.getElementById('pointsCard'),
+                    playerName,
+                    playRecords
+                );
+            }
+
+            // 4c. 選定玩家的統一入口。
+            // 下拉選單、排行榜、同場戰友、傳奇殿堂都走這裡，避免各自漏做某一步。
+            function selectPlayer(playerName, playRecords, options) {
+                const settings = options || {};
+                playerSelector.value = playerName || '';
+                updateWallForPlayer(playerName, playRecords, !!playerName);
+                showPointsProfile(playerName, playRecords);
+                wallViewToggle.hidden = !playerName;
+
+                if (settings.scroll) {
+                    document.getElementById('pointsCard')
+                        .scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            
+            // 5. 顯示評論便利貼
+            function showComments(scriptId, playRecords) {
+                const allComments = [];
+                for (const playerName in playRecords) {
+                    if (playRecords[playerName][scriptId]) {
+                        playRecords[playerName][scriptId].forEach(record => {
+                            if (record.comment) {
+                                allComments.push({
+                                    comment: record.comment,
+                                    rating: record.rating,
+                                    playerName: playerName
+                                });
+                            }
+                        });
+                    }
+                }
+                
+                if (allComments.length === 0) {
+                    allComments.push({
+                        comment: "這個劇本還沒有人留下評論喔！",
+                        rating: null,
+                        playerName: null
+                    });
+                }
+
+                // 便利貼顏色（經典便利貼顏色，更鮮豔真實）
+                const stickyNoteColors = [
+                    { 
+                        bg: 'linear-gradient(135deg, rgba(255, 251, 180, 0.98) 0%, rgba(255, 248, 160, 0.96) 100%)',
+                        overlay: 'rgba(255, 240, 120, 0.1)'
+                    }, // 黃色
+                    { 
+                        bg: 'linear-gradient(135deg, rgba(255, 200, 220, 0.98) 0%, rgba(255, 180, 200, 0.96) 100%)',
+                        overlay: 'rgba(255, 150, 180, 0.1)'
+                    }, // 粉色
+                    { 
+                        bg: 'linear-gradient(135deg, rgba(200, 255, 200, 0.98) 0%, rgba(180, 255, 180, 0.96) 100%)',
+                        overlay: 'rgba(150, 255, 150, 0.1)'
+                    }, // 綠色
+                    { 
+                        bg: 'linear-gradient(135deg, rgba(200, 220, 255, 0.98) 0%, rgba(180, 200, 255, 0.96) 100%)',
+                        overlay: 'rgba(150, 180, 255, 0.1)'
+                    }, // 藍色
+                    { 
+                        bg: 'linear-gradient(135deg, rgba(255, 220, 180, 0.98) 0%, rgba(255, 200, 160, 0.96) 100%)',
+                        overlay: 'rgba(255, 180, 120, 0.1)'
+                    }, // 橙色
+                    { 
+                        bg: 'linear-gradient(135deg, rgba(240, 200, 255, 0.98) 0%, rgba(230, 180, 255, 0.96) 100%)',
+                        overlay: 'rgba(220, 150, 255, 0.1)'
+                    }, // 紫色
+                ];
+
+                // 清除現有的便利貼
+                commentBubbleContainer.innerHTML = '';
+
+                // 已使用的位置，用於避免重疊
+                const usedPositions = [];
+                const minDistance = 80; // 便利貼之間的最小距離
+
+                // 檢查位置是否與現有便利貼重疊
+                function isPositionValid(x, y, width, height) {
+                    for (const pos of usedPositions) {
+                        const distance = Math.sqrt(
+                            Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2)
+                        );
+                        if (distance < minDistance) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                // 生成不規則的 clip-path
+                function generateIrregularShape() {
+                    const points = 12; // 每邊的點數
+                    const variation = 3; // 不規則程度（百分比）
+                    const path = [];
+                    
+                    // 生成頂邊點（從左到右）
+                    for (let i = 0; i <= points; i++) {
+                        const x = (i / points) * 100;
+                        const y = (Math.random() - 0.5) * variation;
+                        path.push(`${x}% ${Math.max(0, y)}%`);
+                    }
+                    
+                    // 生成右邊點（從上到下）
+                    for (let i = 1; i <= points; i++) {
+                        const y = (i / points) * 100;
+                        const x = 100 + (Math.random() - 0.5) * variation;
+                        path.push(`${Math.min(100, x)}% ${y}%`);
+                    }
+                    
+                    // 生成底邊點（從右到左）
+                    for (let i = points - 1; i >= 0; i--) {
+                        const x = (i / points) * 100;
+                        const y = 100 + (Math.random() - 0.5) * variation;
+                        path.push(`${x}% ${Math.min(100, y)}%`);
+                    }
+                    
+                    // 生成左邊點（從下到上）
+                    for (let i = points - 1; i > 0; i--) {
+                        const y = (i / points) * 100;
+                        const x = (Math.random() - 0.5) * variation;
+                        path.push(`${Math.max(0, x)}% ${y}%`);
+                    }
+                    
+                    return `polygon(${path.join(', ')})`;
+                }
+
+                // 創建便利貼
+                const createStickyNote = (commentData, index) => {
+                    requestAnimationFrame(() => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'comment-bubble-wrapper';
+
+                        const stickyNote = document.createElement('div');
+                        stickyNote.className = 'comment-bubble';
+                        
+                        // 創建便利貼內容結構
+                        const content = document.createElement('div');
+                        content.className = 'sticky-note-content';
+                        
+                        // 星星評分區域
+                        if (commentData.rating) {
+                            const ratingDiv = document.createElement('div');
+                            ratingDiv.className = 'sticky-note-rating';
+                            ratingDiv.textContent = generateStars(commentData.rating);
+                            content.appendChild(ratingDiv);
+                        }
+
+                        // 評論文字區域
+                        const commentDiv = document.createElement('div');
+                        commentDiv.className = 'sticky-note-comment';
+                        commentDiv.textContent = commentData.comment;
+                        content.appendChild(commentDiv);
+                        
+                        stickyNote.appendChild(content);
+                        wrapper.appendChild(stickyNote);
+                        
+                        // 根據文字長度計算便利貼大小
+                        const textLength = commentData.comment.length;
+                        const minWidth = 150;
+                        const maxWidth = 300;
+                        const minHeight = 120;
+                        const maxHeight = 250;
+                        
+                        // 計算寬度（根據文字長度和換行，加上星星評分的高度）
+                        const ratingHeight = commentData.rating ? 30 : 0;
+                        const estimatedWidth = Math.min(maxWidth, Math.max(minWidth, textLength * 8 + 40));
+                        const estimatedHeight = Math.min(maxHeight, Math.max(minHeight, Math.ceil(textLength / 20) * 30 + 60 + ratingHeight));
+                        
+                        const width = estimatedWidth;
+                        const height = estimatedHeight;
+                        
+                        wrapper.style.width = `${width}px`;
+                        wrapper.style.height = `${height}px`;
+                        
+                        // 為每個便利貼生成獨特的不規則形狀
+                        const irregularShape = generateIrregularShape();
+                        stickyNote.style.clipPath = irregularShape;
+                        
+                        // 隨機選擇便利貼顏色
+                        const color = stickyNoteColors[Math.floor(Math.random() * stickyNoteColors.length)];
+                        
+                        // 設置完整的背景（包括顏色和紋理）
+                        stickyNote.style.backgroundImage = `
+                            ${color.bg},
+                            radial-gradient(circle at 30% 30%, ${color.overlay} 0%, transparent 50%),
+                            radial-gradient(circle at 70% 70%, ${color.overlay} 0%, transparent 50%),
+                            repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.015) 1px, rgba(0, 0, 0, 0.015) 2px),
+                            repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0, 0, 0, 0.015) 1px, rgba(0, 0, 0, 0.015) 2px)
+                        `;
+                        
+                        // 隨機旋轉角度（-15度到15度）
+                        const rotation = (Math.random() - 0.5) * 30;
+                        wrapper.style.setProperty('--initial-rotate', `${rotation}deg`);
+                        
+                        // 隨機位置（避免與現有便利貼重疊）
+                        const safeMargin = 50;
+                        let x, y;
+                        let attempts = 0;
+                        const maxAttempts = 50;
+                        
+                        do {
+                            x = Math.random() * (window.innerWidth - width - safeMargin * 2) + safeMargin;
+                            y = Math.random() * (window.innerHeight - height - safeMargin * 2) + safeMargin;
+                            attempts++;
+                        } while (attempts < maxAttempts && !isPositionValid(x, y, width, height));
+                        
+                        // 如果找不到合適位置，使用隨機位置（允許重疊）
+                        if (attempts >= maxAttempts) {
+                            x = Math.random() * (window.innerWidth - width - safeMargin * 2) + safeMargin;
+                            y = Math.random() * (window.innerHeight - height - safeMargin * 2) + safeMargin;
+                        }
+                        
+                        usedPositions.push({ x: x + width / 2, y: y + height / 2 });
+                        
+                        wrapper.style.left = `${x}px`;
+                        wrapper.style.top = `${y}px`;
+
+                        // 點擊事件 - 撕下便利貼
+                        wrapper.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            startAudio();
+                            
+                            // 播放撕紙音效
+                            const ripFreq = 200 + Math.random() * 100;
+                            popSound.triggerAttackRelease(ripFreq + 'Hz', '8n');
+                            
+                            // 計算撕下的方向（向上並稍微向右）
+                            const clickX = e.clientX;
+                            const clickY = e.clientY;
+                            const noteX = x + width / 2;
+                            const noteY = y + height / 2;
+                            
+                            const ripX = (clickX - noteX) * 2 + (Math.random() - 0.5) * 50;
+                            const ripY = -Math.abs(clickY - noteY) * 2 - 100 - Math.random() * 50;
+                            
+                            wrapper.style.setProperty('--rip-x', `${ripX}px`);
+                            wrapper.style.setProperty('--rip-y', `${ripY}px`);
+                            
+                            // 觸發撕下動畫
+                            wrapper.classList.add('ripped');
+                            
+                            // 動畫結束後移除
+                            wrapper.addEventListener('animationend', () => {
+                                wrapper.remove();
+                            }, { once: true });
+                        });
+                        
+                        commentBubbleContainer.appendChild(wrapper);
+                    });
+                };
+                
+                // 分批創建便利貼，避免阻塞主線程
+                allComments.forEach((commentData, index) => {
+                    setTimeout(() => createStickyNote(commentData, index), index * 50);
+                });
+            }
+
+            // --- 初始化 ---
+            
+            // A. 動態生成所有劇本卡片
+            scriptsData.forEach(script => {
+                const cardElement = createScriptCard(script);
+                honorWall.appendChild(cardElement);
+            });
+
+            // B. 獲取資料並設定互動功能
+            // 劇本牆、排行榜、玩家選單只靠 CSV；點數（Apps Script／預約系統）另外慢慢來，
+            // 到了再補上。兩邊互不等待——以前用 Promise.all 綁在一起，
+            // 點數端點一慢（最壞要 4+8+10 秒），整頁就跟著卡在「讀取中」。
+            let playRecords = {};
+            let playerNames = [];
+            let hasPlayData = false;
+            let savedName = '';
+            try { savedName = localStorage.getItem('starfishlarp-player-name') || ''; } catch (_) {}
+
+            const loadErrorBox = document.createElement('p');
+            loadErrorBox.className = 'load-error';
+            loadErrorBox.hidden = true;
+            loadErrorBox.style.cssText = 'text-align:center; color:#ffdddd; background:#5c2c2c; padding:16px; border-radius:8px; margin:0 0 1rem;';
+            honorWall.parentNode.insertBefore(loadErrorBox, honorWall);
+
+            function renderPointsSections() {
+                if (!window.StarfishPoints) return;
+                window.StarfishPoints.renderDoubleDay(document.getElementById('doubleDayBanner'));
+                window.StarfishPoints.renderCollective(
+                    document.getElementById('collectiveBanner'), playRecords);
+                window.StarfishPoints.renderLegendHall(document.getElementById('legendHall'));
+            }
+
+            // 拿到（或換新）CSV 資料時重畫所有依賴它的區塊，保留使用者目前選的玩家
+            function applyPlayData(data) {
+                playRecords = data.playRecords;
+                playerNames = data.playerNames;
+                hasPlayData = true;
+                const current = playerSelector.value || savedName;
+
+                // C. 填充玩家下拉選單
+                if (playerNames.length > 0) {
+                    playerSelector.innerHTML = '<option value="">-- 請選擇玩家 --</option>';
+                    playerNames.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        playerSelector.appendChild(option);
+                    });
+                } else {
+                    playerSelector.innerHTML = '<option value="">無玩家資料</option>';
+                }
+
+                // D. 填充排行榜、D2. 更新劇本卡片徽章（推薦數、稀有標記）
+                updateLeaderboard(playRecords);
+                updateScriptBadges(playRecords);
+                renderPointsSections();
+
+                // E3. 記得上次登記的名字，回到榮譽牆直接看到自己的檔案
+                if (current && playRecords[current]) selectPlayer(current, playRecords);
+            }
+
+            if (window.StarfishPoints) {
+                // 探員檔案裡點戰友的名字，直接跳到對方的檔案
+                // 成就卡上的稱號沿用榮譽牆這一套六級制，不另外複製門檻
+                window.StarfishPoints.setTitleResolver((name) => {
+                    let plays = 0;
+                    for (const scriptName in (playRecords[name] || {})) {
+                        plays += playRecords[name][scriptName].length;
+                    }
+                    const title = calculateTitle(plays);
+                    return title ? title.text.replace(/^[^一-龥]+/, '') : '';
+                });
+
+                window.StarfishPoints.setPlayerSelectHandler((name) => {
+                    if (!name || !playRecords[name]) return;
+                    selectPlayer(name, playRecords, { scroll: true });
+                });
+
+                // 點數讀到之後補上點數相關的畫面；讀不到時榮譽牆其餘功能照常
+                window.StarfishPoints.load().then(() => {
+                    renderPointsSections();
+                    if (!hasPlayData) return;
+                    updateLeaderboard(playRecords);
+                    if (playerSelector.value) showPointsProfile(playerSelector.value, playRecords);
+                });
+            }
+
+            // 先用上次存下的 CSV 秒開，同時在背景抓最新的
+            const cachedCsv = readCachedCsv();
+            if (cachedCsv) {
+                const cachedData = parsePlayData(cachedCsv);
+                if (cachedData.playerNames.length) applyPlayData(cachedData);
+            }
+
+            downloadCsv().then((csvText) => {
+                saveCachedCsv(csvText);
+                loadErrorBox.hidden = true;
+                if (csvText !== cachedCsv || !hasPlayData) applyPlayData(parsePlayData(csvText));
+            }).catch((error) => {
+                console.error('❌ 無法獲取劇本資料:', error);
+                if (hasPlayData) return;  // 已經有上次的資料可看，安靜地沿用
+                loadErrorBox.innerHTML = `讀取玩家資料失敗：${escapeHtml(error.message)}<br>請檢查網路後重新整理頁面。`;
+                loadErrorBox.hidden = false;
+                playerSelector.innerHTML = '<option value="">讀取失敗</option>';
+            });
+
+            // E. 監聽下拉選單的變化
+            playerSelector.addEventListener('change', (event) => {
+                // 選空白（請選擇玩家）時 selectPlayer 會還原成顯示全部劇本
+                selectPlayer(event.target.value, playRecords);
+            });
+
+            // E1b. 劇本牆顯示方式：收藏冊（未玩的變剪影）／只看玩過
+            wallViewToggle.querySelectorAll('.sort-btn').forEach((button) => {
+                button.addEventListener('click', () => {
+                    startAudio();
+                    if (wallViewMode === button.dataset.view) return;
+                    wallViewMode = button.dataset.view;
+                    wallViewToggle.querySelectorAll('.sort-btn').forEach((other) => {
+                        other.classList.toggle('active', other === button);
+                    });
+                    updateWallForPlayer(playerSelector.value, playRecords, !!playerSelector.value);
+                });
+            });
+
+            // E2. 排行榜切換：範圍（總榜／本月榜）與排序（場次／點數）各自獨立
+            document.querySelectorAll('.sort-btn[data-sort]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    startAudio();
+                    if (leaderboardSortMode === button.dataset.sort) return;
+                    leaderboardSortMode = button.dataset.sort;
+                    document.querySelectorAll('.sort-btn[data-sort]').forEach((other) => {
+                        other.classList.toggle('active', other === button);
+                    });
+                    updateLeaderboard(playRecords);
+                });
+            });
+
+            document.querySelectorAll('.sort-btn[data-scope]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    startAudio();
+                    if (leaderboardScope === button.dataset.scope) return;
+                    leaderboardScope = button.dataset.scope;
+                    document.querySelectorAll('.sort-btn[data-scope]').forEach((other) => {
+                        other.classList.toggle('active', other === button);
+                    });
+                    updateLeaderboard(playRecords);
+                });
+            });
+
+            // F. 監聽排行榜標題的點擊事件
+            leaderboardHeader.addEventListener('click', () => {
+                startAudio();
+                leaderboardContainer.classList.toggle('collapsed');
+            });
+            
+            // G. 監聽使用導覽標題的點擊事件
+            introHeader.addEventListener('click', () => {
+                startAudio();
+                introContainer.classList.toggle('collapsed');
+            });
+
+            // H. 為所有卡片圖片加上點擊事件以顯示評論
+            document.querySelectorAll('.image-container').forEach(container => {
+                container.addEventListener('click', () => {
+                    startAudio();
+                    clickSound.triggerAttackRelease('C2', '8n');
+                    
+                    const card = container.closest('.script-card');
+                    card.classList.add('clicked');
+                    setTimeout(() => card.classList.remove('clicked'), 200);
+
+                    const scriptId = card.dataset.scriptId;
+                    showComments(scriptId, playRecords);
+                });
+            });
+            
+            // I. 監聽排行榜搜尋框的輸入
+            leaderboardSearch.addEventListener('input', (event) => {
+                const searchTerm = event.target.value.toLowerCase();
+                const players = leaderboardList.querySelectorAll('li');
+                players.forEach(player => {
+                    const playerName = player.querySelector('.player-name').textContent.toLowerCase();
+                    if (playerName.includes(searchTerm)) {
+                        player.style.display = 'flex';
+                    } else {
+                        player.style.display = 'none';
+                    }
+                });
+            });
+            
+            // J. 監聽玩家搜尋框的輸入
+            playerSearch.addEventListener('input', (event) => {
+                const searchTerm = event.target.value.toLowerCase();
+                const options = playerSelector.querySelectorAll('option');
+                options.forEach(option => {
+                    const optionText = option.textContent.toLowerCase();
+                    if (option.value === "" || optionText.includes(searchTerm)) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+            
+            // K. 監聽視窗大小變更，重新調整便利貼位置
+            window.addEventListener('resize', () => {
+                // 延遲執行，避免頻繁觸發
+                clearTimeout(window.resizeTimeout);
+                window.resizeTimeout = setTimeout(() => {
+                    // 視窗大小改變時，清除所有便利貼讓用戶重新點擊顯示
+                    commentBubbleContainer.innerHTML = '';
+                }, 250);
+            });
+
+        });
+    </script>
+
+</body>
+</html>

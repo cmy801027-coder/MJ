@@ -1,23 +1,377 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <base href="/">
-  <title>Assign Roles</title>
-  <link rel="stylesheet" href="/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#080603">
+    <meta name="description" content="海星劇本殺 — 沉浸其中・探索謎局。瀏覽精選劇本，與好友共度精彩故事。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cj2vum4.github.io/starfishlarp/index.html">
+    <meta property="og:title" content="海星劇本殺 · 劇本總覽">
+    <meta property="og:description" content="海星劇本殺 — 沉浸其中・探索謎局。瀏覽精選劇本，與好友共度精彩故事。">
+    <meta property="og:image" content="https://cj2vum4.github.io/starfishlarp/pwa/icon-512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="海星劇本殺 · 劇本總覽">
+    <meta name="twitter:description" content="海星劇本殺 — 沉浸其中・探索謎局。瀏覽精選劇本，與好友共度精彩故事。">
+    <meta name="twitter:image" content="https://cj2vum4.github.io/starfishlarp/pwa/icon-512.png">
+    <meta name="application-name" content="海星劇本殺">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="海星劇本殺">
+    <title>海星劇本殺 · 劇本總覽</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="pwa/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="pwa/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css?v=20261005-logo">
+    <!-- 保底：就算外部 CSS 被快取成舊版，開場層也絕不裸露 -->
+    <style>#intro{display:none}</style>
+    <script>
+    /* 開場動畫開關：
+       - 重新整理（reload）與本 session 首次進站 → 播放
+       - 從劇本頁等返回（navigate/back_forward）→ 不重播，避免煩人
+       - 尊重減少動態偏好 */
+    (function () {
+        try {
+            if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            var navEntry = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+            var isReload = navEntry ? navEntry.type === 'reload'
+                : (performance.navigation && performance.navigation.type === 1);
+            var firstVisit = !sessionStorage.getItem('sfIntroPlayed');
+            if (isReload || firstVisit) {
+                document.documentElement.classList.add('intro-on');
+                sessionStorage.setItem('sfIntroPlayed', '1');
+            }
+        } catch (e) { /* ignore */ }
+    })();
+    </script>
 </head>
 <body>
-  <div class="film top"></div>
-  <div class="film bottom"></div>
-  <div class="noise"></div>
-  <button id="musicBtn" class="music" type="button">♪ OFF</button>
-  <main id="app">
-    <section class="panel">
-      <div class="eyebrow">LOADING</div>
-      <h1 class="title">資料載入中</h1>
+
+    <!-- 開場動畫（僅 .intro-on 時顯示，純 CSS 自動結束） -->
+    <div id="intro" aria-hidden="true">
+        <div class="intro-veil intro-veil-l"></div>
+        <div class="intro-veil intro-veil-r"></div>
+        <div class="intro-inner">
+            <img class="intro-mark" src="img/logo.webp" alt="">
+            <div class="intro-eyebrow">STARFISH · MURDER MYSTERY</div>
+            <div class="intro-title">海星劇本殺</div>
+            <div class="intro-line"></div>
+            <div class="intro-sub">沉浸其中 · 探索謎局</div>
+        </div>
+    </div>
+
+    <!-- ambient orbs -->
+    <div class="background-animation">
+        <div class="floating-orb"></div>
+        <div class="floating-orb"></div>
+        <div class="floating-orb"></div>
+        <div class="floating-orb"></div>
+    </div>
+
+    <!-- navbar -->
+    <nav class="nav" id="nav">
+        <a class="nav-brand" href="#three-hero" aria-label="海星劇本殺">
+            <img class="mark" src="img/logo.webp" alt="" width="36" height="36">
+            <span class="brand-wrap">
+                <span class="brand-txt">海星劇本殺</span>
+                <span class="brand-sub">STARFISH MYSTERY</span>
+            </span>
+        </a>
+        <div class="nav-actions">
+            <button class="pwa-install-button" id="pwaInstallButton" type="button" hidden>
+                <span class="pwa-install-icon" aria-hidden="true">↓</span>
+                <span id="pwaInstallLabel">安裝 App</span>
+            </button>
+            <button class="nav-toggle" id="navToggle" aria-label="開啟選單" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- drawer -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+        <div class="drawer-head">
+            <span class="d-title">✦ 選單</span>
+            <button class="drawer-close" id="drawerClose" aria-label="關閉選單">✕</button>
+        </div>
+        <a class="drawer-link" href="#scriptsGrid" data-close>
+            <span class="d-ico">🎭</span>
+            <span><span class="d-name">劇本總覽</span><span class="d-desc">瀏覽全部劇本</span></span>
+        </a>
+        <a class="drawer-link" onclick="goToPage('劇本介紹.html')">
+            <span class="d-ico">📖</span>
+            <span><span class="d-name">劇本介紹</span><span class="d-desc">新手入門指南</span></span>
+        </a>
+        <a class="drawer-link" onclick="goToPage('榮譽牆.html')">
+            <span class="d-ico">🏆</span>
+            <span><span class="d-name">榮譽牆</span><span class="d-desc">記錄遊戲里程</span></span>
+        </a>
+        <a class="drawer-link" onclick="goToPage('主持人資訊.html')">
+            <span class="d-ico">👨‍💼</span>
+            <span><span class="d-name">主持人資訊</span><span class="d-desc">認識海星</span></span>
+        </a>
+        <div class="drawer-sep"></div>
+        <a class="drawer-link" href="#newScripts" data-close>
+            <span class="d-ico">✨</span>
+            <span><span class="d-name">新劇本上架</span><span class="d-desc">最新引進劇本</span></span>
+        </a>
+        <div class="drawer-foot">沉浸其中・探索謎局<br>© 海星劇本殺</div>
+    </aside>
+
+    <!-- hero -->
+    <section id="three-hero">
+        <canvas id="three-canvas"></canvas>
+        <div class="hero-overlay">
+            <div class="hero-eyebrow">STARFISH · MURDER MYSTERY</div>
+            <h1 class="hero-title">沉浸其中<br><span class="g">探索謎局</span></h1>
+            <p class="hero-sub">每一個選擇，都將改變結局</p>
+            <a class="hero-cta" href="#scriptsGrid">瀏覽劇本 <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-scroll">SCROLL</div>
     </section>
-  </main>
-  <script src="/app.js"></script>
+
+    <div class="container">
+        <!-- new scripts -->
+        <section class="new-scripts reveal" id="newScripts">
+            <div class="new-scripts-head">
+                <span class="new-badge">NEW</span>
+                <span class="new-scripts-label">新劇本上架</span>
+                <span class="new-hint">← 滑動瀏覽 →</span>
+            </div>
+            <div class="new-scripts-row">
+                <a class="new-script-card" onclick="goToScript('sanguan')">
+                    <img class="new-script-poster" src="img/劇本/三觀失控/海報.webp" alt="三觀失控" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🌀 三觀失控</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">架空</span>
+                            <span class="new-script-tag">演繹</span>
+                            <span class="new-script-tag">怪談</span>
+                            <span class="new-script-tag">3男3女</span>
+                            <span class="new-script-tag">4-6小時</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="new-script-card" onclick="goToScript('qinglou')">
+                    <img class="new-script-poster" src="img/劇本/青樓/海報.webp" alt="青樓" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🏮 青樓</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">古風</span>
+                            <span class="new-script-tag">歡樂</span>
+                            <span class="new-script-tag">機制</span>
+                            <span class="new-script-tag">4男3女</span>
+                            <span class="new-script-tag">3-4小時</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="new-script-card" onclick="goToScript('paoxiao')">
+                    <img class="new-script-poster" src="img/劇本/咆哮吧惡龍/海報.webp" alt="咆哮吧惡龍" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🐲 咆哮吧！惡龍</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">童話</span>
+                            <span class="new-script-tag">冒險</span>
+                            <span class="new-script-tag">機制</span>
+                            <span class="new-script-tag">4男4女</span>
+                            <span class="new-script-tag">3.5-4小時</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="new-script-card" onclick="goToScript('sangshi')">
+                    <img class="new-script-poster" src="img/劇本/新鮮喪屍已送達請簽收/海報.webp" alt="新鮮喪屍已送達請簽收" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🧟 新鮮喪屍已送達請簽收</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">未來</span>
+                            <span class="new-script-tag">喪屍</span>
+                            <span class="new-script-tag">陣營</span>
+                            <span class="new-script-tag">5男2女</span>
+                            <span class="new-script-tag">4-5小時</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="new-script-card" onclick="goToScript('jimu2')">
+                    <img class="new-script-poster" src="img/劇本/極目2九爺我想給您養老/極目2_九爺_我想給您養老_主海報.webp" alt="極目2：九爺我想給您養老" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🀄 極目2：九爺我想給您養老</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">民國</span>
+                            <span class="new-script-tag">歡樂</span>
+                            <span class="new-script-tag">陣營</span>
+                            <span class="new-script-tag">4男3女</span>
+                            <span class="new-script-tag">4-5小時</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="new-script-card" onclick="goToScript('jinmen')">
+                    <img class="new-script-poster" src="img/劇本/津門遺雲/津門遺雲主海報.webp" alt="津門遺雲" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🏮 津門遺雲</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">民國</span>
+                            <span class="new-script-tag">歡樂</span>
+                            <span class="new-script-tag">嘴砲</span>
+                            <span class="new-script-tag">4男3女</span>
+                            <span class="new-script-tag">4-5小時</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="new-script-card" onclick="goToScript('chunzhou')">
+                    <img class="new-script-poster" src="img/劇本/春晝短/春晝短_劇本殺封面.webp" alt="春晝短" loading="lazy">
+                    <div class="new-script-info">
+                        <div class="new-script-name">🌸 春晝短</div>
+                        <div class="new-script-tags">
+                            <span class="new-script-tag">現代</span>
+                            <span class="new-script-tag">情感</span>
+                            <span class="new-script-tag">治癒</span>
+                            <span class="new-script-tag">3男3女</span>
+                            <span class="new-script-tag">4小時</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- filter -->
+        <div class="sec-head reveal">
+            <div class="sec-kicker">FIND YOUR STORY</div>
+            <h2 class="sec-title">劇本篩選</h2>
+            <div class="sec-line"></div>
+        </div>
+        <section class="filter-section reveal">
+            <div class="filter-result">找到 <span id="filteredCount">53</span> 個符合條件的劇本</div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 搜索劇本名稱…" autocomplete="off">
+            </div>
+
+            <!-- hidden selects preserve existing filter logic -->
+            <select id="playerFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
+                <option value="">全部人數</option>
+                <option value="5">5人</option>
+                <option value="6">6人</option>
+                <option value="7">7人</option>
+                <option value="8">8人</option>
+                <option value="10">10人</option>
+            </select>
+            <!-- 這些 option 的 value 必須和下方 .ftag 按鈕的 data-value 完全一致：
+                 hero.js 用 select.value = data-value 來轉送篩選，
+                 沒有對應的 option 會讓 value 變成空字串、篩選靜默失效。 -->
+            <select id="typeFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
+                <option value="">全部類型</option>
+                <option value="情感">情感</option>
+                <option value="推理">推理</option>
+                <option value="陣營">陣營</option>
+                <option value="歡樂">歡樂</option>
+                <option value="微恐">微恐</option>
+                <option value="新手">新手</option>
+                <option value="繁體">繁體</option>
+            </select>
+            <select id="difficultyFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
+                <option value="">全部難度</option>
+                <option value="0">0星 - 無推理</option>
+                <option value="1">1星 - 極簡</option>
+                <option value="2">2星 - 簡單</option>
+                <option value="3">3星 - 中等</option>
+                <option value="4">4星 - 困難</option>
+                <option value="5">5星 - 極難</option>
+            </select>
+
+            <div class="filter-group">
+                <div class="filter-group-label">👥 遊戲人數</div>
+                <div class="tag-row">
+                    <button class="ftag active" data-filter="player" data-value="">全部</button>
+                    <button class="ftag" data-filter="player" data-value="5">5人</button>
+                    <button class="ftag" data-filter="player" data-value="6">6人</button>
+                    <button class="ftag" data-filter="player" data-value="7">7人</button>
+                    <button class="ftag" data-filter="player" data-value="8">8人</button>
+                    <button class="ftag" data-filter="player" data-value="10">10人</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-group-label">🎭 劇本類型</div>
+                <div class="tag-row scrollx">
+                    <button class="ftag active" data-filter="type" data-value="">全部</button>
+                    <button class="ftag" data-filter="type" data-value="情感">情感</button>
+                    <button class="ftag" data-filter="type" data-value="推理">推理</button>
+                    <button class="ftag" data-filter="type" data-value="陣營">陣營</button>
+                    <button class="ftag" data-filter="type" data-value="歡樂">歡樂</button>
+                    <button class="ftag" data-filter="type" data-value="微恐">微恐</button>
+                    <button class="ftag" data-filter="type" data-value="新手">新手</button>
+                    <button class="ftag" data-filter="type" data-value="繁體">繁體</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-group-label">⭐ 推理難度</div>
+                <div class="tag-row">
+                    <button class="ftag active" data-filter="diff" data-value="">全部</button>
+                    <button class="ftag" data-filter="diff" data-value="0">0星</button>
+                    <button class="ftag" data-filter="diff" data-value="1">1星</button>
+                    <button class="ftag" data-filter="diff" data-value="2">2星</button>
+                    <button class="ftag" data-filter="diff" data-value="3">3星</button>
+                    <button class="ftag" data-filter="diff" data-value="4">4星</button>
+                    <button class="ftag" data-filter="diff" data-value="5">5星</button>
+                </div>
+            </div>
+
+            <div class="filter-foot">
+                <div class="sort-wrap">
+                    <label for="sortFilter">📊 排序</label>
+                    <select id="sortFilter" class="filter-select">
+                        <option value="default">預設順序</option>
+                        <option value="name">按名稱排序</option>
+                        <option value="difficulty">按難度排序</option>
+                        <option value="time">按時長排序</option>
+                        <option value="players">按人數排序</option>
+                    </select>
+                </div>
+                <button class="reset-btn" onclick="resetFilters()">↺ 重置篩選</button>
+            </div>
+        </section>
+
+        <div class="scripts-grid" id="scriptsGrid"></div>
+
+        <div class="no-results hidden" id="noResults">
+            <p>😔 找不到符合篩選條件的劇本</p>
+            <p>試試調整篩選條件或重置篩選</p>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="f-logo"><img src="img/logo.webp" alt="" width="34" height="34">海星劇本殺</div>
+                <p>沉浸其中・探索謎局。每一個選擇，都將改變結局。在這裡，與好友共度一場場精心編織的故事。</p>
+            </div>
+            <div class="footer-links">
+                <a href="#three-hero">回到頂部</a>
+                <a onclick="goToPage('劇本介紹.html')">劇本介紹</a>
+                <a onclick="goToPage('榮譽牆.html')">榮譽牆</a>
+                <a onclick="goToPage('主持人資訊.html')">主持人資訊</a>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2026 海星劇本殺 STARFISH MYSTERY · 用心編織每一場故事</div>
+    </footer>
+
+    <script src="scripts.js?v=20261006-tags4"></script>
+    <script src="scripts-data.js?v=20261006-tags"></script>
+    <script src="vendor/three.min.js"></script>
+    <script src="hero.js?v=20260702a"></script>
+
+    <div class="pwa-toast" id="pwaToast" role="status" aria-live="polite" hidden>
+        <span id="pwaToastMessage"></span>
+        <button class="pwa-toast-action" id="pwaToastAction" type="button" hidden></button>
+        <button class="pwa-toast-close" id="pwaToastClose" type="button" aria-label="關閉通知">×</button>
+    </div>
+    <script src="pwa.js?v=20261006-noreload"></script>
 </body>
 </html>

@@ -1,65 +1,23 @@
-# Assign Roles v2 CMS
+2025/08/18 第一天做了北國群星跟病嬌  
+---總共3個劇本---  
+2025/08/19 上傳奉天1928、孤城、晴天神社、賣快樂的人，更新了index，然後接著陸續上傳漓川、奶酪、別來無恙，並且新增所有劇本的音樂與回上一頁的按鈕  
+再新增了王座跟陰緣，都還沒有出現在主頁面  
+---總共12個劇本---  
+2025/08/20 更新index，新增案件重演、木夕僧、沸騰跨世紀，更新index(目前有15個劇本)  
+再新增了瘋囚、瘋子2、純白少年，更新index，新增了榮譽牆  
+---總共18個劇本---  
+2025/08/21 新增了主持人資訊和劇本介紹，也同步更新了index  ，榮譽牆多了排行榜、評論功能  
+2025/08/25 上傳了45、常春藤公寓、左左，但好多海報跟劇本資訊找不太到Q_Q還沒更新index  
+2025/08/28 做了拆遷1跟2、酒大奇蹟跟藍太陽、天才在左  
+2025/08/29 做了病嬌3、風起時想你、請將我深埋、神樂湯、年輪  
+2025/09/03 學了cursor，更新了既有劇本的標籤，做了眠夢，更新index(目前有32個劇本)  
+再新增了鯨魚馬戲團  
+---總共32個劇本---
+2025/09/04 新增了榮譽牆所有劇本與google表單，改了榮譽牆的評論泡泡顯示，新增放棄生活去北極、上路、搞錢、霧鴉館、你好(更新index後要有38個)  
+2025/09/05 新增重慶迷霧、南京風沙、盒子先生、風雨雲、死幻(更新index後要有43個)  
+2025/10/14 更新index，新增雪鄉  
+---總共43個劇本---  
+2025/10/27 更新榮譽牆1. 新增劇本"臥底模擬訓練"、"漫畫裡的小黑人"、"吾皇在上" 2. 讓篩選玩家時只顯示已玩過劇本  
+2025/10/28 更新index、榮譽牆、問卷  
+---總共47個劇本---  
 
-## 功能
-
-- `admin.html` 管理後台
-- 管理多個劇本
-- 編輯開場動畫與停留時間
-- 編輯題目、答案、三個角色分數
-- 編輯男女角色、角色圖片、介紹、角色音樂
-- 新增與刪除主持人
-- 拖曳上傳 BGM、圖片、MP3
-- 按「儲存並發布」後透過 Cloudflare Pages Functions Commit 到 GitHub
-- GitHub Commit 後由 Cloudflare Pages 自動部署
-- 玩家端維持單一 LIFF 與 Share Target Picker
-
-## 重要：Cloudflare Pages 設定
-
-### 1. Environment variables / Secrets
-
-在 Cloudflare Pages 專案的 Settings → Variables and Secrets 設定：
-
-- `ADMIN_PASSWORD`：後台登入密碼
-- `SESSION_SECRET`：至少 32 字元的亂數
-- `GITHUB_TOKEN`：GitHub Fine-grained Personal Access Token
-- `GITHUB_OWNER`：`cmy801027-coder`
-- `GITHUB_REPO`：`MJ`
-- `GITHUB_BRANCH`：`main`
-
-GitHub Token 只需授予此 Repository：
-
-- Contents: Read and write
-- Metadata: Read
-
-### 2. 建立 Cloudflare KV
-
-建立一個 KV Namespace，名稱例如 `assign-roles-uploads`。
-
-在 Pages 專案 Settings → Bindings 新增 KV binding：
-
-- Variable name：`ADMIN_UPLOADS`
-- KV namespace：剛建立的 Namespace
-
-KV 只用於「上傳後、發布前」的暫存。發布成功後會自動刪除。
-
-### 3. 重新部署
-
-Cloudflare Pages 必須使用 Git Integration 或 Wrangler 部署，才能執行 `/functions`。
-
-### 4. 開啟後台
-
-`https://你的網域/admin.html`
-
-## 檔案架構
-
-- `data/index.json`：劇本入口
-- `data/settings.json`：全站與 LIFF 設定
-- `data/hosts.json`：主持人
-- `data/scripts/<script-id>/settings.json`
-- `data/scripts/<script-id>/story.json`
-- `data/scripts/<script-id>/questions.json`
-- `data/scripts/<script-id>/characters.json`
-
-## 安全
-
-後台密碼與 GitHub Token 不會出現在前端 JavaScript。所有 GitHub 操作都由 Cloudflare Pages Functions 執行。

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>「賣快樂的人」分角問卷 · 賣快樂的人</title>
+    <style>
+        :root {
+            --veil-top: rgba(255, 255, 255, .35);
+            --backdrop-opacity: .5;
+            --shadow: rgba(40, 30, 20, .25);
+            --error: #c0392b;
+            --on-accent: #ffffff;
+            --field: rgba(255, 255, 255, .7);
+            --bg: #f3eee3;
+            --text: #2e2a26;
+            --title: #2a2622;
+            --muted: #6f675d;
+            --accent: #c8463a;
+            --line: rgba(46, 42, 38, .16);
+            --chip: rgba(200, 70, 58, .1);
+            --card: rgba(255, 252, 245, .85);
+        }
+        * { box-sizing: border-box; }
+        html { color-scheme: light; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 海報本身當整頁的霧面背景，跟劇本主頁同一套視覺 */
+        .backdrop {
+            position: fixed;
+            inset: -40px;
+            z-index: 0;
+            pointer-events: none;
+            background: url("../img/劇本/賣快樂的人/賣快樂的人劇本殺封面1.webp") center / cover no-repeat;
+            filter: blur(38px) saturate(1.15);
+            opacity: var(--backdrop-opacity);
+            transform: scale(1.1);
+        }
+        .backdrop::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, var(--veil-top) 0%, var(--bg) 78%);
+        }
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 28px 16px 72px;
+        }
+
+        /* ── 主視覺 ───────────────────────────── */
+        .hero {
+            display: grid;
+            gap: 26px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .poster {
+            justify-self: center;
+            width: min(78vw, 340px);
+            margin: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--line);
+            animation: rise .9s cubic-bezier(.2, .8, .2, 1) both;
+        }
+        .poster img { display: block; width: 100%; height: auto; }
+        @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.98); } }
+        .intro { text-align: center; animation: rise .9s .12s cubic-bezier(.2, .8, .2, 1) both; }
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-size: .78rem;
+            letter-spacing: .35em;
+            color: var(--accent);
+        }
+        .intro h1 {
+            margin: 14px 0 4px;
+            font-size: clamp(2rem, 9vw, 3rem);
+            line-height: 1.15;
+            letter-spacing: .12em;
+            color: var(--title);
+        }
+        .form-title { margin: 0; font-size: 1.05rem; letter-spacing: .2em; color: var(--muted); }
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .chips li {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--chip);
+            font-size: .85rem;
+            color: var(--text);
+        }
+        .lead {
+            margin: 20px auto 0;
+            max-width: 34em;
+            line-height: 1.9;
+            color: var(--text);
+        }
+        .lead:empty { display: none; }
+
+        /* ── 登場角色 ─────────────────────────── */
+        .cast { margin: 0 0 30px; }
+        .cast h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 14px;
+            font-size: .95rem;
+            letter-spacing: .3em;
+            color: var(--accent);
+        }
+        .cast h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+        .cast ul {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 92px;
+            gap: 12px;
+            margin: 0;
+            padding: 2px 2px 10px;
+            list-style: none;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+        }
+        .ch { scroll-snap-align: start; text-align: center; }
+        .ch img, .ch-ph {
+            display: grid;
+            place-items: center;
+            width: 92px;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top;
+            border-radius: 10px;
+            background: var(--chip);
+            box-shadow: 0 0 0 1px var(--line);
+            font-size: 1.6rem;
+            color: var(--accent);
+            cursor: zoom-in;
+        }
+        .ch-name { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.3; color: var(--muted); }
+        .note { margin: -6px 0 22px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+        @media (min-width: 860px) {
+            .hero { grid-template-columns: 340px 1fr; gap: 44px; }
+            .intro { text-align: left; }
+            .chips { justify-content: flex-start; }
+            .lead { margin-left: 0; }
+            .cast ul { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); overflow: visible; }
+            .ch img, .ch-ph { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) { .poster, .intro { animation: none; } }
+
+        /* ── 問卷 ─────────────────────────────── */
+        .survey-box { max-width: 680px; margin: 0 auto; }
+        #survey {
+            --sv-scheme: light;
+            --sv-accent: var(--accent);
+            --sv-on-accent: var(--on-accent);
+            --sv-text: var(--text);
+            --sv-muted: var(--muted);
+            --sv-card: var(--card);
+            --sv-border: var(--line);
+            --sv-field: var(--field);
+            --sv-error: var(--error);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <main class="wrap container">
+        <header class="hero">
+            <figure class="poster">
+                <img src="../img/劇本/賣快樂的人/賣快樂的人劇本殺封面1.webp" alt="賣快樂的人 海報" fetchpriority="high" decoding="async">
+            </figure>
+            <div class="intro">
+                <span class="eyebrow">角色分配問卷</span>
+                <h1>賣快樂的人</h1>
+                <p class="form-title">「賣快樂的人」分角問卷</p>
+                <ul class="chips">
+                    <li>👥 2男3女</li>
+                    <li>⏰ 5小時</li>
+                    <li>#情感</li>
+                    <li>#新手</li>
+                    <li>#沉浸</li>
+                </ul>
+                <p class="lead">歡迎大家來到快樂星球，祝願每個人在這裡都能找到你希冀的快樂。</p>
+            </div>
+        </header>
+
+        <section class="cast" aria-label="登場角色">
+            <h2>登場角色</h2>
+            <ul>
+                <li class="ch"><img src="../img/劇本/賣快樂的人/縮圖/偷月亮的人.webp" data-full="../img/劇本/賣快樂的人/偷月亮的人.webp" alt="偷月亮的人" loading="lazy" decoding="async"><span class="ch-name">偷月亮的人</span></li>
+                <li class="ch"><img src="../img/劇本/賣快樂的人/縮圖/靜止的人.webp" data-full="../img/劇本/賣快樂的人/靜止的人.webp" alt="靜止的人" loading="lazy" decoding="async"><span class="ch-name">靜止的人</span></li>
+                <li class="ch"><img src="../img/劇本/賣快樂的人/縮圖/藍色的人.webp" data-full="../img/劇本/賣快樂的人/藍色的人.webp" alt="藍色的人" loading="lazy" decoding="async"><span class="ch-name">藍色的人</span></li>
+                <li class="ch"><img src="../img/劇本/賣快樂的人/縮圖/霧氣騰騰的人.webp" data-full="../img/劇本/賣快樂的人/霧氣騰騰的人.webp" alt="霧氣騰騰的人" loading="lazy" decoding="async"><span class="ch-name">霧氣騰騰的人</span></li>
+                <li class="ch"><img src="../img/劇本/賣快樂的人/縮圖/踩影子的人.webp" data-full="../img/劇本/賣快樂的人/踩影子的人.webp" alt="踩影子的人" loading="lazy" decoding="async"><span class="ch-name">踩影子的人</span></li>
+            </ul>
+        </section>
+        <p class="note">依直覺作答就好，角色由主持人綜合大家的回覆分配 🎭</p>
+
+        <div class="survey-box">
+            <div id="survey"></div>
+        </div>
+    </main>
+
+    <script>
+    window.SURVEY = {
+        script: '賣快樂的人',
+        submitText: '送出・買一份快樂',
+        questions: [
+            {"type": "text", "title": "請問要怎麼稱呼你呢？ (line名)", "required": true},
+            {"type": "date", "title": "預約日期", "required": true},
+            {"type": "radio", "title": "你的性別是？", "required": true, "options": ["男", "女", "不愿透露"], "other": true},
+            {"type": "radio", "title": "你的年齡區段落在？", "required": true, "options": ["10-20", "21-30", "31-40", "41-50", "50+"]},
+            {"type": "radio", "title": "你的感情狀況？", "required": true, "options": ["單身", "戀愛中", "已婚"]},
+            {"type": "text", "title": "今天在場是否有跟你比較熟的人，如果有，他/他們的名字是？(請寫line名)", "required": true},
+            {"type": "textarea", "title": "承上題，如果有，請簡單描述一下你們的關係。"},
+            {"type": "text", "title": "如果一定要比較，請問「愛情、親情、友情」在你心中的重要程度是？\n請按重要程度進行排序或是填寫比例。", "desc": "ex. 愛>友>親      (愛70% 親20% 友10%)", "required": true},
+            {"type": "radio", "title": "喜歡小孩子嗎？", "required": true, "options": ["喜歡", "不喜歡", "一般喜歡"]},
+            {"type": "radio", "title": "你認為人的一生之中最重要的是？", "required": true, "options": ["所愛之人平安喜樂", "實現理想、足夠優秀", "和另一半開心快樂地生活", "堅持本心做自己"]},
+            {"type": "radio", "title": "如果遇到不開心的事情會選擇？", "required": true, "options": ["與朋友／家人傾訴", "自我消化，不表露出來"]},
+            {"type": "radio", "title": "如果在場的人有一個是你的家人，你希望他是你的？", "required": true, "options": ["爸爸", "媽媽", "弟弟／妹妹", "哥哥／姐姐"]},
+            {"type": "text", "title": "有其他想說的話可以寫在這～"},
+            {"type": "info", "title": "很重要的事情！！", "desc": "最後，跟各位自我介紹一下，我沒有名字，不過你們可以叫我「賣快樂的人」。從你們決定來到快樂星球的那一刻起，你們就與我的店鋪產生了羈絆，也正如我常說得那句話：「如果用錢能買到快樂，那就多買一點。」\n\n請各位在光臨快樂店的時候，『務必帶上一樣自己珍視的物品』，我會在這裡等待各位，不見不散。"}
+        ],
+        done: {
+            title: '🍬 快樂已打包',
+            text: '記得帶上一樣自己珍視的物品\n我們在快樂店等你，不見不散。',
+            back: { href: '../5人/賣快樂的人.html', text: '← 回到《賣快樂的人》劇本介紹' }
+        }
+    };
+    </script>
+    <script src="../survey.js?v=20261006f"></script>
+    <script src="../lightbox.js?v=20261006"></script>
+    <script src="../fx3d.js?v=20260714" data-fx="petals" data-tint="#e9a29a" data-density="0.6"></script>
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>病嬌男孩的精分日記 - 劇本殺</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 30%, #3e1b1b 60%, #4a1f1f 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 返回按鈕樣式 */
+        .back-to-overview {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideInLeft 1s ease-out 0.5s forwards;
+        }
+
+        .back-btn {
+            background: rgba(220, 38, 127, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(220, 38, 127, 0.5);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 5px 15px rgba(220, 38, 127, 0.3);
+        }
+
+        .back-btn:hover {
+            background: rgba(220, 38, 127, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 127, 0.5);
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 陰暗氛圍動畫 */
+        .shadow-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .shadow {
+            position: absolute;
+            background: radial-gradient(circle, transparent 0%, rgba(0,0,0,0.3) 70%);
+            border-radius: 50%;
+            animation: pulse 4s infinite ease-in-out;
+        }
+
+        .shadow:nth-child(1) { width: 300px; height: 300px; top: 10%; left: 20%; animation-delay: 0s; }
+        .shadow:nth-child(2) { width: 200px; height: 200px; top: 60%; right: 15%; animation-delay: 2s; }
+        .shadow:nth-child(3) { width: 400px; height: 400px; bottom: 20%; left: 10%; animation-delay: 4s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.1); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(220, 38, 127, 0.8), 0 0 40px rgba(220, 38, 127, 0.6);
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #dc267f, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+            text-shadow: 0 0 10px rgba(220, 38, 127, 0.5);
+        }
+
+        .poster-section {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+
+        .poster-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 600px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(220, 38, 127, 0.3), 0 0 80px rgba(220, 38, 127, 0.2);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(220, 38, 127, 0.3);
+        }
+
+        .poster-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 30px 60px rgba(220, 38, 127, 0.4), 0 0 100px rgba(220, 38, 127, 0.3);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(220, 38, 127, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(220, 38, 127, 0.3);
+            border-color: rgba(220, 38, 127, 0.5);
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #dc267f;
+            padding-bottom: 10px;
+            text-shadow: 0 0 10px rgba(220, 38, 127, 0.5);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            background: rgba(220, 38, 127, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(220, 38, 127, 0.3);
+        }
+
+        .info-item:hover {
+            background: rgba(220, 38, 127, 0.3);
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(220, 38, 127, 0.3);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .stars-rating {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star-rating {
+            color: #ffd700;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .star-rating.empty {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .star-rating:hover {
+            transform: scale(1.2);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: linear-gradient(45deg, #dc267f, #dc2626);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(220, 38, 127, 0.3);
+        }
+
+        .tag:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(220, 38, 127, 0.5);
+        }
+
+        .description {
+            grid-column: 1 / -1;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.7s forwards;
+        }
+
+        .description-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #f1f5f9;
+            text-align: justify;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, transparent 0%, rgba(220, 38, 127, 0.4) 50%, transparent 100%);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(220, 38, 127, 0.5);
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 50px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.9s forwards;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #dc267f, #dc2626);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(220, 38, 127, 0.4), 0 0 40px rgba(220, 38, 127, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(220, 38, 127, 0.5), 0 0 60px rgba(220, 38, 127, 0.3);
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            opacity: 0.2;
+            animation: float 8s ease-in-out infinite;
+            color: rgba(220, 38, 127, 0.6);
+            font-size: 2rem;
+        }
+
+        .floating-element:nth-child(1) {
+            top: 15%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            top: 25%;
+            right: 20%;
+            animation-delay: 3s;
+        }
+
+        .floating-element:nth-child(3) {
+            bottom: 25%;
+            left: 25%;
+            animation-delay: 6s;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-15px) rotate(5deg); }
+            66% { transform: translateY(-25px) rotate(-5deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .poster-image {
+                max-height: 400px;
+            }
+
+            .back-to-overview {
+                top: 10px;
+                left: 10px;
+            }
+            
+            .back-btn {
+                padding: 10px 15px;
+                font-size: 0.8rem;
+            }
+
+            .poster-section div {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .poster-section .poster-image {
+                max-width: 90% !important;
+                min-width: unset !important;
+                margin-bottom: 15px;
+            }
+        }
+
+        .personalities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .personality-card {
+            background: rgba(220, 38, 127, 0.2);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            border: 1px solid rgba(220, 38, 127, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .personality-card:hover {
+            background: rgba(220, 38, 127, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .personality-day {
+            font-size: 0.8rem;
+            color: #f1f5f9;
+            opacity: 0.8;
+        }
+
+        .character-name {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 3px;
+            font-size: 0.85rem;
+        }
+
+        .character-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 10px;
+            border: 3px solid rgba(220, 38, 127, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .personality-card:hover .character-image {
+            border-color: rgba(220, 38, 127, 0.8);
+            transform: scale(1.05);
+        }
+
+        .quote {
+            font-style: italic;
+            color: #dc267f;
+            font-size: 1.1rem;
+            margin: 20px 0;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(220, 38, 127, 0.3);
+        }
+
+        /* 固定在左上角的返回按鈕會蓋到標題，替標題保留頂部空間 */
+        .header {
+            padding-top: 56px;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-to-overview">
+        <a href="../index.html" class="back-btn">
+            ← 返回劇本總覽
+        </a>
+    </div>
+
+    <div class="shadow-effects">
+        <div class="shadow"></div>
+        <div class="shadow"></div>
+        <div class="shadow"></div>
+    </div>
+
+    <div class="floating-elements">
+        <div class="floating-element">📔</div>
+        <div class="floating-element">🎭</div>
+        <div class="floating-element">💭</div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">病嬌男孩的精分日記</h1>
+            <p class="subtitle">七個人格，一個秘密，此生必玩的劇本</p>
+        </div>
+
+        <div class="poster-section">
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <img fetchpriority="high" src="../img/劇本/病嬌男孩的精分日記/病嬌男孩的精分日記封面1.webp" alt="病嬌男孩的精分日記封面1" class="poster-image" style="max-width: 45%; min-width: 300px;">
+                <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/病嬌男孩的精分日記封面2.webp" alt="病嬌男孩的精分日記封面2" class="poster-image" style="max-width: 45%; min-width: 300px;">
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">遊戲資訊</h2>
+                
+                <div class="info-item">
+                    <span class="info-label">📔 劇本名稱</span>
+                    <span class="info-value">病嬌男孩的精分日記</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">⏰ 遊戲時間</span>
+                    <span class="info-value">4.5 小時</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">👥 遊戲人數</span>
+                    <span class="info-value">7人（不限性別）</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">🧠 推理程度</span>
+                    <div class="stars-rating">
+                        <span class="star-rating">★</span>
+                        <span class="star-rating">★</span>
+                        <span class="star-rating">★</span>
+                        <span class="star-rating">★</span>
+                        <span class="star-rating empty">★</span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">🏷️ 劇本標籤</span>
+                    <div class="tags">
+                        <span class="tag">微恐</span>
+                        <span class="tag">還原</span>
+                        <span class="tag">推理</span>
+                        <span class="tag">沉浸</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">人格分裂</h2>
+                <div class="quote">"我一生的時間，是別人的七分之一，生命的厚度，卻是別人的七倍"</div>
+                <div class="personalities-grid">
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期一.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期一.webp" alt="蕭何 - 星期一" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期一</div>
+                    </div>
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期二.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期二.webp" alt="蕭何 - 星期二" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期二</div>
+                    </div>
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期三.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期三.webp" alt="蕭何 - 星期三" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期三</div>
+                    </div>
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期四.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期四.webp" alt="蕭何 - 星期四" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期四</div>
+                    </div>
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期五.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期五.webp" alt="蕭何 - 星期五" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期五</div>
+                    </div>
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期六.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期六.webp" alt="蕭何 - 星期六" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期六</div>
+                    </div>
+                    <div class="personality-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/病嬌男孩的精分日記/縮圖/蕭何_星期日.webp" data-full="../img/劇本/病嬌男孩的精分日記/蕭何_星期日.webp" alt="蕭何 - 星期日" class="character-image">
+                        <div class="character-name">蕭何</div>
+                        <div class="personality-day">星期日</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card description">
+                <h2 class="card-title">故事背景</h2>
+                <div class="description-text">
+                    我叫<span class="highlight">蕭何</span>。我一生的時間，是別人的七分之一，生命的厚度，卻是別人的七倍，因為這具身體裡住著七個「我」。
+                    <br><br>
+                    但別誤會，我們可不像電影裡那些暴戾不可理喻的分裂人格。為了能更好的共處，我們分別取名<span class="highlight">星期一至星期日</span>。事實上，我們也是按照一週七天輪流出現，擁有自己獨立的生活。
+                    <br><br>
+                    便利貼上的文字，是我們溝通的唯一途徑。每個人都有一本日記，記錄著自己的小秘密。總之，我有七個我，我便擁有了更豐盈的生命，和更孤單的生活。<span class="highlight">熱鬧是我的，孤獨也是我的⋯⋯</span>
+                </div>
+            </div>
+
+            <div class="card description">
+                <h2 class="card-title">劇本介紹</h2>
+                <div class="description-text">
+                    <span class="highlight">2022年1月23日</span>，一名獨居男子蕭何被發現於自家單位割腕自殺，現場卻發現七個人的生活痕跡以及七本日記。
+                    <br><br>
+                    為何有七人共同生活的痕跡在獨居的蕭何家中呢？除了蕭何，另外六人是誰？<span class="highlight">蕭何又是否真的自殺？</span>還是兇案另有內情？
+                    <br><br>
+                    這是一部關於<span class="highlight">精神分裂</span>的深度還原劇本，適合喜愛心理懸疑和推理解謎的玩家。玩家將扮演蕭何的不同人格，一起拼湊出故事的真相。
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <a href="https://line.me/R/ti/p/@825gdzws" class="cta-button" target="_blank">立即預約遊戲</a>
+        </div>
+    </div>
+
+    <script>
+        // 添加互動效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 星星懸停效果
+            const stars = document.querySelectorAll('.star-rating:not(.empty)');
+            stars.forEach((star, index) => {
+                star.addEventListener('mouseenter', () => {
+                    stars.forEach((s, i) => {
+                        if (i <= index) {
+                            s.style.color = '#dc2626';
+                            s.style.textShadow = '0 0 15px rgba(220, 38, 38, 0.8)';
+                        } else {
+                            s.style.color = '#ffd700';
+                            s.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                        }
+                    });
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    stars.forEach(s => {
+                        s.style.color = '#ffd700';
+                        s.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                    });
+                });
+            });
+
+            // 標籤點擊效果
+            const tags = document.querySelectorAll('.tag');
+            tags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    tag.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        tag.style.transform = 'scale(1.05)';
+                    }, 100);
+                });
+            });
+
+            // 人格卡片懸停效果
+            const personalityCards = document.querySelectorAll('.personality-card');
+            personalityCards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.boxShadow = '0 10px 25px rgba(220, 38, 127, 0.4)';
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.boxShadow = 'none';
+                });
+            });
+
+            // 卡片懸停時的光效
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    card.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(220, 38, 127, 0.25) 0%, rgba(0,0,0,0.4) 100%)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.background = 'rgba(0,0,0,0.4)';
+                });
+            });
+        });
+
+        // 添加滾動視差效果
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const shadows = document.querySelector('.shadow-effects');
+            const floating = document.querySelector('.floating-elements');
+            
+            if (shadows) shadows.style.transform = `translateY(${scrolled * 0.05}px)`;
+            if (floating) floating.style.transform = `translateY(${scrolled * 0.1}px)`;
+        });
+    </script>
+
+</script>
+    <audio preload="none" id="bgm" src="病嬌男孩的精分日記.mp3" loop muted></audio>
+<script>
+  // 點擊頁面解除靜音
+  document.addEventListener('click', function(){
+    document.getElementById('bgm').muted = false;
+  }, {once:true});
+</script>
+
+
+<script src="../bgm-control.js?v=20261006-lazy"></script>
+<script src="../reviews.js?v=20261006-fast"></script>
+<script src="../video.js?v=20261006-tags4"></script>
+<script src="../lightbox.js?v=20261006-thumb"></script>
+<script src="../fx3d.js?v=20260714" data-fx="fog" data-tint="#b03060"></script>
+</body>
+</html>

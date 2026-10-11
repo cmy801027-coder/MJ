@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>《王座》分角表單 · 王座</title>
+    <style>
+        :root {
+            --veil-top: rgba(0, 0, 0, .35);
+            --backdrop-opacity: .55;
+            --shadow: rgba(0, 0, 0, .55);
+            --error: #ff8a7a;
+            --on-accent: #14100c;
+            --field: rgba(255, 255, 255, .06);
+            --bg: #0b0a09;
+            --text: #ece4d4;
+            --title: #e2c88e;
+            --muted: rgba(236, 228, 212, .58);
+            --accent: #c9a45c;
+            --line: rgba(201, 164, 92, .22);
+            --chip: rgba(201, 164, 92, .1);
+            --card: rgba(20, 18, 16, .84);
+        }
+        * { box-sizing: border-box; }
+        html { color-scheme: dark; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 海報本身當整頁的霧面背景，跟劇本主頁同一套視覺 */
+        .backdrop {
+            position: fixed;
+            inset: -40px;
+            z-index: 0;
+            pointer-events: none;
+            background: url("../img/劇本/王座/王座劇本殺海報1.webp") center / cover no-repeat;
+            filter: blur(38px) saturate(1.15);
+            opacity: var(--backdrop-opacity);
+            transform: scale(1.1);
+        }
+        .backdrop::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, var(--veil-top) 0%, var(--bg) 78%);
+        }
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 28px 16px 72px;
+        }
+
+        /* ── 主視覺 ───────────────────────────── */
+        .hero {
+            display: grid;
+            gap: 26px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .poster {
+            justify-self: center;
+            width: min(78vw, 340px);
+            margin: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--line);
+            animation: rise .9s cubic-bezier(.2, .8, .2, 1) both;
+        }
+        .poster img { display: block; width: 100%; height: auto; }
+        @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.98); } }
+        .intro { text-align: center; animation: rise .9s .12s cubic-bezier(.2, .8, .2, 1) both; }
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-size: .78rem;
+            letter-spacing: .35em;
+            color: var(--accent);
+        }
+        .intro h1 {
+            margin: 14px 0 4px;
+            font-size: clamp(2rem, 9vw, 3rem);
+            line-height: 1.15;
+            letter-spacing: .12em;
+            color: var(--title);
+        }
+        .form-title { margin: 0; font-size: 1.05rem; letter-spacing: .2em; color: var(--muted); }
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .chips li {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--chip);
+            font-size: .85rem;
+            color: var(--text);
+        }
+        .lead {
+            margin: 20px auto 0;
+            max-width: 34em;
+            line-height: 1.9;
+            color: var(--text);
+        }
+        .lead:empty { display: none; }
+
+        /* ── 登場角色 ─────────────────────────── */
+        .cast { margin: 0 0 30px; }
+        .cast h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 14px;
+            font-size: .95rem;
+            letter-spacing: .3em;
+            color: var(--accent);
+        }
+        .cast h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+        .cast ul {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 92px;
+            gap: 12px;
+            margin: 0;
+            padding: 2px 2px 10px;
+            list-style: none;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+        }
+        .ch { scroll-snap-align: start; text-align: center; }
+        .ch img, .ch-ph {
+            display: grid;
+            place-items: center;
+            width: 92px;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top;
+            border-radius: 10px;
+            background: var(--chip);
+            box-shadow: 0 0 0 1px var(--line);
+            font-size: 1.6rem;
+            color: var(--accent);
+            cursor: zoom-in;
+        }
+        .ch-name { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.3; color: var(--muted); }
+        .note { margin: -6px 0 22px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+        @media (min-width: 860px) {
+            .hero { grid-template-columns: 340px 1fr; gap: 44px; }
+            .intro { text-align: left; }
+            .chips { justify-content: flex-start; }
+            .lead { margin-left: 0; }
+            .cast ul { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); overflow: visible; }
+            .ch img, .ch-ph { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) { .poster, .intro { animation: none; } }
+
+        /* ── 問卷 ─────────────────────────────── */
+        .survey-box { max-width: 680px; margin: 0 auto; }
+        #survey {
+            --sv-scheme: dark;
+            --sv-accent: var(--accent);
+            --sv-on-accent: var(--on-accent);
+            --sv-text: var(--text);
+            --sv-muted: var(--muted);
+            --sv-card: var(--card);
+            --sv-border: var(--line);
+            --sv-field: var(--field);
+            --sv-error: var(--error);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <main class="wrap container">
+        <header class="hero">
+            <figure class="poster">
+                <img src="../img/劇本/王座/王座劇本殺海報1.webp" alt="王座 海報" fetchpriority="high" decoding="async">
+            </figure>
+            <div class="intro">
+                <span class="eyebrow">角色分配問卷</span>
+                <h1>王座</h1>
+                <p class="form-title">《王座》分角表單</p>
+                <ul class="chips">
+                    <li>👥 4男3女</li>
+                    <li>⏰ 4.5小時</li>
+                    <li>#神話</li>
+                    <li>#陣營</li>
+                    <li>#機制</li>
+                </ul>
+                <p class="lead"></p>
+            </div>
+        </header>
+
+        <section class="cast" aria-label="登場角色">
+            <h2>登場角色</h2>
+            <ul>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/巨狼芬里爾.webp" data-full="../img/劇本/王座/巨狼芬里爾.webp" alt="巨狼芬里爾" loading="lazy" decoding="async"><span class="ch-name">巨狼芬里爾</span></li>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/守護神海姆達爾.webp" data-full="../img/劇本/王座/守護神海姆達爾.webp" alt="守護神海姆達爾" loading="lazy" decoding="async"><span class="ch-name">守護神海姆達爾</span></li>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/神后弗麗嘉.webp" data-full="../img/劇本/王座/神后弗麗嘉.webp" alt="神后弗麗嘉" loading="lazy" decoding="async"><span class="ch-name">神后弗麗嘉</span></li>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/雷神托爾.webp" data-full="../img/劇本/王座/雷神托爾.webp" alt="雷神托爾" loading="lazy" decoding="async"><span class="ch-name">雷神托爾</span></li>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/詭計之神洛基.webp" data-full="../img/劇本/王座/詭計之神洛基.webp" alt="詭計之神洛基" loading="lazy" decoding="async"><span class="ch-name">詭計之神洛基</span></li>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/女武神瓦基里.webp" data-full="../img/劇本/王座/女武神瓦基里.webp" alt="女武神瓦基里" loading="lazy" decoding="async"><span class="ch-name">女武神瓦基里</span></li>
+                <li class="ch"><img src="../img/劇本/王座/縮圖/青春女神希芙.webp" data-full="../img/劇本/王座/青春女神希芙.webp" alt="青春女神希芙" loading="lazy" decoding="async"><span class="ch-name">青春女神希芙</span></li>
+            </ul>
+        </section>
+        <p class="note">依直覺作答就好，角色由主持人綜合大家的回覆分配 🎭</p>
+
+        <div class="survey-box">
+            <div id="survey"></div>
+        </div>
+    </main>
+
+    <script>
+    window.SURVEY = {
+        script: '王座',
+        submitText: '立誓・登上王座',
+        questions: [
+            {"type": "text", "title": "Line名稱", "required": true},
+            {"type": "radio", "title": "生理性別", "desc": "非必要性別不會反串", "required": true, "options": ["我是男生", "我是女生", "我是男生，我也願意玩女角", "我是女生，我也願意玩男角"]},
+            {"type": "radio", "title": "玩過大約幾場劇本殺", "required": true, "options": ["這是第一次", "5本以內", "5~20之間", "20~50之間", "50up"]},
+            {"type": "scale", "title": "認為自己邏輯能力...", "required": true, "min": 1, "max": 5, "minLabel": "不太好", "maxLabel": "超好"},
+            {"type": "scale", "title": "團隊中常擔任領導者，主持全局", "required": true, "min": 1, "max": 5, "minLabel": "不符合", "maxLabel": "符合"},
+            {"type": "scale", "title": "團隊中擔任氣氛大師，搞笑擔當", "required": true, "min": 1, "max": 5, "minLabel": "不符合", "maxLabel": "符合"},
+            {"type": "scale", "title": "我是老騙子，玩遊戲總是能把別人騙得團團轉", "required": true, "min": 1, "max": 5, "minLabel": "不符合", "maxLabel": "符合"},
+            {"type": "textarea", "title": "若有喜歡的角色，請排序", "desc": "1. 雷神\n2. 洛基\n3. 守護神\n4. 巨狼\n5. 神后\n6. 青春女神\n7. 女武神"},
+            {"type": "textarea", "title": "留言板 / 許願池"}
+        ],
+        done: {
+            title: '⚡ 眾神已收到你的誓言',
+            text: '角色將由主持人分配\n阿斯嘉德見！',
+            back: { href: '../7人/王座.html', text: '← 回到《王座》劇本介紹' }
+        }
+    };
+    </script>
+    <script src="../survey.js?v=20261006f"></script>
+    <script src="../lightbox.js?v=20261006"></script>
+    <script src="../fx3d.js?v=20260714" data-fx="storm" data-tint="#d9c08a" data-density="0.6"></script>
+</body>
+</html>

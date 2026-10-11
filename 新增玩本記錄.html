@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#080603">
+    <meta name="description" content="登記在海星劇本殺遊玩的劇本、角色與心得。">
+    <title>新增玩本記錄｜海星劇本殺</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="pwa/favicon-32.png">
+    <link rel="apple-touch-icon" href="pwa/apple-touch-icon.png">
+    <link rel="stylesheet" href="honor-form.css?v=20260730-safearea">
+</head>
+<body>
+    <div class="ambient" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <a class="back-link" href="榮譽牆.html" aria-label="返回榮譽牆">← 返回榮譽牆</a>
+        <a class="brand" href="index.html" aria-label="海星劇本殺首頁">
+            <img src="pwa/icon-192.png" alt="" width="44" height="44">
+            <span>海星劇本殺</span>
+        </a>
+    </header>
+
+    <main class="page-shell">
+        <section class="intro" aria-labelledby="pageTitle">
+            <p class="eyebrow">HONOR WALL · PLAY RECORD</p>
+            <h1 id="pageTitle">留下你的玩本記錄</h1>
+            <p>每留下一筆記錄就能集點，點數可以在榮譽牆兌換折抵、優先選角權與專屬稱號。寫下心得、開沒人碰過的本、帶朋友來，都能多拿點數。</p>
+            <p class="double-day" id="doubleDayNote" hidden></p>
+        </section>
+
+        <section class="form-card">
+            <form id="playRecordForm" novalidate>
+                <input
+                    id="website"
+                    name="website"
+                    type="text"
+                    tabindex="-1"
+                    autocomplete="off"
+                    aria-hidden="true"
+                    style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"
+                >
+
+                <div class="field-grid two-columns">
+                    <div class="field">
+                        <label for="playerName">怎麼稱呼你呢 <span aria-hidden="true">*</span></label>
+                        <p class="field-hint" id="nameHint">請和之前登記的名字保持一致</p>
+                        <input
+                            id="playerName"
+                            type="text"
+                            maxlength="30"
+                            autocomplete="nickname"
+                            aria-describedby="nameHint"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="playDate">遊玩日期 <span aria-hidden="true">*</span></label>
+                        <p class="field-hint" id="dateHint">選擇這次開本的日期</p>
+                        <input id="playDate" type="date" aria-describedby="dateHint" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="scriptSelect">玩的是哪個劇本？ <span aria-hidden="true">*</span></label>
+                    <p class="field-hint" id="scriptHint">選擇後會自動載入首頁中對應的角色</p>
+                    <select id="scriptSelect" aria-describedby="scriptHint roleLoadStatus" required>
+                        <option value="">請選擇劇本</option>
+                    </select>
+                    <p class="load-status" id="roleLoadStatus" role="status" aria-live="polite">正在載入劇本資料…</p>
+                </div>
+
+                <fieldset class="field role-field" id="roleField" disabled>
+                    <legend id="roleLegend">飾演的角色 <span aria-hidden="true">*</span></legend>
+                    <p class="field-hint">請選擇你實際飾演的角色</p>
+                    <div class="role-options" id="roleOptions">
+                        <p class="role-placeholder">先選擇劇本，這裡就會出現角色。</p>
+                    </div>
+                </fieldset>
+
+                <fieldset class="field rating-field">
+                    <legend>給予評價 <span aria-hidden="true">*</span></legend>
+                    <p class="field-hint">1 分到 5 分，5 分最高</p>
+                    <div class="rating-options">
+                        <label><input type="radio" name="rating" value="1" required><span><b>1</b>★</span></label>
+                        <label><input type="radio" name="rating" value="2"><span><b>2</b>★</span></label>
+                        <label><input type="radio" name="rating" value="3"><span><b>3</b>★</span></label>
+                        <label><input type="radio" name="rating" value="4"><span><b>4</b>★</span></label>
+                        <label><input type="radio" name="rating" value="5"><span><b>5</b>★</span></label>
+                    </div>
+                </fieldset>
+
+                <div class="field">
+                    <div class="label-row">
+                        <label for="comment">50 字以內的心得推薦</label>
+                        <span id="commentCount" aria-live="polite">0 / 50</span>
+                    </div>
+                    <p class="field-hint" id="commentHint">寫滿 15 字可以多拿 5 點</p>
+                    <textarea id="comment" maxlength="50" rows="4" aria-describedby="commentHint" placeholder="哪個瞬間最讓你印象深刻？"></textarea>
+                </div>
+
+                <div class="field">
+                    <label for="referrer">是誰帶你來的？</label>
+                    <p class="field-hint" id="referrerHint">只有第一次登記時需要填。填了雙方各得 10 點</p>
+                    <input
+                        id="referrer"
+                        type="text"
+                        maxlength="30"
+                        autocomplete="off"
+                        aria-describedby="referrerHint"
+                    >
+                </div>
+
+                <p class="form-status" id="formStatus" role="alert" hidden></p>
+                <button class="submit-button" id="submitButton" type="submit">
+                    <span>送出玩本記錄</span>
+                    <span aria-hidden="true">→</span>
+                </button>
+            </form>
+
+            <div class="success-panel" id="successPanel" tabindex="-1" hidden>
+                <div class="success-icon" aria-hidden="true">✓</div>
+                <h2>記錄已送出</h2>
+
+                <div class="award-card" id="awardCard" hidden>
+                    <span class="award-label">本場獲得</span>
+                    <strong class="award-points" id="awardPoints">+0</strong>
+                    <span class="award-unit">點</span>
+                    <p class="award-detail" id="awardDetail"></p>
+                </div>
+
+                <p id="successNote">謝謝你留下這次的角色與心得。試算表同步後，就會出現在榮譽牆上。</p>
+                <div class="success-actions">
+                    <a class="primary-link" href="榮譽牆.html">查看我的探員檔案</a>
+                    <button type="button" id="addAnotherButton">再新增一筆</button>
+                </div>
+            </div>
+        </section>
+
+        <p class="fallback-note" id="setupNote" hidden>
+            尚未設定資料寫入網址。請先部署專案內的 Google Apps Script，並將 Web App 網址填入
+            <code>play-record-config.js</code>。
+        </p>
+    </main>
+
+    <script src="scripts.js?v=20261006-tags4"></script>
+    <script src="play-record-config.js?v=20261006-fast"></script>
+    <script src="play-record.js?v=20261006-linename"></script>
+</body>
+</html>

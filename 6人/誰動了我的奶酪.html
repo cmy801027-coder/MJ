@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>誰動了我的奶酪 - 劇本殺</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: '微軟正黑體', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FFE4B5 0%, #F0E68C 30%, #DDA0DD 60%, #98FB98 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 返回按鈕樣式 */
+        .back-to-overview {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideInLeft 1s ease-out 0.5s forwards;
+        }
+
+        .back-btn {
+            background: rgba(139, 69, 19, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(139, 69, 19, 0.5);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .back-btn:hover {
+            background: rgba(139, 69, 19, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.5);
+        }
+
+        /* 奶酪飄落效果 */
+        .cheese-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .cheese-piece {
+            position: absolute;
+            font-size: 2rem;
+            user-select: none;
+            pointer-events: none;
+            animation: cheesefall 12s linear infinite;
+        }
+
+        .cheese-piece:nth-child(1) { left: 10%; animation-delay: 0s; content: "🧀"; }
+        .cheese-piece:nth-child(2) { left: 20%; animation-delay: 2s; content: "🧀"; }
+        .cheese-piece:nth-child(3) { left: 30%; animation-delay: 4s; content: "🧀"; }
+        .cheese-piece:nth-child(4) { left: 40%; animation-delay: 6s; content: "🧀"; }
+        .cheese-piece:nth-child(5) { left: 50%; animation-delay: 8s; content: "🧀"; }
+        .cheese-piece:nth-child(6) { left: 60%; animation-delay: 1s; content: "🧀"; }
+        .cheese-piece:nth-child(7) { left: 70%; animation-delay: 3s; content: "🧀"; }
+        .cheese-piece:nth-child(8) { left: 80%; animation-delay: 5s; content: "🧀"; }
+        .cheese-piece:nth-child(9) { left: 90%; animation-delay: 7s; content: "🧀"; }
+
+        @keyframes cheesefall {
+            0% {
+                top: -10%;
+                opacity: 0;
+                transform: rotate(0deg);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                top: 110%;
+                opacity: 0;
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 165, 0, 0.8), 0 0 60px rgba(255, 165, 0, 0.6);
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #fff, #FFA500, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            font-family: '微軟正黑體', serif;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+            text-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .fairy-quote {
+            font-size: 1.1rem;
+            color: rgba(255, 165, 0, 0.9);
+            margin: 20px 0;
+            text-align: center;
+            line-height: 1.6;
+            font-family: '微軟正黑體', serif;
+            font-style: italic;
+            max-width: 700px;
+            margin: 20px auto;
+        }
+
+        .poster-section {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+
+        .poster-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 600px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.4), 0 0 80px rgba(255, 165, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 3px solid rgba(255, 165, 0, 0.4);
+        }
+
+        .poster-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 30px 60px rgba(139, 69, 19, 0.5), 0 0 100px rgba(255, 165, 0, 0.4);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 165, 0, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(255, 165, 0, 0.3);
+            border-color: rgba(255, 165, 0, 0.5);
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #FF8C00;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #FFA500;
+            padding-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            background: rgba(255, 165, 0, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 165, 0, 0.3);
+        }
+
+        .info-item:hover {
+            background: rgba(255, 165, 0, 0.3);
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(255, 165, 0, 0.3);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #8B4513;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #FF8C00;
+        }
+
+        .stars-rating {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star-rating {
+            color: #ffd700;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .star-rating.empty {
+            color: rgba(139, 69, 19, 0.3);
+        }
+
+        .star-rating:hover {
+            transform: scale(1.2);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: linear-gradient(45deg, #FFA500, #FFD700);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+        }
+
+        .tag:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 165, 0, 0.5);
+        }
+
+        .description {
+            grid-column: 1 / -1;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.7s forwards;
+        }
+
+        .description-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #8B4513;
+            text-align: justify;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, transparent 0%, rgba(255, 165, 0, 0.4) 50%, transparent 100%);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #8B4513;
+            text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 50px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.9s forwards;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #FFA500, #FFD700);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 165, 0, 0.4), 0 0 40px rgba(255, 165, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(255, 165, 0, 0.5), 0 0 60px rgba(255, 165, 0, 0.3);
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            opacity: 0.4;
+            animation: float 14s ease-in-out infinite;
+            color: rgba(255, 165, 0, 0.6);
+            font-size: 2rem;
+        }
+
+        .floating-element:nth-child(1) {
+            top: 15%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            top: 25%;
+            right: 20%;
+            animation-delay: 5s;
+        }
+
+        .floating-element:nth-child(3) {
+            bottom: 25%;
+            left: 25%;
+            animation-delay: 10s;
+        }
+
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .character-card {
+            background: rgba(255, 165, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px 15px;
+            text-align: center;
+            border: 2px solid rgba(255, 165, 0, 0.3);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .character-card:hover {
+            background: rgba(255, 165, 0, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 165, 0, 0.4);
+        }
+
+        .character-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            margin: 0 auto 15px;
+            border: 3px solid rgba(255, 165, 0, 0.5);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+            object-fit: cover;
+        }
+
+        .character-card:hover .character-image {
+            border-color: rgba(255, 165, 0, 0.8);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 165, 0, 0.5);
+        }
+
+        .character-name {
+            font-weight: 600;
+            color: #8B4513;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .character-info {
+            font-size: 0.85rem;
+            color: #8B4513;
+            opacity: 0.8;
+            line-height: 1.3;
+        }
+
+        .gender-icons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gender-icon {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: #FFA500;
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(255, 165, 0, 0.3);
+        }
+
+        .icon {
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-25px) rotate(2deg); }
+            66% { transform: translateY(-40px) rotate(-2deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .poster-image {
+                max-height: 400px;
+            }
+
+            .back-to-overview {
+                top: 10px;
+                left: 10px;
+            }
+            
+            .back-btn {
+                padding: 10px 15px;
+                font-size: 0.8rem;
+            }
+
+            .poster-section div {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .poster-section .poster-image {
+                max-width: 90% !important;
+                min-width: unset !important;
+                margin-bottom: 15px;
+            }
+        }
+
+        /* 固定在左上角的返回按鈕會蓋到標題，替標題保留頂部空間 */
+        .header {
+            padding-top: 56px;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-to-overview">
+        <a href="../index.html" class="back-btn">
+            ← 返回劇本總覽
+        </a>
+    </div>
+
+    <div class="cheese-effects">
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+        <div class="cheese-piece">🧀</div>
+    </div>
+
+    <div class="floating-elements">
+        <div class="floating-element">🏰</div>
+        <div class="floating-element">🌳</div>
+        <div class="floating-element">✨</div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">誰動了我的奶酪</h1>
+            <div class="fairy-quote">
+                「你聽說了嗎？不眠之城的黃金奶酪被偷了！」<br>
+                在一片神奇的大陸上，獨立於現實世界之外，這裡只充滿了童真和快樂
+            </div>
+            <p class="subtitle" style="color: #8B4513; font-weight: 600; text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);">森林警察通過蛛絲馬跡，迅速地找到了六個最可疑的人...</p>
+        </div>
+
+        <div class="poster-section">
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <img fetchpriority="high" src="../img/劇本/誰動了我的奶酪/誰動了我的奶酪劇本殺封面1.webp" alt="誰動了我的奶酪劇本殺封面1" class="poster-image" style="max-width: 45%; min-width: 300px;">
+                <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/誰動了我的奶酪劇本殺封面2.webp" alt="誰動了我的奶酪劇本殺封面2" class="poster-image" style="max-width: 45%; min-width: 300px;">
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">遊戲資訊</h2>
+                
+                <div class="info-item">
+                    <span class="info-label">🧀 劇本名稱</span>
+                    <span class="info-value">誰動了我的奶酪</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">⏰ 遊戲時間</span>
+                    <span class="info-value">4 小時</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">👥 遊戲人數</span>
+                    <div class="gender-icons">
+                        <div class="gender-icon">
+                            <span class="icon">👨</span>
+                            <span>2男</span>
+                        </div>
+                        <div class="gender-icon">
+                            <span class="icon">👩</span>
+                            <span>4女</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">🧠 推理程度</span>
+                    <div class="stars-rating">
+                        <span class="star-rating">★</span>
+                        <span class="star-rating">★</span>
+                        <span class="star-rating">★</span>
+                        <span class="star-rating empty">★</span>
+                        <span class="star-rating empty">★</span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">🏷️ 劇本標籤</span>
+                    <div class="tags">
+                        <span class="tag">歡樂</span>
+                        <span class="tag">新手</span>
+                        <span class="tag">童話</span>
+                        <span class="tag">推理</span>
+                        <span class="tag">輕鬆</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">角色介紹</h2>
+                <div class="characters-grid">
+                    <div class="character-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/縮圖/黑髮少女.webp" data-full="../img/劇本/誰動了我的奶酪/黑髮少女.webp" alt="黑髮少女" class="character-image">
+                        <div class="character-name">黑髮少女</div>
+                        <div class="character-info">膚白如雪，青春靚麗<br>神秘的童話角色</div>
+                    </div>
+                    <div class="character-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/縮圖/小男孩.webp" data-full="../img/劇本/誰動了我的奶酪/小男孩.webp" alt="小男孩" class="character-image">
+                        <div class="character-name">小男孩</div>
+                        <div class="character-info">皮膚很堅硬，呈現特殊的紋路<br>奇特的外貌特徵</div>
+                    </div>
+                    <div class="character-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/縮圖/啞巴姑娘.webp" data-full="../img/劇本/誰動了我的奶酪/啞巴姑娘.webp" alt="啞巴姑娘" class="character-image">
+                        <div class="character-name">啞巴姑娘</div>
+                        <div class="character-info">長相普通，似乎是個啞巴<br>沉默寡言的女子</div>
+                    </div>
+                    <div class="character-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/縮圖/金髮少女.webp" data-full="../img/劇本/誰動了我的奶酪/金髮少女.webp" alt="金髮少女" class="character-image">
+                        <div class="character-name">金髮少女</div>
+                        <div class="character-info">身穿美麗的裙子，左腳上有一隻水晶鞋<br>優雅的公主形象</div>
+                    </div>
+                    <div class="character-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/縮圖/小女孩.webp" data-full="../img/劇本/誰動了我的奶酪/小女孩.webp" alt="小女孩" class="character-image">
+                        <div class="character-name">小女孩</div>
+                        <div class="character-info">穿著一件紅色的衣服<br>天真可愛的小女孩</div>
+                    </div>
+                    <div class="character-card">
+                        <img loading="lazy" decoding="async" src="../img/劇本/誰動了我的奶酪/縮圖/鬍子叔叔.webp" data-full="../img/劇本/誰動了我的奶酪/鬍子叔叔.webp" alt="鬍子叔叔" class="character-image">
+                        <div class="character-name">鬍子叔叔</div>
+                        <div class="character-info">穿著一套海盜服<br>豪爽的冒險家形象</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card description">
+                <h2 class="card-title">故事背景</h2>
+                <div class="description-text">
+                    <span class="highlight">「不眠之城」</span>在一片神奇的大陸上，它獨立於現實世界之外，在這裡只充滿了童真和快樂。在「不眠之城」裡面有城堡、有小鎮、有森林、還有大片大片的沙和海洋。
+                    <br><br>
+                    「不眠之城」的東面和西面，分別有兩扇巨大的城門。從來沒有人知道，這兩扇大門的背後，究竟通往何方。每年的年末都是<span class="highlight">「不眠之城」的奶酪節</span>。
+                    <br><br>
+                    每到這個時候，「不眠之城」就要比賽評選出最受孩子歡迎的人，那個人可以拿到「不眠之城」最高的獎勵——<span class="highlight">黃金奶酪</span>。
+                    <br><br>
+                    而今年的比賽發生了變數，有一個膽大包天的竊賊，居然提前偷走了黃金奶酪！森林警察通過蛛絲馬跡，迅速地找到了六個最可疑的人，然而他們聲稱自己失去了所有的記憶...
+                </div>
+            </div>
+
+            <div class="card description">
+                <h2 class="card-title">劇本介紹</h2>
+                <div class="description-text">
+                    《誰動了我的奶酪》是一本非常<span class="highlight">小巧可愛的歡樂本</span>！這個劇本非常適合新手入坑遊玩，推理方面可能會需要至少一個比較注重細節的玩家，但大家一起討論都是能推理出來的。
+                    <br><br>
+                    劇本設計巧妙，有點像是在拆俄羅斯娃娃一樣，你以為你已經拆到最裡面了，沒想到裡面還有一層是你沒想到的。在最終得知真相之後會有非常<span class="highlight">印象深刻的設計</span>。
+                    <br><br>
+                    角色設定上綁定了些微的<span class="highlight">童話元素</span>，但也要注意不要被固有的童話框架住了。這個劇本帶出來的情感也是通常歡樂本沒有的，整體而言讓人耳目一新。
+                    <br><br>
+                    這是一個中老手可以跟新手一起混合著玩的歡樂本，主持人也會適當地給予幫助。整體而言並不算特別難，是個新手也可以歡樂遊玩的劇本！
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <a href="https://line.me/R/ti/p/@825gdzws" class="cta-button" target="_blank">立即預約遊戲</a>
+        </div>
+    </div>
+
+    <script>
+        // 添加互動效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 星星懸停效果
+            const stars = document.querySelectorAll('.star-rating:not(.empty)');
+            stars.forEach((star, index) => {
+                star.addEventListener('mouseenter', () => {
+                    stars.forEach((s, i) => {
+                        if (i <= index) {
+                            s.style.color = '#FFA500';
+                            s.style.textShadow = '0 0 15px rgba(255, 165, 0, 0.8)';
+                        } else {
+                            s.style.color = '#ffd700';
+                            s.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                        }
+                    });
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    stars.forEach(s => {
+                        s.style.color = '#ffd700';
+                        s.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                    });
+                });
+            });
+
+            // 標籤點擊效果
+            const tags = document.querySelectorAll('.tag');
+            tags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    tag.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        tag.style.transform = 'scale(1.05)';
+                    }, 100);
+                });
+            });
+
+            // 角色卡片懸停效果
+            const characterCards = document.querySelectorAll('.character-card');
+            characterCards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.boxShadow = '0 10px 25px rgba(255, 165, 0, 0.4)';
+                    const emoji = card.querySelector('.character-image');
+                    emoji.style.transform = 'scale(1.2) rotate(10deg)';
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.boxShadow = 'none';
+                    const emoji = card.querySelector('.character-image');
+                    emoji.style.transform = 'scale(1) rotate(0deg)';
+                });
+            });
+
+            // 卡片懸停時的光效
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    card.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 165, 0, 0.3) 0%, rgba(255, 255, 255, 0.8) 100%)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.background = 'rgba(255, 255, 255, 0.8)';
+                });
+            });
+
+            // 奶酪互動效果
+            const cheesePieces = document.querySelectorAll('.cheese-piece');
+            cheesePieces.forEach(cheese => {
+                cheese.addEventListener('click', () => {
+                    cheese.style.animation = 'none';
+                    cheese.style.transform = 'scale(2) rotate(720deg)';
+                    cheese.style.opacity = '0';
+                    setTimeout(() => {
+                        cheese.style.animation = 'cheesefall 12s linear infinite';
+                        cheese.style.transform = '';
+                        cheese.style.opacity = '';
+                    }, 1500);
+                });
+            });
+
+            // 黃金奶酪特效
+            function createGoldenCheese() {
+                const goldenCheese = document.createElement('div');
+                goldenCheese.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 5rem;
+                    pointer-events: none;
+                    z-index: 9999;
+                    animation: goldenCheeseEffect 3s ease-out forwards;
+                `;
+                goldenCheese.textContent = '🧀';
+                
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes goldenCheeseEffect {
+                        0% { 
+                            transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                            opacity: 1;
+                            filter: drop-shadow(0 0 20px gold);
+                        }
+                        50% {
+                            transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+                            opacity: 1;
+                            filter: drop-shadow(0 0 40px gold);
+                        }
+                        100% { 
+                            transform: translate(-50%, -50%) scale(0) rotate(360deg);
+                            opacity: 0;
+                            filter: drop-shadow(0 0 0px gold);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+                document.body.appendChild(goldenCheese);
+                
+                setTimeout(() => {
+                    document.body.removeChild(goldenCheese);
+                    document.head.removeChild(style);
+                }, 3000);
+            }
+
+            // 點擊標題觸發黃金奶酪特效
+            document.querySelector('.title').addEventListener('click', createGoldenCheese);
+
+            // 童話音效模擬
+            function playMagicSound() {
+                const sparkles = [];
+                for (let i = 0; i < 10; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.style.cssText = `
+                        position: fixed;
+                        top: ${Math.random() * 100}%;
+                        left: ${Math.random() * 100}%;
+                        font-size: 1.5rem;
+                        pointer-events: none;
+                        z-index: 9999;
+                        animation: sparkleEffect 2s ease-out forwards;
+                    `;
+                    sparkle.textContent = '✨';
+                    sparkles.push(sparkle);
+                    document.body.appendChild(sparkle);
+                }
+                
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes sparkleEffect {
+                        0% { 
+                            opacity: 1;
+                            transform: scale(0);
+                        }
+                        50% {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                        100% { 
+                            opacity: 0;
+                            transform: scale(0);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                setTimeout(() => {
+                    sparkles.forEach(sparkle => document.body.removeChild(sparkle));
+                    document.head.removeChild(style);
+                }, 2000);
+            }
+
+            // 點擊CTA按鈕觸發魔法特效
+            document.querySelector('.cta-button').addEventListener('click', (e) => {
+                playMagicSound();
+            });
+        });
+
+        // 添加滾動視差效果
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const cheese = document.querySelector('.cheese-effects');
+            const floating = document.querySelector('.floating-elements');
+            
+            if (cheese) cheese.style.transform = `translateY(${scrolled * 0.05}px)`;
+            if (floating) floating.style.transform = `translateY(${scrolled * 0.1}px)`;
+        });
+
+        // 角色名稱跳動效果
+        const characterNames = document.querySelectorAll('.character-name');
+        characterNames.forEach(name => {
+            name.addEventListener('mouseenter', () => {
+                name.style.animation = 'bounce 0.6s ease-in-out';
+            });
+            
+            name.addEventListener('animationend', () => {
+                name.style.animation = '';
+            });
+        });
+
+        // 添加彈跳動畫
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes bounce {
+                0%, 20%, 60%, 100% {
+                    transform: translateY(0);
+                }
+                40% {
+                    transform: translateY(-10px);
+                }
+                80% {
+                    transform: translateY(-5px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+    <audio preload="none" id="bgm" src="誰動了我的奶酪.mp3" loop muted></audio>
+    <script>
+        // 點擊頁面解除靜音
+        document.addEventListener('click', function(){
+            document.getElementById('bgm').muted = false;
+        }, {once:true});
+    </script>
+
+
+<script src="../bgm-control.js?v=20261006-lazy"></script>
+<script src="../reviews.js?v=20261006-fast"></script>
+<script src="../video.js?v=20261006-tags4"></script>
+<script src="../lightbox.js?v=20261006-thumb"></script>
+<script src="../fx3d.js?v=20260714" data-fx="fireflies" data-tint="#ffd97a"></script>
+</body>
+</html>

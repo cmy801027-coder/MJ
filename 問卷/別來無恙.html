@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>別來無恙問卷 · 別來無恙</title>
+    <style>
+        :root {
+            --veil-top: rgba(255, 255, 255, .35);
+            --backdrop-opacity: .5;
+            --shadow: rgba(40, 30, 20, .25);
+            --error: #c0392b;
+            --on-accent: #ffffff;
+            --field: rgba(255, 255, 255, .7);
+            --bg: #efede8;
+            --text: #26262a;
+            --title: #151518;
+            --muted: #6c6c72;
+            --accent: #26262a;
+            --line: rgba(38, 38, 42, .16);
+            --chip: rgba(38, 38, 42, .07);
+            --card: rgba(255, 255, 255, .82);
+        }
+        * { box-sizing: border-box; }
+        html { color-scheme: light; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 海報本身當整頁的霧面背景，跟劇本主頁同一套視覺 */
+        .backdrop {
+            position: fixed;
+            inset: -40px;
+            z-index: 0;
+            pointer-events: none;
+            background: url("../img/劇本/別來無恙/別來無恙劇本殺海報1.webp") center / cover no-repeat;
+            filter: blur(38px) saturate(1.15);
+            opacity: var(--backdrop-opacity);
+            transform: scale(1.1);
+        }
+        .backdrop::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, var(--veil-top) 0%, var(--bg) 78%);
+        }
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 28px 16px 72px;
+        }
+
+        /* ── 主視覺 ───────────────────────────── */
+        .hero {
+            display: grid;
+            gap: 26px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .poster {
+            justify-self: center;
+            width: min(78vw, 340px);
+            margin: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--line);
+            animation: rise .9s cubic-bezier(.2, .8, .2, 1) both;
+        }
+        .poster img { display: block; width: 100%; height: auto; }
+        @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.98); } }
+        .intro { text-align: center; animation: rise .9s .12s cubic-bezier(.2, .8, .2, 1) both; }
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-size: .78rem;
+            letter-spacing: .35em;
+            color: var(--accent);
+        }
+        .intro h1 {
+            margin: 14px 0 4px;
+            font-size: clamp(2rem, 9vw, 3rem);
+            line-height: 1.15;
+            letter-spacing: .12em;
+            color: var(--title);
+        }
+        .form-title { margin: 0; font-size: 1.05rem; letter-spacing: .2em; color: var(--muted); }
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .chips li {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--chip);
+            font-size: .85rem;
+            color: var(--text);
+        }
+        .lead {
+            margin: 20px auto 0;
+            max-width: 34em;
+            line-height: 1.9;
+            color: var(--text);
+        }
+        .lead:empty { display: none; }
+
+        /* ── 登場角色 ─────────────────────────── */
+        .cast { margin: 0 0 30px; }
+        .cast h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 14px;
+            font-size: .95rem;
+            letter-spacing: .3em;
+            color: var(--accent);
+        }
+        .cast h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+        .cast ul {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 92px;
+            gap: 12px;
+            margin: 0;
+            padding: 2px 2px 10px;
+            list-style: none;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+        }
+        .ch { scroll-snap-align: start; text-align: center; }
+        .ch img, .ch-ph {
+            display: grid;
+            place-items: center;
+            width: 92px;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top;
+            border-radius: 10px;
+            background: var(--chip);
+            box-shadow: 0 0 0 1px var(--line);
+            font-size: 1.6rem;
+            color: var(--accent);
+            cursor: zoom-in;
+        }
+        .ch-name { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.3; color: var(--muted); }
+        .note { margin: -6px 0 22px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+        @media (min-width: 860px) {
+            .hero { grid-template-columns: 340px 1fr; gap: 44px; }
+            .intro { text-align: left; }
+            .chips { justify-content: flex-start; }
+            .lead { margin-left: 0; }
+            .cast ul { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); overflow: visible; }
+            .ch img, .ch-ph { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) { .poster, .intro { animation: none; } }
+
+        /* ── 問卷 ─────────────────────────────── */
+        .survey-box { max-width: 680px; margin: 0 auto; }
+        #survey {
+            --sv-scheme: light;
+            --sv-accent: var(--accent);
+            --sv-on-accent: var(--on-accent);
+            --sv-text: var(--text);
+            --sv-muted: var(--muted);
+            --sv-card: var(--card);
+            --sv-border: var(--line);
+            --sv-field: var(--field);
+            --sv-error: var(--error);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <main class="wrap container">
+        <header class="hero">
+            <figure class="poster">
+                <img src="../img/劇本/別來無恙/別來無恙劇本殺海報1.webp" alt="別來無恙 海報" fetchpriority="high" decoding="async">
+            </figure>
+            <div class="intro">
+                <span class="eyebrow">角色分配問卷</span>
+                <h1>別來無恙</h1>
+                <p class="form-title">別來無恙問卷</p>
+                <ul class="chips">
+                    <li>👥 3男3女</li>
+                    <li>⏰ 4小時</li>
+                    <li>#情感</li>
+                    <li>#現代</li>
+                    <li>#新手</li>
+                </ul>
+                <p class="lead">請依照個人真實經驗或第一直覺回答問題</p>
+            </div>
+        </header>
+
+        <section class="cast" aria-label="登場角色">
+            <h2>登場角色</h2>
+            <ul>
+                <li class="ch"><img src="../img/劇本/別來無恙/縮圖/夏藍.webp" data-full="../img/劇本/別來無恙/夏藍.webp" alt="夏藍" loading="lazy" decoding="async"><span class="ch-name">夏藍</span></li>
+                <li class="ch"><img src="../img/劇本/別來無恙/縮圖/顧夢嬌.webp" data-full="../img/劇本/別來無恙/顧夢嬌.webp" alt="顧夢嬌" loading="lazy" decoding="async"><span class="ch-name">顧夢嬌</span></li>
+                <li class="ch"><img src="../img/劇本/別來無恙/縮圖/梁白.webp" data-full="../img/劇本/別來無恙/梁白.webp" alt="梁白" loading="lazy" decoding="async"><span class="ch-name">梁白</span></li>
+                <li class="ch"><img src="../img/劇本/別來無恙/縮圖/陳久然.webp" data-full="../img/劇本/別來無恙/陳久然.webp" alt="陳久然" loading="lazy" decoding="async"><span class="ch-name">陳久然</span></li>
+                <li class="ch"><img src="../img/劇本/別來無恙/縮圖/李斯哲.webp" data-full="../img/劇本/別來無恙/李斯哲.webp" alt="李斯哲" loading="lazy" decoding="async"><span class="ch-name">李斯哲</span></li>
+                <li class="ch"><img src="../img/劇本/別來無恙/縮圖/簡珩.webp" data-full="../img/劇本/別來無恙/簡珩.webp" alt="簡珩" loading="lazy" decoding="async"><span class="ch-name">簡珩</span></li>
+            </ul>
+        </section>
+        <p class="note">依直覺作答就好，角色由主持人綜合大家的回覆分配 🎭</p>
+
+        <div class="survey-box">
+            <div id="survey"></div>
+        </div>
+    </main>
+
+    <script>
+    window.SURVEY = {
+        script: '別來無恙',
+        submitText: '寫好了・交給你',
+        questions: [
+            {"type": "radio", "title": "你的性別", "desc": "是指本次劇本體驗的角色性別呦", "required": true, "options": ["男生", "女生"]},
+            {"type": "info", "title": "[女角]別來無恙問卷", "desc": "請依照個人真實經驗或第一直覺回答問題", "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "text", "title": "你在line的名稱", "desc": "不是line ID唷", "required": true, "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "date", "title": "你預約玩本的日期", "required": true, "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "text", "title": "本次同行玩家中是否有你喜歡的人，她是誰", "desc": "可以放心和我說~回應只會有我看的到！", "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "radio", "title": "請問你在感情關係裡，會優先選擇愛你的人還是你愛的人？", "desc": "優先優先優先，當下你的感情觀或直覺回答", "required": true, "options": ["愛你的人", "你愛的人"], "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "radio", "title": "請問你面對喜歡的人，會願意主動付出嗎？", "desc": "就是願意先告白或是對別人好", "required": true, "options": ["願意", "不會"], "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "radio", "title": "根據你的感情經歷，你的前任讓你念念不忘的特質是？", "desc": "如果沒有前任，請依照自己追過的電視劇男主角來做投射", "required": true, "options": ["陽光開朗風趣", "溫柔體貼", "霸氣十足大男人"], "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "radio", "title": "感情中你比較優先在乎對方感受，還是自己的情緒要優先被照顧？", "required": true, "options": ["在乎對方感受", "我的情緒為優先"], "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "radio", "title": "你能將就跟一個你並不是非常愛但很適合的人在一起，甚至結婚嗎？", "desc": "對你很好而且相處融洽，只是你就是沒有那種瘋狂喜歡對方的感覺", "required": true, "options": ["可以", "不可以，我只想跟我很愛的人結婚"], "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "radio", "title": "你是否曾經非常在乎前任與他的新歡，甚至知道前任對新歡更好？", "required": true, "options": ["曾經有過，但不太清楚他們相處", "曾經非常在乎，而且的確對方對後面的對象更好", "完全不在乎前任", "沒有前任"], "showIf": {"title": "你的性別", "in": ["女生"]}},
+            {"type": "info", "title": "[男角]別來無恙問卷", "desc": "請依照個人真實經驗或第一直覺回答問題", "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "date", "title": "你預約玩本的日期？", "required": true, "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "text", "title": "你在line的名稱", "desc": "不是line ID唷", "required": true, "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "text", "title": "本次同行玩家中是否有你喜歡的人，她是誰", "desc": "可以放心和我說~回應只會有我看的到！", "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "請問你有愛而不得的經驗嗎?", "desc": "就是你喜歡的人不喜歡你的意思啦", "required": true, "options": ["有", "沒有"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "請問你面對愛而不得的人會選擇...", "desc": "就是告白失敗後或是知道對方對你沒意思後，你的反應啦", "required": true, "options": ["默默守護", "果斷放棄"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "你願意為了你愛的人改變你自己的個性或是習慣嗎？", "desc": "只要你有意願去為了對方做出任何一丁點的改變，都選願意", "required": true, "options": ["願意", "不願意"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "曾經有過女友長時間不回覆訊息，而你的反應是？", "required": true, "options": ["跟對方生氣，問責對方", "信任對方並且會關心"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "有沒有人說過你在感情中很幼稚？", "required": true, "options": ["有人說過我在感情很幼稚", "沒有，大家都說我很成熟"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "你在感情關係裡，對待女友的態度是？", "desc": "我知道你三個都有做到，但請以最高比例的作為選擇", "required": true, "options": ["成熟穩重大方", "開朗風趣幽默", "溫柔體貼無微不至"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "面對被另一半誤會，或是有強烈的爭執時，你會選擇？", "required": true, "options": ["當下的誤會必須馬上講清楚說明白，不然睡不好", "沈默以對，希望冷靜後再聊聊", "懶得解釋"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "感情中你比較優先在乎對方感受，還是自己的情緒要優先被照顧？", "required": true, "options": ["在乎對方感受", "自己的情緒比較重要"], "showIf": {"title": "你的性別", "in": ["男生"]}},
+            {"type": "radio", "title": "你能跟一個你並不是非常愛但很適合的人在一起，甚至結婚嗎？", "desc": "對你很好而且相處融洽，只是你就是沒有那種瘋狂喜歡對方的感覺", "required": true, "options": ["可以", "不可以，我只想跟我很愛的人結婚"], "showIf": {"title": "你的性別", "in": ["男生"]}}
+        ],
+        done: {
+            title: '✉️ 已經收到囉',
+            text: '好久不見，別來無恙。\n當天見！',
+            back: { href: '../6人/別來無恙.html', text: '← 回到《別來無恙》劇本介紹' }
+        }
+    };
+    </script>
+    <script src="../survey.js?v=20261006f"></script>
+    <script src="../lightbox.js?v=20261006"></script>
+    <script src="../fx3d.js?v=20260714" data-fx="snow" data-tint="#b8bcc4" data-density="0.6"></script>
+</body>
+</html>

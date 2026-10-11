@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瘋子2：我將在18歲後分裂成很多人 - 劇本殺</title>
+    <style>
+        :root {
+            --primary-red: #cc0000;
+            --dark-red: #8B0000;
+            --dark-bg: #1a1a1a;
+            --card-bg: rgba(26, 26, 26, 0.9);
+            --text-white: #fff;
+            --text-light: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #2c1810 30%, var(--dark-red) 60%, #000000 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 神經元分裂特效 */
+        .split-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .neural-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, var(--primary-red) 0%, var(--dark-red) 100%);
+            border-radius: 50%;
+            animation: splitPulse 4s ease-in-out infinite;
+            box-shadow: 0 0 20px var(--primary-red);
+        }
+
+        .neural-node:nth-child(1) { top: 20%; left: 15%; animation-delay: 0s; }
+        .neural-node:nth-child(2) { top: 40%; left: 80%; animation-delay: 0.8s; }
+        .neural-node:nth-child(3) { top: 65%; left: 25%; animation-delay: 1.6s; }
+        .neural-node:nth-child(4) { top: 85%; left: 70%; animation-delay: 2.4s; }
+        .neural-node:nth-child(5) { top: 30%; left: 50%; animation-delay: 3.2s; }
+
+        @keyframes splitPulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            25% { 
+                transform: scale(2);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(4) rotate(180deg);
+                opacity: 0.5;
+            }
+            75% { 
+                transform: scale(1.5) rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+
+        /* 分裂連接線 */
+        .split-connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-red), var(--dark-red), transparent);
+            animation: connectionSplit 6s linear infinite;
+            opacity: 0.6;
+        }
+
+        .split-connection:nth-child(6) {
+            top: 25%;
+            left: 10%;
+            width: 300px;
+            transform: rotate(45deg);
+        }
+
+        .split-connection:nth-child(7) {
+            top: 60%;
+            left: 40%;
+            width: 250px;
+            transform: rotate(-30deg);
+        }
+
+        .split-connection:nth-child(8) {
+            top: 80%;
+            left: 20%;
+            width: 400px;
+            transform: rotate(15deg);
+        }
+
+        @keyframes connectionSplit {
+            0% {
+                background: linear-gradient(90deg, transparent, var(--primary-red), transparent);
+                transform: scale(1) rotate(var(--rotation, 0deg));
+            }
+            50% {
+                background: linear-gradient(90deg, transparent, var(--dark-red), var(--primary-red), transparent);
+                transform: scale(1.5) rotate(calc(var(--rotation, 0deg) + 180deg));
+            }
+            100% {
+                background: linear-gradient(90deg, transparent, var(--primary-red), transparent);
+                transform: scale(1) rotate(calc(var(--rotation, 0deg) + 360deg));
+            }
+        }
+
+        /* 返回按鈕樣式 */
+        .back-to-overview {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideInLeft 1s ease-out 0.5s forwards;
+        }
+
+        .back-btn {
+            background: rgba(139, 0, 0, 0.9);
+            color: var(--text-white);
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(204, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
+        }
+
+        .back-btn:hover,
+        .back-btn:focus {
+            background: var(--dark-red);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(204, 0, 0, 0.5);
+            outline: 2px solid var(--primary-red);
+            outline-offset: 2px;
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--text-white);
+            text-shadow: 0 0 30px rgba(204, 0, 0, 0.8), 0 0 60px rgba(139, 0, 0, 0.6);
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, var(--primary-red), var(--dark-red), var(--primary-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .title:hover {
+            transform: scale(1.02);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            font-weight: 300;
+            text-shadow: 0 0 15px rgba(204, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .year-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--primary-red), var(--dark-red));
+            color: var(--text-white);
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 15px 0;
+            box-shadow: 0 5px 20px rgba(204, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .year-badge:hover,
+        .year-badge:focus {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(204, 0, 0, 0.6);
+            outline: 2px solid var(--primary-red);
+            outline-offset: 2px;
+        }
+
+        .poster-section {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+
+        .poster-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .poster-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 600px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(204, 0, 0, 0.4), 0 0 80px rgba(139, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 3px solid rgba(204, 0, 0, 0.4);
+            flex: 1;
+            min-width: 250px;
+            max-width: 45%;
+        }
+
+        .poster-image:hover,
+        .poster-image:focus {
+            transform: scale(1.02) rotate(1deg);
+            box-shadow: 0 30px 60px rgba(204, 0, 0, 0.5), 0 0 100px rgba(139, 0, 0, 0.4);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(204, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        .card:hover,
+        .card:focus-within {
+            transform: translateY(-10px) rotate(1deg);
+            box-shadow: 0 30px 60px rgba(204, 0, 0, 0.3);
+            border-color: rgba(204, 0, 0, 0.5);
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-red);
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--primary-red);
+            padding-bottom: 10px;
+            text-shadow: 0 0 10px rgba(204, 0, 0, 0.3);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            background: rgba(204, 0, 0, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(204, 0, 0, 0.3);
+        }
+
+        .info-item:hover,
+        .info-item:focus-within {
+            background: rgba(204, 0, 0, 0.2);
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 5px 15px rgba(204, 0, 0, 0.3);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--primary-red);
+        }
+
+        .stars-rating {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star-rating {
+            color: var(--primary-red);
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .star-rating.empty {
+            color: rgba(204, 0, 0, 0.3);
+        }
+
+        .star-rating:hover,
+        .star-rating:focus {
+            transform: scale(1.3) rotate(15deg);
+            text-shadow: 0 0 15px rgba(204, 0, 0, 0.8);
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: linear-gradient(45deg, var(--dark-red), var(--primary-red));
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(204, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(204, 0, 0, 0.3);
+        }
+
+        .tag:hover,
+        .tag:focus {
+            transform: scale(1.05) rotate(5deg);
+            box-shadow: 0 8px 25px rgba(204, 0, 0, 0.5);
+            outline: 2px solid var(--primary-red);
+            outline-offset: 2px;
+        }
+
+        .description {
+            grid-column: 1 / -1;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.7s forwards;
+        }
+
+        .description-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-white);
+            text-align: justify;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, transparent 0%, rgba(204, 0, 0, 0.4) 50%, transparent 100%);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--primary-red);
+            text-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 50px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.9s forwards;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--dark-red), var(--primary-red));
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(204, 0, 0, 0.4), 0 0 40px rgba(139, 0, 0, 0.2);
+            border: 2px solid rgba(204, 0, 0, 0.3);
+        }
+
+        .cta-button:hover,
+        .cta-button:focus {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(204, 0, 0, 0.5), 0 0 60px rgba(139, 0, 0, 0.3);
+            outline: 2px solid var(--primary-red);
+            outline-offset: 2px;
+        }
+
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .character-card {
+            background: rgba(204, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid rgba(204, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .character-card:hover,
+        .character-card:focus-within {
+            background: rgba(204, 0, 0, 0.2);
+            transform: translateY(-5px) rotate(2deg);
+            box-shadow: 0 10px 25px rgba(204, 0, 0, 0.4);
+        }
+
+        .character-image {
+            width: 100%;
+            height: 140px;
+            border-radius: 15px;
+            margin: 0 auto 15px;
+            border: 3px solid rgba(204, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(204, 0, 0, 0.3);
+            object-fit: cover;
+            display: block;
+        }
+
+        .character-icon {
+            width: 100%;
+            height: 140px;
+            border-radius: 15px;
+            margin: 0 auto 15px;
+            border: 3px solid rgba(204, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(204, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(45deg, var(--dark-red), var(--primary-red));
+        }
+
+        .character-card:hover .character-image,
+        .character-card:hover .character-icon {
+            border-color: rgba(204, 0, 0, 0.8);
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 8px 25px rgba(204, 0, 0, 0.5);
+        }
+
+        .character-name {
+            font-weight: 600;
+            color: var(--primary-red);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .character-info {
+            font-size: 0.9rem;
+            color: var(--text-white);
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .gender-icons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .gender-icon {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: var(--primary-red);
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(204, 0, 0, 0.3);
+        }
+
+        .icon {
+            font-size: 1.2rem;
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            opacity: 0.4;
+            animation: float 16s ease-in-out infinite;
+            color: rgba(204, 0, 0, 0.6);
+            font-size: 2.5rem;
+        }
+
+        .floating-element:nth-child(1) {
+            top: 15%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            top: 25%;
+            right: 20%;
+            animation-delay: 6s;
+        }
+
+        .floating-element:nth-child(3) {
+            bottom: 25%;
+            left: 25%;
+            animation-delay: 12s;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(5deg); }
+            66% { transform: translateY(-50px) rotate(-5deg); }
+        }
+
+        /* 裝飾線條 */
+        .decorative-line {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-red), transparent);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .decorative-line::before,
+        .decorative-line::after {
+            content: "◆";
+            position: absolute;
+            top: -8px;
+            color: var(--primary-red);
+            font-size: 1.2rem;
+        }
+
+        .decorative-line::before {
+            left: 20%;
+        }
+
+        .decorative-line::after {
+            right: 20%;
+        }
+
+        /* 特殊効果區域 */
+        .split-mechanism {
+            background: rgba(139, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid var(--primary-red);
+        }
+
+        .mechanism-title {
+            font-size: 1.5rem;
+            color: var(--primary-red);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .mechanism-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .mechanism-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(204, 0, 0, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .mechanism-item:hover,
+        .mechanism-item:focus-within {
+            background: rgba(204, 0, 0, 0.2);
+            transform: translateX(5px) scale(1.02);
+        }
+
+        .mechanism-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary-red), var(--dark-red));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .poster-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .poster-image {
+                max-width: 90%;
+                min-width: unset;
+                margin-bottom: 15px;
+            }
+
+            .back-to-overview {
+                top: 10px;
+                left: 10px;
+            }
+            
+            .back-btn {
+                padding: 10px 15px;
+                font-size: 0.8rem;
+            }
+
+            .characters-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 15px;
+            }
+
+            .character-card {
+                padding: 15px;
+            }
+
+            .character-image,
+            .character-icon {
+                height: 120px;
+            }
+
+            .mechanism-list {
+                grid-template-columns: 1fr;
+            }
+
+            .gender-icons {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .characters-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+
+            .character-image,
+            .character-icon {
+                height: 100px;
+            }
+        }
+
+        /* 無障礙改善 */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 焦點可見性 */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* 固定在左上角的返回按鈕會蓋到標題，替標題保留頂部空間 */
+        .header {
+            padding-top: 56px;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-to-overview">
+        <a href="../index.html" class="back-btn" tabindex="1">
+            <span aria-hidden="true">←</span> 返回劇本總覽
+        </a>
+    </div>
+
+    <div class="split-effects">
+        <div class="neural-node"></div>
+        <div class="neural-node"></div>
+        <div class="neural-node"></div>
+        <div class="neural-node"></div>
+        <div class="neural-node"></div>
+        <div class="split-connection"></div>
+        <div class="split-connection"></div>
+        <div class="split-connection"></div>
+    </div>
+
+    <div class="floating-elements">
+        <div class="floating-element" aria-hidden="true">🧠</div>
+        <div class="floating-element" aria-hidden="true">⚖️</div>
+        <div class="floating-element" aria-hidden="true">🎭</div>
+    </div>
+
+    <main class="container">
+        <header class="header">
+            <h1 class="title" tabindex="2">瘋子2：我將在18歲後分裂成很多人</h1>
+            <div class="year-badge" tabindex="3" role="button" aria-label="劇本類型：日式推理變革硬核">日式推理 × 變革硬核</div>
+            <div class="decorative-line" aria-hidden="true"></div>
+            <p class="subtitle">從兄長身上分裂出來的我，能否在扭曲的世界中找到真相？</p>
+        </header>
+
+        <section class="poster-section">
+            <div class="poster-container">
+                <img fetchpriority="high" src="../img/劇本/瘋子2/瘋子2劇本殺海報.webp" alt="瘋子2劇本殺海報，展示分裂人世界的黑暗氛圍與法庭場景" class="poster-image">
+                <img src="../img/劇本/瘋子2/瘋子2劇本殺第二張海報.webp" alt="瘋子2劇本殺第二張海報，突出角色分裂與社會偏見主題" class="poster-image" loading="lazy">
+            </div>
+        </section>
+
+        <div class="main-content">
+            <section class="card">
+                <h2 class="card-title">遊戲資訊</h2>
+                
+                <div class="info-item">
+                    <span class="info-label">🎭 劇本名稱</span>
+                    <span class="info-value">瘋子2：我將在18歲後分裂成很多人</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">⏰ 遊戲時間</span>
+                    <span class="info-value">5.5-6 小時</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">👥 遊戲人數</span>
+                    <div class="gender-icons">
+                        <div class="gender-icon">
+                            <span class="icon" aria-hidden="true">👨</span>
+                            <span>3男</span>
+                        </div>
+                        <div class="gender-icon">
+                            <span class="icon" aria-hidden="true">👩</span>
+                            <span>3女</span>
+                        </div>
+                        <div class="gender-icon">
+                            <span class="icon" aria-hidden="true">🎭</span>
+                            <span>可反串</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">🧠 推理程度</span>
+                    <div class="stars-rating" role="img" aria-label="推理難度：5顆星，滿分5星">
+                        <span class="star-rating" tabindex="0" aria-label="第1顆星">★</span>
+                        <span class="star-rating" tabindex="0" aria-label="第2顆星">★</span>
+                        <span class="star-rating" tabindex="0" aria-label="第3顆星">★</span>
+                        <span class="star-rating" tabindex="0" aria-label="第4顆星">★</span>
+                        <span class="star-rating" tabindex="0" aria-label="第5顆星">★</span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">🏷️ 劇本標籤</span>
+                    <div class="tags">
+                        <span class="tag" tabindex="0">日式推理</span>
+                        <span class="tag" tabindex="0">變革</span>
+                        <span class="tag" tabindex="0">硬核</span>
+                        <span class="tag" tabindex="0">進階</span>
+                        <span class="tag" tabindex="0">設定推理</span>
+                        <span class="tag" tabindex="0">多重反轉</span>
+                        <span class="tag" tabindex="0">微恐怖</span>
+                        <span class="tag" tabindex="0">繁體</span>
+                        <span class="tag" tabindex="0">城限</span>
+                    </div>
+                </div>
+
+                
+            </section>
+
+            <section class="card">
+                <h2 class="card-title">反轉事務所成員</h2>
+                <div class="characters-grid">
+                    <div class="character-card" tabindex="0">
+                        <img src="../img/劇本/瘋子2/大蛇角色頭像.webp" alt="大蛇角色頭像，冷酷理性的策略家" class="character-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="character-icon">🐍</div>
+                        <div class="character-name">大蛇</div>
+                        
+                    </div>
+                    <div class="character-card" tabindex="0">
+                        <img src="../img/劇本/瘋子2/鋼筆角色頭像.webp" alt="鋼筆角色頭像，精通法律條文的專家" class="character-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="character-icon">✒️</div>
+                        <div class="character-name">鋼筆</div>
+                        
+                    </div>
+                    <div class="character-card" tabindex="0">
+                        <img src="../img/劇本/瘋子2/櫻角色頭像.webp" alt="櫻角色頭像，溫柔外表下的敏銳洞察者" class="character-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="character-icon">🌸</div>
+                        <div class="character-name">櫻</div>
+                        
+                    </div>
+                    <div class="character-card" tabindex="0">
+                        <img src="../img/劇本/瘋子2/兔子角色頭像.webp" alt="兔子角色頭像，機敏活潑的調查員" class="character-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="character-icon">🐰</div>
+                        <div class="character-name">兔子</div>
+                        
+                    </div>
+                    <div class="character-card" tabindex="0">
+                        <img src="../img/劇本/瘋子2/可樂角色頭像.webp" alt="可樂角色頭像，年輕有活力的新人" class="character-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="character-icon">🥤</div>
+                        <div class="character-name">可樂</div>
+                        
+                    </div>
+                    <div class="character-card" tabindex="0">
+                        <img src="../img/劇本/瘋子2/夫人角色頭像.webp" alt="夫人角色頭像，經驗豐富的資深成員" class="character-image" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="character-icon">👩‍🎩</div>
+                        <div class="character-name">夫人</div>
+                        
+                    </div>
+                </div>
+            </section>
+
+            <section class="card description">
+                <h2 class="card-title">故事背景</h2>
+                <div class="decorative-line" aria-hidden="true"></div>
+                <div class="description-text">
+                    <span class="highlight">18歲的我，從18歲的哥哥身體上鑽了出來。</span>
+                    <br><br>
+                    雖然我現在只是一顆人頭，但我知道，8個月後我便會和其他人一樣，長出四肢，從哥哥身上剝離成一個嶄新的人。然而，當我真正分裂完成的時候，卻是只有一條腿的畸形，和其他人不一樣。
+                    <br><br>
+                    新聞說，哥哥是分裂出不健全人的垃圾，說我是社會的渣滓，說我殺了很多人，煮熟了死者的屍體，還殺了……<span class="highlight">哥哥</span>。
+                    <br><br>
+                    在這個世界裡，人們能夠從身體任意部位長出新的個體，最後脫離成為獨立的人格。但當社會對「不全者」充滿偏見與歧視時，真相又會是什麼模樣？
+                    <br><br>
+                    隨著一個擁有六個頭、十二隻手的來訪者，兩個四隻手的律師進入到<span class="highlight">反轉事務所</span>，一切的故事都變得不再簡單。在這場荒誕的庭審中，每一次反轉都是為了尋找最終的真相。
+                </div>
+            </section>
+
+            <section class="card description">
+                <h2 class="card-title">劇本特色</h2>
+                <div class="decorative-line" aria-hidden="true"></div>
+                <div class="description-text">
+                    《瘋子2：我將在18歲後分裂成很多人》是一部<span class="highlight">日式推理</span>的硬核劇本，融合了變革推理的精髓與荒誕現實主義的表現手法。整個故事以「分裂人」這一獨特設定為核心，構建了一個既荒誕又嚴肅的世界觀。
+                    <br><br>
+                    劇本最大的特色在於<span class="highlight">單一設定多重詭計</span>的巧妙設計。表面上的荒誕喜劇背後，隱藏著嚴密的邏輯鏈條和深刻的社會議題。從庭審的每一次反轉，到最終真相的揭露，都體現了作者對推理技巧的精準把控。
+                    <br><br>
+                    這不僅是一場<span class="highlight">智力的較量</span>，更是一次對人性、偏見、媒體操控等社會問題的深度探討。劇本通過「分裂人」的設定，映射了現實社會中對「異類」的歧視與偏見，引發玩家對社會公正的思考。
+                    <br><br>
+                    適合具有一定推理基礎的<span class="highlight">進階玩家</span>，需要充分理解設定背景才能享受推理的樂趣。整個遊戲過程中，DM的表現至關重要，優秀的DM能夠完美呈現這個荒誕世界的魅力。
+                </div>
+            </section>
+
+            
+        </div>
+
+        <section class="cta-section">
+            <a href="https://line.me/R/ti/p/@825gdzws" class="cta-button" target="_blank" rel="noopener noreferrer">立即預約遊戲</a>
+        </section>
+    </main>
+
+    <script>
+        // 效能優化的滾動節流函數
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            }
+        }
+
+        // DOM 元素緩存
+        const elements = {
+            stars: null,
+            tags: null,
+            characterCards: null,
+            cards: null,
+            yearBadge: null,
+            neuralNodes: null,
+            splitEffects: null,
+            floating: null,
+            mechanismItems: null,
+            characterNames: null
+        };
+
+        // 音效系統
+        let audioContext;
+
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function playSplitSound() {
+            if (audioContext) {
+                const oscillator1 = audioContext.createOscillator();
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator1.frequency.setValueAtTime(440, audioContext.currentTime);
+                oscillator1.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.3);
+                
+                oscillator2.frequency.setValueAtTime(660, audioContext.currentTime);
+                oscillator2.frequency.exponentialRampToValueAtTime(330, audioContext.currentTime + 0.3);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator1.start(audioContext.currentTime);
+                oscillator1.stop(audioContext.currentTime + 0.3);
+                oscillator2.start(audioContext.currentTime);
+                oscillator2.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        // 特效函數
+        function createSplitEffect() {
+            const splitContainer = elements.splitEffects;
+            if (!splitContainer) return;
+
+            const splitBurst = document.createElement('div');
+            splitBurst.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(204, 0, 0, 0.8) 0%, rgba(139, 0, 0, 0.6) 100%);
+                border-radius: 50%;
+                animation: splitBurst 2s ease-out forwards;
+                pointer-events: none;
+                z-index: 9999;
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes splitBurst {
+                    0% { 
+                        width: 100px;
+                        height: 100px;
+                        opacity: 1;
+                        transform: translate(-50%, -50%) rotate(0deg);
+                    }
+                    50% { 
+                        width: 300px;
+                        height: 300px;
+                        opacity: 0.8;
+                        transform: translate(-50%, -50%) rotate(180deg);
+                    }
+                    100% { 
+                        width: 600px;
+                        height: 600px;
+                        opacity: 0;
+                        transform: translate(-50%, -50%) rotate(360deg);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            splitContainer.appendChild(splitBurst);
+            
+            setTimeout(() => {
+                if (splitContainer.contains(splitBurst)) {
+                    splitContainer.removeChild(splitBurst);
+                }
+                if (document.head.contains(style)) {
+                    document.head.removeChild(style);
+                }
+            }, 2000);
+        }
+
+        function createDataStream() {
+            const splitContainer = elements.splitEffects;
+            if (!splitContainer) return;
+
+            const streams = ['分裂中...', '推理中...', '反轉中...', '真相揭露...'];
+            
+            streams.forEach((text, index) => {
+                setTimeout(() => {
+                    const stream = document.createElement('div');
+                    stream.style.cssText = `
+                        position: absolute;
+                        color: rgba(204, 0, 0, 0.8);
+                        font-size: 16px;
+                        font-weight: bold;
+                        left: ${Math.random() * 80 + 10}%;
+                        top: -20px;
+                        animation: splitPulse 6s linear forwards;
+                        pointer-events: none;
+                        z-index: 5;
+                        text-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+                    `;
+                    stream.textContent = text;
+                    splitContainer.appendChild(stream);
+                    
+                    setTimeout(() => {
+                        if (splitContainer.contains(stream)) {
+                            splitContainer.removeChild(stream);
+                        }
+                    }, 6000);
+                }, index * 500);
+            });
+        }
+
+        // 背景粒子管理
+        let particleCount = 0;
+        const maxParticles = 15;
+
+        function createBackgroundParticles() {
+            if (particleCount >= maxParticles) return;
+
+            const container = elements.floating;
+            if (!container) return;
+
+            for (let i = 0; i < 3 && particleCount < maxParticles; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 3px;
+                    height: 3px;
+                    background: linear-gradient(45deg, var(--primary-red), var(--dark-red));
+                    border-radius: 50%;
+                    box-shadow: 0 0 10px rgba(204, 0, 0, 0.8);
+                    animation: splitParticle ${8 + Math.random() * 4}s ease-in-out infinite;
+                    top: ${Math.random() * 100}%;
+                    left: ${Math.random() * 100}%;
+                `;
+                container.appendChild(particle);
+                particleCount++;
+                
+                setTimeout(() => {
+                    if (container.contains(particle)) {
+                        container.removeChild(particle);
+                        particleCount--;
+                    }
+                }, 12000);
+            }
+        }
+
+        // 事件處理函數
+        function handleStarHover(star, index, stars) {
+            stars.forEach((s, i) => {
+                if (i <= index) {
+                    s.style.color = 'var(--primary-red)';
+                    s.style.textShadow = '0 0 20px rgba(204, 0, 0, 0.8)';
+                    s.style.transform = 'scale(1.3) rotate(15deg)';
+                } else {
+                    s.style.color = 'rgba(204, 0, 0, 0.3)';
+                }
+            });
+        }
+
+        function handleStarLeave(stars) {
+            stars.forEach(s => {
+                if (!s.classList.contains('empty')) {
+                    s.style.color = 'var(--primary-red)';
+                    s.style.textShadow = '0 0 10px rgba(204, 0, 0, 0.5)';
+                    s.style.transform = '';
+                }
+            });
+        }
+
+        function handleTagClick(tag) {
+            tag.style.transform = 'scale(0.9) rotate(-5deg)';
+            setTimeout(() => {
+                tag.style.transform = 'scale(1.1) rotate(5deg)';
+            }, 100);
+            setTimeout(() => {
+                tag.style.transform = '';
+            }, 300);
+        }
+
+        function handleCharacterCardHover(card, isEntering) {
+            const image = card.querySelector('.character-image');
+            const icon = card.querySelector('.character-icon');
+            
+            if (isEntering) {
+                card.style.boxShadow = '0 15px 35px rgba(204, 0, 0, 0.4)';
+                
+                if (image && image.style.display !== 'none') {
+                    image.style.transform = 'scale(1.05) rotate(2deg)';
+                    image.style.boxShadow = '0 10px 30px rgba(204, 0, 0, 0.6)';
+                } else if (icon && icon.style.display === 'flex') {
+                    icon.style.transform = 'scale(1.1) rotate(10deg)';
+                    icon.style.boxShadow = '0 10px 30px rgba(204, 0, 0, 0.6)';
+                }
+            } else {
+                card.style.boxShadow = '';
+                
+                if (image) {
+                    image.style.transform = '';
+                    image.style.boxShadow = '';
+                }
+                if (icon) {
+                    icon.style.transform = '';
+                    icon.style.boxShadow = '';
+                }
+            }
+        }
+
+        function handleCardMouseMove(card, e) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            card.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(204, 0, 0, 0.3) 0%, var(--card-bg) 100%)`;
+        }
+
+        function handleCardMouseLeave(card) {
+            card.style.background = 'var(--card-bg)';
+        }
+
+        // 初始化函數
+        function initializeElements() {
+            elements.stars = document.querySelectorAll('.star-rating:not(.empty)');
+            elements.tags = document.querySelectorAll('.tag');
+            elements.characterCards = document.querySelectorAll('.character-card');
+            elements.cards = document.querySelectorAll('.card');
+            elements.yearBadge = document.querySelector('.year-badge');
+            elements.neuralNodes = document.querySelectorAll('.neural-node');
+            elements.splitEffects = document.querySelector('.split-effects');
+            elements.floating = document.querySelector('.floating-elements');
+            elements.mechanismItems = document.querySelectorAll('.mechanism-item');
+            elements.characterNames = document.querySelectorAll('.character-name');
+        }
+
+        function initializeEventListeners() {
+            // 星星懸停效果
+            elements.stars.forEach((star, index) => {
+                star.addEventListener('mouseenter', () => handleStarHover(star, index, elements.stars));
+                star.addEventListener('mouseleave', () => handleStarLeave(elements.stars));
+                
+                // 鍵盤支援
+                star.addEventListener('focus', () => handleStarHover(star, index, elements.stars));
+                star.addEventListener('blur', () => handleStarLeave(elements.stars));
+            });
+
+            // 標籤點擊效果
+            elements.tags.forEach(tag => {
+                tag.addEventListener('click', () => handleTagClick(tag));
+                tag.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleTagClick(tag);
+                    }
+                });
+            });
+
+            // 角色卡片懸停效果
+            elements.characterCards.forEach(card => {
+                card.addEventListener('mouseenter', () => handleCharacterCardHover(card, true));
+                card.addEventListener('mouseleave', () => handleCharacterCardHover(card, false));
+                card.addEventListener('focus', () => handleCharacterCardHover(card, true));
+                card.addEventListener('blur', () => handleCharacterCardHover(card, false));
+            });
+
+            // 卡片懸停光效
+            elements.cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => handleCardMouseMove(card, e));
+                card.addEventListener('mouseleave', () => handleCardMouseLeave(card));
+            });
+
+            // 年代徽章點擊效果
+            if (elements.yearBadge) {
+                elements.yearBadge.addEventListener('click', () => {
+                    createSplitEffect();
+                    createDataStream();
+                    playSplitSound();
+                });
+                
+                elements.yearBadge.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        createSplitEffect();
+                        createDataStream();
+                        playSplitSound();
+                    }
+                });
+            }
+
+            // 神經元互動效果
+            elements.neuralNodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    node.style.animation = 'none';
+                    node.style.transform = 'scale(6) rotate(720deg)';
+                    node.style.opacity = '0';
+                    setTimeout(() => {
+                        node.style.animation = 'splitPulse 4s ease-in-out infinite';
+                        node.style.transform = '';
+                        node.style.opacity = '';
+                    }, 1500);
+                });
+            });
+
+            // 機制項目動畫
+            elements.mechanismItems.forEach(item => {
+                const handleMechanismHover = (isEntering) => {
+                    const icon = item.querySelector('.mechanism-icon');
+                    if (isEntering) {
+                        icon.style.transform = 'scale(1.2) rotate(360deg)';
+                        icon.style.background = 'linear-gradient(45deg, var(--dark-red), var(--primary-red))';
+                    } else {
+                        icon.style.transform = '';
+                        icon.style.background = '';
+                    }
+                };
+                
+                item.addEventListener('mouseenter', () => handleMechanismHover(true));
+                item.addEventListener('mouseleave', () => handleMechanismHover(false));
+                item.addEventListener('focus', () => handleMechanismHover(true));
+                item.addEventListener('blur', () => handleMechanismHover(false));
+            });
+
+            // 角色名稱跳動效果
+            elements.characterNames.forEach(name => {
+                const handleNameAnimation = () => {
+                    name.style.animation = 'splitBounce 0.6s ease-in-out';
+                    name.addEventListener('animationend', () => {
+                        name.style.animation = '';
+                    }, { once: true });
+                };
+                
+                name.addEventListener('mouseenter', handleNameAnimation);
+            });
+
+            // CTA按鈕效果
+            const ctaButton = document.querySelector('.cta-button');
+            if (ctaButton) {
+                ctaButton.addEventListener('click', () => {
+                    playSplitSound();
+                    createSplitEffect();
+                });
+            }
+
+            // 標題點擊效果
+            const title = document.querySelector('.title');
+            if (title) {
+                title.addEventListener('click', createSplitEffect);
+            }
+
+            // 滾動視差效果（節流處理）
+            const handleScroll = throttle(() => {
+                const scrolled = window.pageYOffset;
+                if (elements.splitEffects) {
+                    elements.splitEffects.style.transform = `translateY(${scrolled * 0.05}px)`;
+                }
+                if (elements.floating) {
+                    elements.floating.style.transform = `translateY(${scrolled * 0.1}px)`;
+                }
+            }, 16); // 約60fps
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+
+            // 一次性音效初始化
+            document.addEventListener('click', initAudio, { once: true });
+        }
+
+        // 添加必要的CSS動畫
+        function addAnimationStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes splitParticle {
+                    0%, 100% { 
+                        transform: translateY(0px) translateX(0px) scale(1);
+                        opacity: 0;
+                    }
+                    25% {
+                        transform: translateY(-20px) translateX(10px) scale(1.5);
+                        opacity: 1;
+                    }
+                    50% {
+                        transform: translateY(-40px) translateX(-15px) scale(2);
+                        opacity: 0.8;
+                    }
+                    75% {
+                        transform: translateY(-20px) translateX(20px) scale(1.2);
+                        opacity: 0.6;
+                    }
+                }
+
+                @keyframes splitBounce {
+                    0%, 20%, 60%, 100% {
+                        transform: translateY(0) rotate(0deg);
+                    }
+                    40% {
+                        transform: translateY(-12px) rotate(5deg);
+                    }
+                    80% {
+                        transform: translateY(-6px) rotate(-3deg);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // DOMContentLoaded 事件處理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 檢查是否支援 reduced motion
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            
+            if (!prefersReducedMotion) {
+                // 只在用戶沒有要求減少動畫時才執行
+                addAnimationStyles();
+                
+                // 定期創建背景粒子（節流處理）
+                setInterval(createBackgroundParticles, 4000);
+            }
+
+            // 初始化所有元素和事件監聽器
+            initializeElements();
+            initializeEventListeners();
+
+            // 錯誤處理：確保所有圖片都有適當的錯誤處理
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                img.addEventListener('error', function() {
+                    console.log(`圖片載入失敗: ${this.src}`);
+                    // 圖片載入失敗時的處理已在 HTML 中的 onerror 屬性處理
+                });
+            });
+        });
+
+        // 頁面卸載時清理
+        window.addEventListener('beforeunload', () => {
+            // 清理音效上下文
+            if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close();
+            }
+        });
+
+        // 錯誤處理
+        window.addEventListener('error', (e) => {
+            console.error('JavaScript 錯誤:', e.error);
+        });
+
+        // 確保在較舊瀏覽器中的相容性
+        if (!Element.prototype.matches) {
+            Element.prototype.matches = Element.prototype.msMatchesSelector || 
+                                        Element.prototype.webkitMatchesSelector;
+        }
+
+        if (!Element.prototype.closest) {
+            Element.prototype.closest = function(s) {
+                var el = this;
+                do {
+                    if (el.matches(s)) return el;
+                    el = el.parentElement || el.parentNode;
+                } while (el !== null && el.nodeType === 1);
+                return null;
+            };
+        }
+    </script>
+
+    <audio preload="none" id="bgm" src="瘋子2.mp3" loop muted></audio>
+    <script>
+        // 點擊頁面解除靜音
+        document.addEventListener('click', function(){
+            const bgm = document.getElementById('bgm');
+            if (bgm) {
+                bgm.muted = false;
+            }
+        }, {once:true});
+    </script>
+
+<script src="../bgm-control.js?v=20261006-lazy"></script>
+<script src="../reviews.js?v=20261006-fast"></script>
+<script src="../video.js?v=20261006-tags4"></script>
+<script src="../lightbox.js?v=20261006-thumb"></script>
+<script src="../fx3d.js?v=20260714" data-fx="fireflies" data-tint="#6ac8ff" data-hide=".neural-node"></script>
+</body>
+</html>

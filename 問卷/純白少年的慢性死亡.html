@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>角色適性測驗 · 純白少年的慢性死亡</title>
+    <style>
+        :root {
+            --veil-top: rgba(0, 0, 0, .35);
+            --backdrop-opacity: .55;
+            --shadow: rgba(0, 0, 0, .55);
+            --error: #ff8a7a;
+            --on-accent: #ffffff;
+            --field: rgba(255, 255, 255, .06);
+            --bg: #081013;
+            --text: #e4eef0;
+            --title: #ffffff;
+            --muted: rgba(228, 238, 240, .6);
+            --accent: #e33b44;
+            --line: rgba(159, 211, 214, .2);
+            --chip: rgba(159, 211, 214, .1);
+            --card: rgba(12, 24, 28, .82);
+        }
+        * { box-sizing: border-box; }
+        html { color-scheme: dark; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 海報本身當整頁的霧面背景，跟劇本主頁同一套視覺 */
+        .backdrop {
+            position: fixed;
+            inset: -40px;
+            z-index: 0;
+            pointer-events: none;
+            background: url("../img/劇本/純白少年的慢性死亡/純白少年的慢性死亡_海報1.webp") center / cover no-repeat;
+            filter: blur(38px) saturate(1.15);
+            opacity: var(--backdrop-opacity);
+            transform: scale(1.1);
+        }
+        .backdrop::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, var(--veil-top) 0%, var(--bg) 78%);
+        }
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 28px 16px 72px;
+        }
+
+        /* ── 主視覺 ───────────────────────────── */
+        .hero {
+            display: grid;
+            gap: 26px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .poster {
+            justify-self: center;
+            width: min(78vw, 340px);
+            margin: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--line);
+            animation: rise .9s cubic-bezier(.2, .8, .2, 1) both;
+        }
+        .poster img { display: block; width: 100%; height: auto; }
+        @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.98); } }
+        .intro { text-align: center; animation: rise .9s .12s cubic-bezier(.2, .8, .2, 1) both; }
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-size: .78rem;
+            letter-spacing: .35em;
+            color: var(--accent);
+        }
+        .intro h1 {
+            margin: 14px 0 4px;
+            font-size: clamp(2rem, 9vw, 3rem);
+            line-height: 1.15;
+            letter-spacing: .12em;
+            color: var(--title);
+        }
+        .form-title { margin: 0; font-size: 1.05rem; letter-spacing: .2em; color: var(--muted); }
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .chips li {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--chip);
+            font-size: .85rem;
+            color: var(--text);
+        }
+        .lead {
+            margin: 20px auto 0;
+            max-width: 34em;
+            line-height: 1.9;
+            color: var(--text);
+        }
+        .lead:empty { display: none; }
+
+        /* ── 登場角色 ─────────────────────────── */
+        .cast { margin: 0 0 30px; }
+        .cast h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 14px;
+            font-size: .95rem;
+            letter-spacing: .3em;
+            color: var(--accent);
+        }
+        .cast h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+        .cast ul {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 92px;
+            gap: 12px;
+            margin: 0;
+            padding: 2px 2px 10px;
+            list-style: none;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+        }
+        .ch { scroll-snap-align: start; text-align: center; }
+        .ch img, .ch-ph {
+            display: grid;
+            place-items: center;
+            width: 92px;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top;
+            border-radius: 10px;
+            background: var(--chip);
+            box-shadow: 0 0 0 1px var(--line);
+            font-size: 1.6rem;
+            color: var(--accent);
+            cursor: zoom-in;
+        }
+        .ch-name { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.3; color: var(--muted); }
+        .note { margin: -6px 0 22px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+        @media (min-width: 860px) {
+            .hero { grid-template-columns: 340px 1fr; gap: 44px; }
+            .intro { text-align: left; }
+            .chips { justify-content: flex-start; }
+            .lead { margin-left: 0; }
+            .cast ul { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); overflow: visible; }
+            .ch img, .ch-ph { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) { .poster, .intro { animation: none; } }
+
+        /* ── 問卷 ─────────────────────────────── */
+        .survey-box { max-width: 680px; margin: 0 auto; }
+        #survey {
+            --sv-scheme: dark;
+            --sv-accent: var(--accent);
+            --sv-on-accent: var(--on-accent);
+            --sv-text: var(--text);
+            --sv-muted: var(--muted);
+            --sv-card: var(--card);
+            --sv-border: var(--line);
+            --sv-field: var(--field);
+            --sv-error: var(--error);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <main class="wrap container">
+        <header class="hero">
+            <figure class="poster">
+                <img src="../img/劇本/純白少年的慢性死亡/純白少年的慢性死亡_海報1.webp" alt="純白少年的慢性死亡 海報" fetchpriority="high" decoding="async">
+            </figure>
+            <div class="intro">
+                <span class="eyebrow">角色分配問卷</span>
+                <h1>純白少年的慢性死亡</h1>
+                <p class="form-title">角色適性測驗</p>
+                <ul class="chips">
+                    <li>👥 3男4女</li>
+                    <li>⏰ 4.5小時</li>
+                    <li>#懸疑</li>
+                    <li>#病態</li>
+                    <li>#還原</li>
+                </ul>
+                <p class="lead">請依直覺作答，這不是心理測驗，而是角色適性篩選。</p>
+            </div>
+        </header>
+
+        <section class="cast" aria-label="登場角色">
+            <h2>登場角色</h2>
+            <ul>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/紅色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/紅色角色.webp" alt="紅色" loading="lazy" decoding="async"><span class="ch-name">紅色</span></li>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/橙色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/橙色角色.webp" alt="橙色" loading="lazy" decoding="async"><span class="ch-name">橙色</span></li>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/黃色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/黃色角色.webp" alt="黃色" loading="lazy" decoding="async"><span class="ch-name">黃色</span></li>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/綠色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/綠色角色.webp" alt="綠色" loading="lazy" decoding="async"><span class="ch-name">綠色</span></li>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/青色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/青色角色.webp" alt="青色" loading="lazy" decoding="async"><span class="ch-name">青色</span></li>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/藍色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/藍色角色.webp" alt="藍色" loading="lazy" decoding="async"><span class="ch-name">藍色</span></li>
+                <li class="ch"><img src="../img/劇本/純白少年的慢性死亡/縮圖/紫色角色.webp" data-full="../img/劇本/純白少年的慢性死亡/紫色角色.webp" alt="紫色" loading="lazy" decoding="async"><span class="ch-name">紫色</span></li>
+            </ul>
+        </section>
+        <p class="note">依直覺作答就好，角色由主持人綜合大家的回覆分配 🎭</p>
+
+        <div class="survey-box">
+            <div id="survey"></div>
+        </div>
+    </main>
+
+    <script>
+    window.SURVEY = {
+        script: '純白少年的慢性死亡',
+        submitText: '提交測驗',
+        questions: [
+            {"type": "text", "title": "line上的名稱", "required": true},
+            {"type": "radio", "title": "玩過的劇本殺數量", "required": true, "options": ["0", "1-5", "6-20", "20up"]},
+            {"type": "date", "title": "遊玩日期", "required": true},
+            {"type": "text", "title": "同行玩家中是否有你的伴侶或喜歡的對象~他是誰"},
+            {"type": "radio", "title": "Q1. 當你很在意的人連續三天回訊息很冷淡，你比較可能？", "required": true, "options": ["A. 直接問清楚是不是發生什麼事", "B. 開始反省是不是自己哪裡做錯", "C. 裝沒事，但情緒會受影響", "D. 覺得算了，慢慢疏遠比較不痛"]},
+            {"type": "radio", "title": "Q2. 如果一段關係裡只有你在撐，你會？", "options": ["A. 再努力看看", "B. 等對方自己發現你的好", "C. 開始變得冷淡或暴躁", "D. 直接放掉"]},
+            {"type": "radio", "title": "Q3. 如果對方說：「你想太多了。」你通常會？", "required": true, "options": ["A. 覺得自己真的想太多", "B. 很受傷，但不想吵", "C. 想辦法證明自己沒錯", "D. 心裡記一筆，慢慢扣分"]},
+            {"type": "radio", "title": "Q4. 你比較接近哪一種？", "required": true, "options": ["A. 只要不被丟下，什麼都可以", "B. 關係一定要對等", "C. 寧願孤單也不要委屈", "D. 能撐就撐，撐不下去再說"]},
+            {"type": "radio", "title": "Q5. 吵架之後，你通常會？", "required": true, "options": ["A. 一定要馬上和好", "B. 會先低頭道歉", "C. 冷處理一陣子", "D. 當作沒發生過"]},
+            {"type": "radio", "title": "Q6. 如果對方常常讓你失望，你會？", "required": true, "options": ["A. 更努力對他好", "B. 開始懷疑是不是自己不夠好", "C. 逐漸降低期待", "D. 直接把情感抽走"]},
+            {"type": "radio", "title": "Q7. 你比較能接受哪一種關係狀態？", "required": true, "options": ["A. 對方是我生活的重心", "B. 彼此重要，但要平衡", "C. 各自獨立，偶爾依靠", "D. 各過各的比較自在"]},
+            {"type": "radio", "title": "Q8. 當你感到沒有安全感時，你通常會？", "required": true, "options": ["A. 變得很想確認對方的存在", "B. 默默觀察對方態度", "C. 表面沒事，但情緒會累積", "D. 告訴自己不要太在意"]},
+            {"type": "radio", "title": "Q9. 如果你發現自己付出比較多，你會？", "required": true, "options": ["A. 覺得這是應該的", "B. 希望對方有一天會懂", "C. 心裡不平衡，但不說", "D. 逐漸想退出這段關係"]},
+            {"type": "radio", "title": "Q10. 面對「可能會失去」的關係，你通常？", "required": true, "options": ["A. 會非常焦慮，想盡辦法抓住", "B. 會反覆檢討哪裡出了問題", "C. 表面冷靜，內心混亂", "D. 會先替自己準備退路"]},
+            {"type": "radio", "title": "Q11. 你在關係中比較常是？", "required": true, "options": ["A. 需要對方比較多的那個", "B. 配合對方比較多的那個", "C. 情緒被影響比較多的那個", "D. 保留距離比較多的那個"]},
+            {"type": "radio", "title": "Q12. 如果一段關係讓你很痛苦，但還沒結束，你會？", "required": true, "options": ["A. 撐到對方不要我為止", "B. 一邊痛一邊捨不得走", "C. 慢慢讓自己抽離", "D. 直接做出切割的決定"]},
+            {"type": "textarea", "title": "許願池", "desc": "有任何需要或幫助都可以跟我說唷~"}
+        ],
+        done: {
+            title: '測驗已提交',
+            text: '角色將由主持人依結果分配\n當天見。',
+            back: { href: '../7人/純白少年的慢性死亡.html', text: '← 回到《純白少年的慢性死亡》劇本介紹' }
+        }
+    };
+    </script>
+    <script src="../survey.js?v=20261006f"></script>
+    <script src="../lightbox.js?v=20261006"></script>
+    <script src="../fx3d.js?v=20260714" data-fx="dust" data-tint="#9fd3d6" data-density="0.8"></script>
+</body>
+</html>
