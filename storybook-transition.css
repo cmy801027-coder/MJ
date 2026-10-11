@@ -51,3 +51,35 @@
 @keyframes turn-sheet{0%{opacity:0;transform:perspective(700px) rotateY(0)}25%{opacity:.95}100%{opacity:0;transform:perspective(700px) rotateY(-165deg)}}
 @media(max-width:650px){#storybook .library-shelf{width:95vw;height:42vh;bottom:15%}#storybook .magic-book{width:40vw;height:60vw}#storybook.open .magic-book{width:96vw;height:min(70vh,650px)}#storybook.open .reading{border-width:6px}#storybook .page{padding:14px}#storybook .page .char-grid{grid-template-columns:repeat(2,1fr)}#storybook .book-actions{bottom:5px;gap:4px}#storybook .book-actions button,#storybook .book-actions a{font-size:11px;padding:7px 9px}}
 @media(prefers-reduced-motion:reduce){#storybook *,#storybook *:before{animation:none!important;transition:none!important}}
+
+/* V3: larger reading spread and typography, without shortcut links */
+#storybook.open .magic-book{
+  width:min(96vw,1480px);
+  height:min(88vh,900px);
+  top:51%;
+}
+#storybook.open .reading{border-width:12px}
+#storybook .page{padding:clamp(22px,3.5vw,65px) clamp(20px,3.6vw,68px) 80px}
+#storybook .page h2{font-size:clamp(27px,3.2vw,47px);line-height:1.45}
+#storybook .page h3{font-size:clamp(23px,2.6vw,37px);line-height:1.45}
+#storybook .page p{font-size:clamp(17px,1.65vw,25px);line-height:1.85}
+#storybook .page .chapter{font-size:clamp(14px,1.1vw,19px)}
+#storybook .page .story-tags span{font-size:clamp(14px,1.1vw,18px);padding:7px 13px}
+#storybook .page .char{font-size:clamp(14px,1.25vw,20px)}
+#storybook .page .char-grid{gap:clamp(12px,1.7vw,26px)}
+#storybook .book-actions{bottom:22px}
+#storybook .book-actions button{font-size:17px;padding:11px 22px}
+@media(max-width:650px){
+  #storybook.open .magic-book{width:99vw;height:85dvh;top:52%}
+  #storybook.open .reading{border-width:5px}
+  #storybook .page{padding:15px 10px 64px}
+  #storybook .page h2{font-size:23px}
+  #storybook .page h3{font-size:20px}
+  #storybook .page p{font-size:15px;line-height:1.7}
+  #storybook .page .chapter{font-size:12px}
+  #storybook .page .story-tags span{font-size:12px;padding:4px 7px}
+  #storybook .page .char{font-size:12px}
+  #storybook .page .char-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  #storybook .book-actions{bottom:10px}
+  #storybook .book-actions button{font-size:13px;padding:9px 13px}
+}

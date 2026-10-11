@@ -39,11 +39,10 @@ window.playStorybookTransition=async function(s,url){
  active=el;
  const poster=safe(s.poster);
  el.innerHTML='<div class="library-art"></div><div class="dust"></div><div class="library-label">✦ 敏捷私團 · STORYLAB ✦</div>'+
- '<div class="library-shelf"></div><div class="magic-book"><div class="book-block"><div class="book-pages"><div class="book-inside"><strong>'+esc(s.name)+'</strong><span>✧ 故事，即將展開 ✧</span></div></div><div class="book-cover">'+(poster?'<img src="'+poster+'" alt="'+esc(s.name)+' 海報">':'<div class="no-poster">'+esc(s.name)+'</div>')+'</div></div><div class="reading"><div class="page left"></div><div class="page right"></div><div class="page-turn"></div><div class="book-actions"><button class="prev" type="button">← 上一頁</button><button class="next" type="button">下一頁 →</button><a class="full" href="'+esc(url)+'">完整劇本介紹 ↗</a></div></div></div>'+
- '<div class="hint">✦ 魔法書正在從書架取出 ✦</div><button class="skip" type="button">直接看劇本 ↗</button><button class="close" type="button">✕ 返回總覽</button>';
+ '<div class="library-shelf"></div><div class="magic-book"><div class="book-block"><div class="book-pages"><div class="book-inside"><strong>'+esc(s.name)+'</strong><span>✧ 故事，即將展開 ✧</span></div></div><div class="book-cover">'+(poster?'<img src="'+poster+'" alt="'+esc(s.name)+' 海報">':'<div class="no-poster">'+esc(s.name)+'</div>')+'</div></div><div class="reading"><div class="page left"></div><div class="page right"></div><div class="page-turn"></div><div class="book-actions"><button class="prev" type="button">← 上一頁</button><button class="next" type="button">下一頁 →</button></div></div></div>'+
+ '<div class="hint">✦ 魔法書正在從書架取出 ✦</div><button class="close" type="button">✕ 返回總覽</button>';
  document.body.appendChild(el);
  el.querySelector('.close').onclick=close;
- el.querySelector('.skip').onclick=()=>{location.href=url};
  el.querySelector('.prev').onclick=()=>turn(-1);
  el.querySelector('.next').onclick=()=>turn(1);
  const escListener=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',escListener)}};
