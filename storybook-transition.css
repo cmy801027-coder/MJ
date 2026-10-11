@@ -1,8 +1,9 @@
 
 #storybook{position:fixed;inset:0;z-index:999999;background:#160e19;color:#56341f;font-family:"Noto Serif TC",serif;overflow:hidden;isolation:isolate}
 #storybook *{box-sizing:border-box}
-#storybook .library-art{position:absolute;inset:-2%;background:url('storybook/library-scene.png') center/cover no-repeat;filter:saturate(1.12) brightness(.78);transform:scale(1.06);animation:library-enter 1.7s ease-out both}
-#storybook .library-art:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#160e1966,transparent 35%,#160e1944),linear-gradient(0deg,#100a17ad,transparent 42%)}
+#storybook .library-art {
+    display: none;
+}
 #storybook .dust{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,#ffe0a4 1.2px,transparent 2.5px),radial-gradient(circle,#fff0bd 1px,transparent 2px);background-size:91px 113px,131px 137px;animation:dust-drift 9s linear infinite;opacity:.6}
 #storybook .library-label{position:absolute;top:5%;width:100%;text-align:center;color:#ffe6ae;font-size:clamp(18px,3vw,32px);letter-spacing:.2em;text-shadow:0 2px 12px #100716,0 0 18px #ffd486}
 #storybook .library-shelf{position:absolute;width:min(58vw,580px);height:min(37vw,380px);bottom:8%;left:50%;transform:translateX(-50%);background:url('storybook/library-shelf.png') center/cover;border:7px ridge #b98b56;border-radius:12px;box-shadow:0 30px 55px #100915e8,0 0 0 3px #452c33;animation:shelf-appear .8s ease both}
