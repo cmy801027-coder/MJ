@@ -1,11 +1,170 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>劇本管理後台｜Starfish LARP</title>
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>劇本管理後台｜Starfish LARP</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#0b0c1e;color:#e8e1d5;font-family:system-ui,"Noto Sans TC",sans-serif;line-height:1.6}main{max-width:1080px;margin:auto;padding:30px 20px 100px}h1{font-size:30px;font-weight:500}h2{font-size:19px;color:#ddcba9}p,small{color:#a8a3b9}a{color:#e5cc9f}section{background:#16172c;border:1px solid #33314a;padding:24px;border-radius:12px;margin:20px 0}label{display:block;margin:12px 0 5px;color:#e0d5c2;font-size:14px}input,textarea,select{display:block;width:100%;background:#0d0e20;color:#fff;border:1px solid #4c4964;border-radius:6px;padding:11px;font:inherit}textarea{min-height:110px}input[type=file]{padding:9px}button{background:#e7d4b0;color:#171529;border:0;padding:11px 20px;border-radius:5px;cursor:pointer;font:inherit}button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#36334b;color:#f5ead6}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.hint{font-size:12px}.notice{padding:14px;background:#252039;border-left:3px solid #ddbd7d}.error{color:#ffb7b7}.ok{color:#b5e6c4}.hidden{display:none!important}hr{border:0;border-top:1px solid #39354c;margin:24px 0}.imagebox{display:grid;grid-template-columns:1fr 1fr;gap:18px}.preview{width:110px;max-height:150px;object-fit:contain;margin-top:10px}.chip{padding:5px 10px;background:#2a2741;border-radius:4px;font-size:12px}.item{padding:12px;border:1px solid #39354c;margin:10px 0;border-radius:8px}@media(max-width:700px){.grid,.imagebox{grid-template-columns:1fr}section{padding:17px}}
-</style></head><body><main><div class="row" style="justify-content:space-between"><h1>✦ 劇本管理後台</h1><a href="../index.html">返回網站</a></div><p>新增或修改劇本資料，儲存後自動提交到 GitHub，Cloudflare Pages 會依現有設定重新部署。</p>
-<section id="login"><h2>管理員登入</h2><label for="password">管理密碼</label><input id="password" type="password" autocomplete="current-password" placeholder="Cloudflare CMS_ADMIN_PASSWORD"><p class="hint">密碼只傳送至本站 Cloudflare Function，不會寫入 GitHub 或儲存在瀏覽器本機。</p><button id="loginBtn">登入並讀取劇本</button><p id="loginStatus" role="status"></p></section>
-<div id="editor" class="hidden"><section><div class="row"><div style="flex:1;min-width:220px"><label for="existing">選擇既有劇本（或新增）</label><select id="existing"></select></div><button class="secondary" id="newBtn">＋ 新增劇本</button><button class="secondary" id="refreshBtn">重新載入</button></div><p class="hint">編輯既有劇本時，ID 不可更改，以免影響連結與評價。</p></section>
-<form id="form"><section><h2>基本資訊</h2><div class="grid"><div><label for="id">劇本 ID（英文、數字、-、_） *</label><input id="id" required pattern="[a-z0-9_-]{2,64}" placeholder="shanglu"></div><div><label for="name">劇本名稱 *</label><input id="name" required></div><div><label for="players">遊戲人數 *</label><input id="players" type="number" min="1" max="30" required></div><div><label for="playersLabel">男女配置 *</label><input id="playersLabel" required placeholder="2男3女"></div><div><label for="time">遊戲時長（小時，可小數） *</label><input id="time" type="number" min="0.5" max="48" step="0.5" required></div><div><label for="difficulty">推理難度（0-5） *</label><input id="difficulty" type="number" min="0" max="5" required></div></div><label for="types">劇本類型（逗號分隔） *</label><input id="types" placeholder="推理, 現代, 恐怖, 還原" required><label for="tagline">劇本標語</label><input id="tagline" placeholder="時辰到了，該上路了。"><label for="youtube">YouTube 影片網址</label><input id="youtube" type="url" placeholder="https://youtu.be/..."><label for="posterFile">劇本海報（PNG / JPG / WebP）</label><input id="posterFile" type="file" accept="image/png,image/jpeg,image/webp"><small id="posterPath"></small><img id="posterPreview" class="preview hidden" alt="海報預覽"></section>
-<section><h2>劇本介紹</h2><label for="story">故事背景／劇本簡介</label><textarea id="story" rows="9"></textarea><label for="features">遊戲特色</label><textarea id="features" rows="5"></textarea><label for="notice">行前須知</label><textarea id="notice" rows="5"></textarea><label for="bookingNote">預約說明</label><textarea id="bookingNote" rows="3"></textarea></section>
-<section><h2>角色列表</h2><p class="hint">每位角色可填名稱、身分介紹及圖片。按「新增角色」可增加欄位。</p><div id="characters"></div><button class="secondary" type="button" id="addChar">＋ 新增角色</button></section>
-<section><h2>主持人名冊（選填）</h2><div id="hosts"></div><button class="secondary" type="button" id="addHost">＋ 新增主持人</button></section>
-<section><h2>儲存並發布</h2><div class="notice">儲存會直接建立 GitHub Commit。Cloudflare Pages 依你現有的 GitHub 自動部署設定發布，並非即時更新。請先確認資料與圖片。</div><p class="hint">每張圖片最多約 3MB，建議使用壓縮過的 WebP。此功能不會刪除舊的劇本 HTML。</p><button type="submit" id="saveBtn">儲存到 GitHub</button><p id="status" role="status"></p></section></form></div></main><script src="cms.js"></script></body></html>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0c1e;color:#e8e1d5;font-family:system-ui,"Noto Sans TC",sans-serif;line-height:1.6}
+main{max-width:1080px;margin:auto;padding:30px 20px 100px}
+h1{font-size:30px;font-weight:500}
+h2{font-size:19px;color:#ddcba9}
+p,small{color:#a8a3b9}
+a{color:#e5cc9f}
+section{background:#16172c;border:1px solid #33314a;padding:24px;border-radius:12px;margin:20px 0}
+label{display:block;margin:12px 0 5px;color:#e0d5c2;font-size:14px}
+input,textarea,select{display:block;width:100%;background:#0d0e20;color:#fff;border:1px solid #4c4964;border-radius:6px;padding:11px;font:inherit}
+textarea{min-height:110px}
+input[type=file]{padding:9px}
+button{background:#e7d4b0;color:#171529;border:0;padding:11px 20px;border-radius:5px;cursor:pointer;font:inherit}
+button:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#36334b;color:#f5ead6}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hint{font-size:12px}
+.notice{padding:14px;background:#252039;border-left:3px solid #ddbd7d}
+.error{color:#ffb7b7}
+.ok{color:#b5e6c4}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid #39354c;margin:24px 0}
+.preview{width:110px;max-height:150px;object-fit:contain;margin-top:10px}
+.item{padding:12px;border:1px solid #39354c;margin:10px 0;border-radius:8px}
+.types-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.check-option{display:flex;align-items:center;gap:10px;margin:0;padding:12px;background:#242239;border:1px solid #47435e;border-radius:8px;cursor:pointer}
+.check-option:has(input:checked){background:#37314e;border-color:#ddbd7d}
+.check-option input{width:18px;height:18px;margin:0;flex-shrink:0;accent-color:#e7d4b0}
+.check-option span{font-size:14px}
+.check-option.wide{display:inline-flex;margin:12px 0}
+@media(max-width:700px){
+.grid{grid-template-columns:1fr}
+.types-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+section{padding:17px}
+}
+</style>
+</head>
+<body>
+<main>
+<div class="row" style="justify-content:space-between">
+  <h1>✦ 劇本管理後台</h1>
+  <a href="../index.html">返回網站</a>
+</div>
+<p>新增或修改劇本資料，儲存後自動提交到 GitHub，Cloudflare Pages 會依現有設定重新部署。</p>
+
+<section id="login">
+  <h2>管理員登入</h2>
+  <label for="password">管理密碼</label>
+  <input id="password" type="password" autocomplete="current-password" placeholder="Cloudflare CMS_ADMIN_PASSWORD">
+  <p class="hint">密碼只傳送至本站 Cloudflare Function，不會寫入 GitHub 或儲存在瀏覽器本機。</p>
+  <button id="loginBtn">登入並讀取劇本</button>
+  <p id="loginStatus" role="status"></p>
+</section>
+
+<div id="editor" class="hidden">
+  <section>
+    <div class="row">
+      <div style="flex:1;min-width:220px">
+        <label for="existing">選擇既有劇本（或新增）</label>
+        <select id="existing"></select>
+      </div>
+      <button class="secondary" id="newBtn" type="button">＋ 新增劇本</button>
+      <button class="secondary" id="refreshBtn" type="button">重新載入</button>
+    </div>
+    <p class="hint">編輯既有劇本時，ID 不可更改，以免影響連結與評價。</p>
+  </section>
+
+  <form id="form">
+    <section>
+      <h2>基本資訊</h2>
+      <div class="grid">
+        <div>
+          <label for="id">劇本 ID（英文、數字、-、_） *</label>
+          <input id="id" required pattern="[a-z0-9_-]{2,64}" placeholder="shanglu">
+        </div>
+        <div>
+          <label for="name">劇本名稱 *</label>
+          <input id="name" required>
+        </div>
+        <div>
+          <label for="players">遊戲人數 *</label>
+          <input id="players" type="number" min="1" max="30" required>
+        </div>
+        <div>
+          <label for="playersLabel">男女配置 *</label>
+          <input id="playersLabel" required placeholder="2男3女">
+        </div>
+        <div>
+          <label for="time">遊戲時長（小時，可小數） *</label>
+          <input id="time" type="number" min="0.5" max="48" step="0.5" required>
+        </div>
+      </div>
+
+      <label>劇本類型（可複選） *</label>
+      <div class="types-grid" id="types">
+        <label class="check-option"><input type="checkbox" name="scriptType" value="推理"><span>推理</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="情感"><span>情感</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="機制"><span>機制</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="恐怖"><span>恐怖</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="歡樂"><span>歡樂</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="古風"><span>古風</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="歐式"><span>歐式</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="民國"><span>民國</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="科幻"><span>科幻</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="日式"><span>日式</span></label>
+        <label class="check-option"><input type="checkbox" name="scriptType" value="陣營"><span>陣營</span></label>
+      </div>
+      <p id="legacyTypesHint" class="hint hidden"></p>
+
+      <label class="check-option wide">
+        <input type="checkbox" id="allowCrossGender">
+        <span>可反串</span>
+      </label>
+
+      <label for="tagline">劇本標語</label>
+      <input id="tagline" placeholder="時辰到了，該上路了。">
+
+      <label for="posterFile">劇本海報（PNG / JPG / WebP）</label>
+      <input id="posterFile" type="file" accept="image/png,image/jpeg,image/webp">
+      <small id="posterPath"></small>
+      <img id="posterPreview" class="preview hidden" alt="海報預覽">
+    </section>
+
+    <section>
+      <h2>劇本介紹</h2>
+      <label for="story">故事背景／劇本簡介</label>
+      <textarea id="story" rows="9"></textarea>
+      <label for="features">遊戲特色</label>
+      <textarea id="features" rows="5"></textarea>
+      <label for="notice">行前須知</label>
+      <textarea id="notice" rows="5"></textarea>
+      <label for="bookingNote">預約說明</label>
+      <textarea id="bookingNote" rows="3"></textarea>
+    </section>
+
+    <section>
+      <h2>角色列表</h2>
+      <p class="hint">每位角色可填名稱、身分介紹及圖片。按「新增角色」可增加欄位。</p>
+      <div id="characters"></div>
+      <button class="secondary" type="button" id="addChar">＋ 新增角色</button>
+    </section>
+
+    <section>
+      <h2>主持人名冊（選填）</h2>
+      <div id="hosts"></div>
+      <button class="secondary" type="button" id="addHost">＋ 新增主持人</button>
+    </section>
+
+    <section>
+      <h2>儲存並發布</h2>
+      <div class="notice">儲存會直接建立 GitHub Commit。Cloudflare Pages 依你現有的 GitHub 自動部署設定發布，並非即時更新。請先確認資料與圖片。</div>
+      <p class="hint">每張圖片最多約 3MB，建議使用壓縮過的 WebP。此功能不會刪除舊的劇本 HTML。</p>
+      <button type="submit" id="saveBtn">儲存到 GitHub</button>
+      <p id="status" role="status"></p>
+    </section>
+  </form>
+</div>
+</main>
+<script src="cms.js"></script>
+</body>
+</html>
