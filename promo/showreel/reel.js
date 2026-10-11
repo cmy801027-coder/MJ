@@ -1,5 +1,5 @@
 /* ==========================================================
-   海星劇本殺 · 10 秒形象影片（16:9 分鏡）
+   敏捷私團 · 10 秒形象影片（16:9 分鏡）
    ----------------------------------------------------------
    共用引擎在 core.js；這裡只有 16:9 的分鏡、版面與時間軸。
 
@@ -558,7 +558,7 @@ function logoScene(c, t) {
   if (tq > 0) {
     const e = E.outQuart(tq), ls = lerp(.9, .18, e), blur = lerp(12, 0, e), a = clamp(tq / .6);
     const T = TA.ctx, px = 124; T.setTransform(1, 0, 0, 1, 0, 0); T.clearRect(0, 0, W, H);
-    const row = charRow('海星劇本殺', 960, px, ls), x0 = row[0].x - px / 2, x1 = row[row.length - 1].x + px / 2;
+    const row = charRow('敏捷私團', 960, px, ls), x0 = row[0].x - px / 2, x1 = row[row.length - 1].x + px / 2;
     T.fillStyle = lgrad(T, x0, 40, x1, 260, [[0, '#ffffff'], [.4, GOLDL], [.8, GOLD], [1, '#b38a45']]); setFont(T, F.serif, 900, px); T.textAlign = 'center'; T.textBaseline = 'middle';
     row.forEach(o => T.fillText(o.ch, o.x, 150));
     const shx = lerp(x0 - 200, x1 + 200, inv(9.25, 9.75, t));

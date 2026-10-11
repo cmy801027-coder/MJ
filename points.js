@@ -1,5 +1,5 @@
 /* ============================================================
-   海星劇本殺｜集點系統（榮譽牆共用元件）
+   敏捷私團｜集點系統（榮譽牆共用元件）
 
    資料來源：預約系統的快速副本（play-record-config.js 的 starfishFetchSummary），
    讀不到時改走 Apps Script 的 ?action=summary 端點（JSONP）。
@@ -871,7 +871,7 @@
         // ── 眉標 ────────────────────────────────────────────
         ctx.fillStyle = CARD.muted;
         ctx.font = '400 19px ' + CARD.sans;
-        trackedText(ctx, '海星劇本殺　探員檔案', centerX, eyebrowY, 9, 'center');
+        trackedText(ctx, '敏捷私團　探員檔案', centerX, eyebrowY, 9, 'center');
 
         ctx.strokeStyle = CARD.hairline;
         ctx.beginPath();

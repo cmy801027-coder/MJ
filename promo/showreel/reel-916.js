@@ -1,5 +1,5 @@
 /* ==========================================================
-   海星劇本殺 · IG Reels 直式版（9:16 / 1080×1920 / 30fps / 16 秒）
+   敏捷私團 · IG Reels 直式版（9:16 / 1080×1920 / 30fps / 16 秒）
    ----------------------------------------------------------
    共用引擎在 core.js；這裡只有直式的分鏡、版面與時間軸。
 
@@ -573,7 +573,7 @@ function logoScene(c, t) {
     if (tq > 0) {
       const e = E.outQuart(tq), ls = lerp(.62, .1, e), blur = lerp(12, 0, e), a = clamp(tq / .6) * out;
       const T = TA.ctx, px = 140; T.setTransform(1, 0, 0, 1, 0, 0); T.clearRect(0, 0, W, H);   // 整張清：縮放取樣不會帶到前面殘留的列
-      const row = charRow('海星劇本殺', CX, px, ls), x0 = row[0].x - px / 2, x1 = row[row.length - 1].x + px / 2;
+      const row = charRow('敏捷私團', CX, px, ls), x0 = row[0].x - px / 2, x1 = row[row.length - 1].x + px / 2;
       T.fillStyle = lgrad(T, x0, 50, x1, 270, [[0, '#ffffff'], [.4, GOLDL], [.8, GOLD], [1, '#b38a45']]); setFont(T, F.serif, 900, px); T.textAlign = 'center'; T.textBaseline = 'middle';
       row.forEach(o => T.fillText(o.ch, o.x, 160));
       const shx = lerp(x0 - 200, x1 + 200, inv(12.85, 13.35, t));

@@ -79,7 +79,7 @@
     window.addEventListener('appinstalled', function () {
         deferredInstallPrompt = null;
         if (installButton) installButton.hidden = true;
-        showToast('海星劇本殺已安裝完成。');
+        showToast('敏捷私團已安裝完成。');
     });
 
     window.addEventListener('offline', function () {

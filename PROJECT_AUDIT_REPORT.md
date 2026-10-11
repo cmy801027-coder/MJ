@@ -1,4 +1,4 @@
-# 海星劇本殺 · 前端專案全面審查報告
+# 敏捷私團 · 前端專案全面審查報告
 
 > 審查日期：2026-07-28
 > 審查範圍：`cj2vum4/starfishlarp` 全部 196 個 git 追蹤檔案（64 個 HTML、10 個共用 JS、2 個 CSS、設定檔、靜態資源）
@@ -1447,10 +1447,10 @@ starfishlarp/
   4. 加空的 `.nojekyll` 檔，跳過 GitHub Pages 的 Jekyll 處理，加快部署也避免特殊檔名被過濾。
 - **建議修改範例**（劇本頁 og 標記樣板）：
   ```html
-  <meta name="description" content="王座 · 7人（4男3女）· 4.5小時 · 神話/陣營/機制 — 海星劇本殺">
+  <meta name="description" content="王座 · 7人（4男3女）· 4.5小時 · 神話/陣營/機制 — 敏捷私團">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://cj2vum4.github.io/starfishlarp/7人/王座.html">
-  <meta property="og:title" content="王座｜海星劇本殺">
+  <meta property="og:title" content="王座｜敏捷私團">
   <meta property="og:description" content="7人 · 4.5小時 · 神話/陣營/機制">
   <meta property="og:image" content="https://i.postimg.cc/d0cKpGxL/2021-11-13-195627.jpg">
   ```
