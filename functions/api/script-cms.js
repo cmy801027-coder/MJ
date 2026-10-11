@@ -8,7 +8,7 @@ const bytes64=b=>{let r="";const bytes=new Uint8Array(b);for(let i=0;i<bytes.len
 const gh=async(env,path,opts={})=>{
  const res=await fetch("https://api.github.com/repos/"+env.CMS_GITHUB_REPO.split("/").map(encodeURIComponent).join("/")+path,{
  method:opts.method||"GET",
- headers:{"Authorization":"Bearer "+env.CMS_GITHUB_TOKEN,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"starfishlarp-cms","Content-Type":"application/json"},
+ headers:{"Authorization":"Bearer "+env.CMS_GITHUB_TOKEN,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"MJlarp-cms","Content-Type":"application/json"},
  body:opts.body?JSON.stringify(opts.body):undefined
  });
  const result=await res.json().catch(()=>({}));

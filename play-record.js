@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const endpoint = String(window.STARFISH_PLAY_RECORD_ENDPOINT || '').trim();
+    const endpoint = String(window.MJ_PLAY_RECORD_ENDPOINT || '').trim();
     const sourceScripts = Array.isArray(window.SCRIPTS) ? window.SCRIPTS : [];
 
     const scripts = sourceScripts
@@ -242,8 +242,8 @@
     function loadDoubleDayNote() {
         if (!endpoint) return;
         // 先讀預約系統的快速副本，讀不到再走 Apps Script。
-        const fast = typeof window.starfishFetchSummary === 'function'
-            ? window.starfishFetchSummary(4000) : Promise.resolve(null);
+        const fast = typeof window.MJFetchSummary === 'function'
+            ? window.MJFetchSummary(4000) : Promise.resolve(null);
         fast.then((payload) => {
             if (payload) showDoubleDayNote(payload.doubleDayNote);
             else loadDoubleDayNoteJsonp();
@@ -258,7 +258,7 @@
 
     function loadDoubleDayNoteJsonp() {
 
-        const callbackName = 'starfishPoints' + Date.now().toString(36);
+        const callbackName = 'MJPoints' + Date.now().toString(36);
         const script = document.createElement('script');
         const cleanup = () => {
             delete window[callbackName];
@@ -334,7 +334,7 @@
         try {
             const award = await postRecord(payload);
             try {
-                localStorage.setItem('starfishlarp-player-name', payload.name);
+                localStorage.setItem('MJlarp-player-name', payload.name);
             } catch (_) {
                 // 無痕模式可能停用 localStorage，不影響送出。
             }
@@ -369,7 +369,7 @@
     if (!endpoint) setupNote.hidden = false;
 
     try {
-        playerName.value = localStorage.getItem('starfishlarp-player-name') || '';
+        playerName.value = localStorage.getItem('MJlarp-player-name') || '';
     } catch (_) {
         // 記住名稱是非必要功能。
     }

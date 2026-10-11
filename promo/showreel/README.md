@@ -2,9 +2,9 @@
 
 | 成品 | 規格 | 分鏡檔 |
 |------|------|--------|
-| `../starfish-showreel.mp4` | 16:9 · 1920×1080 · 60fps · 10.0 秒 | `index.html` → `reel.js` |
-| `../starfish-reel-916.mp4` | 9:16 IG Reels · 1080×1920 · 30fps · 16.0 秒，可無縫循環 | `index-916.html` → `reel-916.js` |
-| `../starfish-reel-916-cover.jpg` | Reels 封面（1080×1920，片中 14.6 秒那一格） | — |
+| `../MJ-showreel.mp4` | 16:9 · 1920×1080 · 60fps · 10.0 秒 | `index.html` → `reel.js` |
+| `../MJ-reel-916.mp4` | 9:16 IG Reels · 1080×1920 · 30fps · 16.0 秒，可無縫循環 | `index-916.html` → `reel-916.js` |
+| `../MJ-reel-916-cover.jpg` | Reels 封面（1080×1920，片中 14.6 秒那一格） | — |
 
 兩支片共用 `core.js`（數學、字型排版、素材、海報、57 張劇本卡、3D 劇本牆、粒子、後製、逐格渲染）；
 各格式只在自己的分鏡檔裡寫版面與時間軸，用 `Reel.use({...})` 註冊。
@@ -37,13 +37,13 @@
 | 2.0–6.4 | 世界 | 同樣八個世界、各一張實際海報，直式構圖（上：英文標＋劇名，中：海報，下：資訊），0.8 → 0.6 → 0.4 秒越剪越快；0.4 秒段排成 漓川→津門→神社→沸騰（亮度單向往上），神社那一刀是「往上滑」 |
 | 6.4–9.2 | 群像 | 卡片漩渦拉高、海星放在畫面上半，計數器在下方安全區 |
 | 9.2–11.2 | 你 | 驚悚／推理／情感／歡樂 直書 2×2 四格，由暗到亮在重拍上切換，拉開 →「這一次，你是誰？」 |
-| 11.2–16.0 | LOGO | 金塵匯聚成 Logo、品牌字；12.8 起預約資訊（私訊／LINE、台北·南港·新竹、IG @larp_starfish）停留約 2.5 秒；15.45 起收場，Logo 中心的鑰匙孔縮放回片頭位置，Reels 重播時接回第一格 |
+| 11.2–16.0 | LOGO | 金塵匯聚成 Logo、品牌字；12.8 起預約資訊（私訊／LINE、台北·南港·新竹、IG @larp_MJ）停留約 2.5 秒；15.45 起收場，Logo 中心的鑰匙孔縮放回片頭位置，Reels 重播時接回第一格 |
 
 - 版面避開 IG Reels 介面：上 250px、下 420px（y > 1500）、右側 x > 950 且 y 1000–1700；重要文字都在安全區內。
 - 配樂同一組樂器、另一份 cue 表（`node audio.js --fmt 916`），多算 2 秒尾音再折回開頭，循環時殘響不會斷。
 - IG 以 30fps 播放，所以直式版直接算 30fps（每格多個子格累積、快門 1/60 秒），不是從 60fps 抽格；要 60fps 預覽可開 `index-916.html?fps=60`。
 - 響度約 -14.5 LUFS、峰值 -2.4 dBFS：IG 轉碼成 AAC 後 true peak 仍在 -1 dBTP 以下。
-- 上傳時封面請選 `starfish-reel-916-cover.jpg`（不選的話 IG 會用第一格——只有鑰匙孔）。
+- 上傳時封面請選 `MJ-reel-916-cover.jpg`（不選的話 IG 會用第一格——只有鑰匙孔）。
 
 ## 光敏安全（WCAG 2.3.1）
 
@@ -68,7 +68,7 @@ ffmpeg -framerate 60 -i /tmp/reel-frames/f%04d.png -i /tmp/soundtrack.wav \
   -vf "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p" \
   -c:v libx264 -preset slow -crf 16 -profile:v high \
   -color_primaries bt709 -color_trc bt709 -colorspace bt709 -color_range tv \
-  -c:a aac -b:a 256k -movflags +faststart -shortest ../starfish-showreel.mp4
+  -c:a aac -b:a 256k -movflags +faststart -shortest ../MJ-showreel.mp4
 
 # 9:16 IG Reels
 node render.js --page index-916.html --out /tmp/reel916-frames  # 480 張 PNG（30fps），約 6 分鐘
@@ -77,8 +77,8 @@ ffmpeg -framerate 30 -i /tmp/reel916-frames/f%04d.png -i /tmp/soundtrack-916.wav
   -vf "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p" \
   -c:v libx264 -preset slow -crf 16 -profile:v high \
   -color_primaries bt709 -color_trc bt709 -colorspace bt709 -color_range tv \
-  -c:a aac -b:a 256k -ar 48000 -movflags +faststart -shortest ../starfish-reel-916.mp4
-cp /tmp/reel916-frames/f0438.png /tmp/cover.png && ffmpeg -i /tmp/cover.png -q:v 2 ../starfish-reel-916-cover.jpg
+  -c:a aac -b:a 256k -ar 48000 -movflags +faststart -shortest ../MJ-reel-916.mp4
+cp /tmp/reel916-frames/f0438.png /tmp/cover.png && ffmpeg -i /tmp/cover.png -q:v 2 ../MJ-reel-916-cover.jpg
 ```
 
 > 色彩：PNG 是 sRGB，轉 YUV 時要明確用 BT.709 矩陣（`out_color_matrix=bt709`）並標 `-color_range tv`；

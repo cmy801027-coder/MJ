@@ -256,11 +256,11 @@ group('神秘盒');
   check('有預設獎品', sheetRows('神秘盒').length > 0, true);
 
   let unknown = '';
-  try { global.openMysteryBox_('不存在的人'); } catch (error) { unknown = error.message; }
+  try { global.openstorylabBox_('不存在的人'); } catch (error) { unknown = error.message; }
   check('名字打錯說找不到玩家，而不是點數不足', /找不到玩家/.test(unknown), true);
 
   const before = summaryOf('海星').balance;
-  const result = global.openMysteryBox_('海星');
+  const result = global.openstorylabBox_('海星');
 
   check('抽出了獎品', typeof result.prize === 'string' && result.prize.length > 0, true);
   check('扣了 30 點', result.cost, 30);
@@ -268,12 +268,12 @@ group('神秘盒');
   check('累積點不受影響', summaryOf('海星').earned, before);
 
   const payload = global.buildPublicPayload_();
-  check('開箱紀錄進 payload', payload.mystery.length, 1);
-  check('紀錄掛在正確的人身上', payload.mystery[0].name, '海星');
-  check('紀錄有獎品名稱', payload.mystery[0].prize, result.prize);
+  check('開箱紀錄進 payload', payload.storylab.length, 1);
+  check('紀錄掛在正確的人身上', payload.storylab[0].name, '海星');
+  check('紀錄有獎品名稱', payload.storylab[0].prize, result.prize);
 
   global.rebuildPoints_();
-  check('重算後開箱紀錄仍在', global.buildPublicPayload_().mystery.length, 1);
+  check('重算後開箱紀錄仍在', global.buildPublicPayload_().storylab.length, 1);
   check('重算後餘額仍是扣過的', summaryOf('海星').balance, before - 30);
 
   // 點數不足要擋下
@@ -281,7 +281,7 @@ group('神秘盒');
     new Date(), '海星', '海星', 'redeem', -999, '清空', '', '2026/3/1', '手動', '有效', '', '']);
   global.rebuildPoints_();
   let poor = '';
-  try { global.openMysteryBox_('海星'); } catch (error) { poor = error.message; }
+  try { global.openstorylabBox_('海星'); } catch (error) { poor = error.message; }
   check('點數不足會被擋下', /不足/.test(poor), true);
 }
 
@@ -294,7 +294,7 @@ group('神秘盒抽獎隨機性');
   for (let i = 0; i < 300 && seen.size < 3; i++) {
     ledger.appendRow([new Date(), '海星', '海星', 'adjust', 100, '測試補點',
       '', '2026/3/1', '手動', '有效', '', '']);
-    try { seen.add(global.openMysteryBox_('海星').prize); } catch (error) { break; }
+    try { seen.add(global.openstorylabBox_('海星').prize); } catch (error) { break; }
   }
   check('會抽到不同獎品（不是固定回第一個）', seen.size >= 2, true);
 }

@@ -75,7 +75,7 @@ const SCRIPTS = window.SCRIPTS || [];
 const byId = id => SCRIPTS.find(s => s.id === id) || {};
 const THEME = {
   horror:  { en: 'HORROR',    c1: '#3d0909', c2: '#0b0202', acc: '#ff4a3d' },
-  mystery: { en: 'MYSTERY',   c1: '#0c3638', c2: '#031010', acc: '#6fe0cf' },
+  storylab: { en: 'storylab',   c1: '#0c3638', c2: '#031010', acc: '#6fe0cf' },
   love:    { en: 'ROMANCE',   c1: '#5e2136', c2: '#1a070e', acc: '#ffa8c0' },
   history: { en: 'REPUBLIC',  c1: '#4d3413', c2: '#140c04', acc: '#ecd08a' },
   ancient: { en: 'ANCIENT',   c1: '#4f1717', c2: '#150505', acc: '#f0b878' },

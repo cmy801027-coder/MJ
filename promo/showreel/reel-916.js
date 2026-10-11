@@ -317,7 +317,7 @@ function cutLichuan(c, u, s) {
     c.strokeStyle = '#bff8ee'; c.lineWidth = 6; c.beginPath(); c.arc(lx, TY, lr, 0, TAU); c.stroke();
     c.lineWidth = 16; c.lineCap = 'round'; c.beginPath(); c.moveTo(lx + lr * .72, TY + lr * .72); c.lineTo(lx + lr * 1.2, TY + lr * 1.2); c.stroke();
   }
-  label(c, 'MYSTERY', 540, LBL_Y, u * 1.5, { fill: '#7ff5e2' });
+  label(c, 'storylab', 540, LBL_Y, u * 1.5, { fill: '#7ff5e2' });
   infoStack(c, s, 540, INF_Y, { u: u * 1.5, col: '#dffbf6', acc: '#7ff5e2', tags: '日式 · 硬核推理 · 密室' });
 }
 const CONF = Array.from({ length: 200 }, (_, i) => { const r = rng(1900 + i); const a = r() * TAU, v = 500 + r() * 1500; return { vx: Math.cos(a) * v * .75, vy: Math.sin(a) * v * 1.2 - 500, w: 12 + r() * 18, h: 7 + r() * 11, c: ['#ffffff', '#ffe14a', '#2ad1ff', '#ff3b7f', '#7c4dff', '#3cff9a'][r() * 6 | 0], rs: (r() - .5) * 30, ph: r() * TAU }; });
@@ -568,7 +568,7 @@ function logoScene(c, t) {
   }
   // 品牌字
   if (out > 0) {
-    txt(c, 'STARFISH · MURDER MYSTERY', CX, 1004, { fam: F.cin, wt: 700, px: 26, ls: .44, fill: GOLD, alpha: inv(11.95, 12.45, t) * out });
+    txt(c, 'MJ · storylab', CX, 1004, { fam: F.cin, wt: 700, px: 26, ls: .44, fill: GOLD, alpha: inv(11.95, 12.45, t) * out });
     const tq = inv(11.78, 12.75, t);
     if (tq > 0) {
       const e = E.outQuart(tq), ls = lerp(.62, .1, e), blur = lerp(12, 0, e), a = clamp(tq / .6) * out;
@@ -594,7 +594,7 @@ function logoScene(c, t) {
       if (sh > px0 - 160 && sh < px0 + pw + 160) { c.save(); roundRect(c, px0, py, pw, ph, ph / 2); c.clip(); c.fillStyle = lgrad(c, sh - 80, 0, sh + 80, 0, [[0, 'rgba(255,255,255,0)'], [.5, 'rgba(255,255,255,.7)'], [1, 'rgba(255,255,255,0)']]); c.fillRect(px0, py, pw, ph); c.restore(); }
       txt(c, '立即預約 · 私訊 / LINE', CX, py + ph / 2 + 2, { px: 40, wt: 900, ls: .1, fill: '#1a0f08' });
       c.restore();
-      txt(c, '台北 · 南港 · 新竹　｜　IG @larp_starfish', CX, 1446, { fam: F.sans, wt: 500, px: 32, ls: .05, fill: '#f3e8d2', alpha: inv(T_CTA + .15, T_CTA + .4, t) * out });
+      txt(c, '台北 · 南港 · 新竹　｜　IG @larp_MJ', CX, 1446, { fam: F.sans, wt: 500, px: 32, ls: .05, fill: '#f3e8d2', alpha: inv(T_CTA + .15, T_CTA + .4, t) * out });
     }
   }
   // 鑰匙孔：從 Logo 中心長回片頭的大小與位置（Reels 重播接回第一格）
@@ -615,7 +615,7 @@ function hud(c, t) {
   [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([x, y, sx, sy]) => { c.beginPath(); c.moveTo(x, y + sy * L); c.lineTo(x, y); c.lineTo(x + sx * L, y); c.stroke(); });
   const f = Math.floor(t * FPS + 1e-6), tc = `00:00:${String(Math.floor(f / FPS)).padStart(2, '0')}:${String(f % FPS).padStart(2, '0')}`;
   const o = { fam: F.mono, wt: 600, px: 17, ls: .14, fill: col, base: 'middle' };
-  txt(c, 'STARFISH MYSTERY · REELS', m + 40, m + 6, { ...o, align: 'left' });
+  txt(c, 'MJ storylab · REELS', m + 40, m + 6, { ...o, align: 'left' });
   txt(c, tc, W - m - 40, m + 6, { ...o, align: 'right' });
   c.fillStyle = '#ff3b30'; c.globalAlpha = a * (Math.floor(t * 2) % 2 ? .35 : 1); c.beginPath(); c.arc(W - m - 40 - tw(tc, F.mono, 600, 17, .14) - 20, m + 6, 5, 0, TAU); c.fill(); c.globalAlpha = a;
   let k = 0; while (k < SC.length - 1 && t >= SC[k + 1][0]) k++;

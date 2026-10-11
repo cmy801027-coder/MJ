@@ -948,7 +948,7 @@
             const HEDGE_DELAY_MS = 3500;
             const FETCH_TIMEOUT_MS = 20000;
             // 上次成功讀到的 CSV 存在瀏覽器裡，下次打開先秒開舊資料，背景再換新的
-            const CSV_CACHE_KEY = 'starfishlarp-honor-csv';
+            const CSV_CACHE_KEY = 'MJlarp-honor-csv';
             // 資料來源：直接請求為主，GAS_PROXY_URL 有設定時當作額外備援。
             //
             // 這裡曾經還有三個公共 CORS 代理（corsproxy.io / allorigins.win / codetabs.com）
@@ -1382,7 +1382,7 @@
             let leaderboardScope = 'all';
 
             function updateLeaderboard(playRecords) {
-                const points = window.StarfishPoints;
+                const points = window.MJPoints;
                 const playerCounts = [];
 
                 for (const playerName in playRecords) {
@@ -1478,8 +1478,8 @@
 
             // 4b. 我的探員檔案（點數、兌換清單、彩蛋徽章）
             function showPointsProfile(playerName, playRecords) {
-                if (!window.StarfishPoints) return;
-                window.StarfishPoints.renderProfile(
+                if (!window.MJPoints) return;
+                window.MJPoints.renderProfile(
                     document.getElementById('pointsCard'),
                     playerName,
                     playRecords
@@ -1758,7 +1758,7 @@
             let playerNames = [];
             let hasPlayData = false;
             let savedName = '';
-            try { savedName = localStorage.getItem('starfishlarp-player-name') || ''; } catch (_) {}
+            try { savedName = localStorage.getItem('MJlarp-player-name') || ''; } catch (_) {}
 
             const loadErrorBox = document.createElement('p');
             loadErrorBox.className = 'load-error';
@@ -1767,11 +1767,11 @@
             honorWall.parentNode.insertBefore(loadErrorBox, honorWall);
 
             function renderPointsSections() {
-                if (!window.StarfishPoints) return;
-                window.StarfishPoints.renderDoubleDay(document.getElementById('doubleDayBanner'));
-                window.StarfishPoints.renderCollective(
+                if (!window.MJPoints) return;
+                window.MJPoints.renderDoubleDay(document.getElementById('doubleDayBanner'));
+                window.MJPoints.renderCollective(
                     document.getElementById('collectiveBanner'), playRecords);
-                window.StarfishPoints.renderLegendHall(document.getElementById('legendHall'));
+                window.MJPoints.renderLegendHall(document.getElementById('legendHall'));
             }
 
             // 拿到（或換新）CSV 資料時重畫所有依賴它的區塊，保留使用者目前選的玩家
@@ -1803,10 +1803,10 @@
                 if (current && playRecords[current]) selectPlayer(current, playRecords);
             }
 
-            if (window.StarfishPoints) {
+            if (window.MJPoints) {
                 // 探員檔案裡點戰友的名字，直接跳到對方的檔案
                 // 成就卡上的稱號沿用榮譽牆這一套六級制，不另外複製門檻
-                window.StarfishPoints.setTitleResolver((name) => {
+                window.MJPoints.setTitleResolver((name) => {
                     let plays = 0;
                     for (const scriptName in (playRecords[name] || {})) {
                         plays += playRecords[name][scriptName].length;
@@ -1815,13 +1815,13 @@
                     return title ? title.text.replace(/^[^一-龥]+/, '') : '';
                 });
 
-                window.StarfishPoints.setPlayerSelectHandler((name) => {
+                window.MJPoints.setPlayerSelectHandler((name) => {
                     if (!name || !playRecords[name]) return;
                     selectPlayer(name, playRecords, { scroll: true });
                 });
 
                 // 點數讀到之後補上點數相關的畫面；讀不到時榮譽牆其餘功能照常
-                window.StarfishPoints.load().then(() => {
+                window.MJPoints.load().then(() => {
                     renderPointsSections();
                     if (!hasPlayData) return;
                     updateLeaderboard(playRecords);

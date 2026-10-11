@@ -12,7 +12,7 @@ const section=(num,en,title,body)=>body?`<section class="section reveal"><div cl
 const paragraph=x=>`<div class="prose">${esc(x)}</div>`;
 const youtubeId=x=>{const s=String(x||'').trim();if(/^[\w-]{11}$/.test(s))return s;const m=s.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/);return m?m[1]:null};
 if(!item){root.innerHTML='<section class="section"><h1>找不到這本劇本</h1><p>請從劇本總覽選擇。</p><a class="button" href="index.html">返回總覽</a></section>';return}
-document.title=item.name+'｜STARFISH LARP';
+document.title=item.name+'｜MJ LARP';
 fetch('script-details.json',{cache:'no-cache'}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(all=>{
 const d=all[id]||{};
 const tags=(item.types||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');

@@ -113,7 +113,7 @@ const SUMMARY = {
     { label: '心得被選為精選', points: 20 },
     { label: '平日開本，點數兩倍', multiplier: 2, note: '當天所有點數加倍' }
   ],
-  mystery: [{ name: '海星', prize: '免費飲料一杯', date: inMonth(9) }],
+  storylab: [{ name: '海星', prize: '免費飲料一杯', date: inMonth(9) }],
   interactions: [{ script: '年輪', date: inMonth(9), author: '海星', likes: 4, featured: true }]
 };
 
@@ -436,7 +436,7 @@ async function launchBrowser() {
     const callback = new URL(route.request().url()).searchParams.get('callback') || 'cb';
     return route.fulfill({
       status: 200, contentType: 'text/javascript; charset=utf-8',
-      body: callback + '({"ok":true,"service":"starfishlarp-play-record","message":"endpoint ready"});'
+      body: callback + '({"ok":true,"service":"MJlarp-play-record","message":"endpoint ready"});'
     });
   });
 

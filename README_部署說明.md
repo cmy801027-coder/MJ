@@ -1,6 +1,6 @@
 # 海星網站 + Assign Roles v3.3 整合覆蓋包
 
-此 ZIP 是**增量覆蓋包**，不是 372 MB 全站壓縮檔。請先保留 `starfishlarp-main(1).zip` 的原始所有檔案，再把此 ZIP 解壓到**同一個網站根目錄**，新增 `assign-roles/`、`functions/` 和 `_routes.json`。不需要刪除原網站圖片、音樂、影片或其他 HTML。
+此 ZIP 是**增量覆蓋包**，不是 372 MB 全站壓縮檔。請先保留 `MJlarp-main(1).zip` 的原始所有檔案，再把此 ZIP 解壓到**同一個網站根目錄**，新增 `assign-roles/`、`functions/` 和 `_routes.json`。不需要刪除原網站圖片、音樂、影片或其他 HTML。
 
 ## 入口
 - 原海星首頁：`/`，維持原樣

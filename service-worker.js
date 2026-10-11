@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_PREFIX = 'starfishlarp';
+const CACHE_PREFIX = 'MJlarp';
 const CACHE_VERSION = '20261007-load';
 const APP_SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}-runtime-${CACHE_VERSION}`;

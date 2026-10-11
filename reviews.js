@@ -24,8 +24,8 @@
     }
 
     function loadEndpoint() {
-        if (window.STARFISH_PLAY_RECORD_ENDPOINT) {
-            return Promise.resolve(String(window.STARFISH_PLAY_RECORD_ENDPOINT).trim());
+        if (window.MJ_PLAY_RECORD_ENDPOINT) {
+            return Promise.resolve(String(window.MJ_PLAY_RECORD_ENDPOINT).trim());
         }
 
         const url = configUrl();
@@ -34,7 +34,7 @@
         return new Promise((resolve) => {
             const tag = document.createElement('script');
             tag.src = url;
-            tag.onload = () => resolve(String(window.STARFISH_PLAY_RECORD_ENDPOINT || '').trim());
+            tag.onload = () => resolve(String(window.MJ_PLAY_RECORD_ENDPOINT || '').trim());
             tag.onerror = () => resolve('');
             document.head.appendChild(tag);
         });
@@ -259,8 +259,8 @@
         if (!endpoint) return [];
 
         // 先讀預約系統的快速副本，讀不到再走 Apps Script。
-        if (typeof window.starfishFetchSummary === 'function') {
-            const fast = await window.starfishFetchSummary(4000);
+        if (typeof window.MJFetchSummary === 'function') {
+            const fast = await window.MJFetchSummary(4000);
             if (fast) return Array.isArray(fast.interactions) ? fast.interactions : [];
         }
 

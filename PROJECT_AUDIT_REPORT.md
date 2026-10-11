@@ -1,7 +1,7 @@
 # 敏捷私團 · 前端專案全面審查報告
 
 > 審查日期：2026-07-28
-> 審查範圍：`cj2vum4/starfishlarp` 全部 196 個 git 追蹤檔案（64 個 HTML、10 個共用 JS、2 個 CSS、設定檔、靜態資源）
+> 審查範圍：`cj2vum4/MJlarp` 全部 196 個 git 追蹤檔案（64 個 HTML、10 個共用 JS、2 個 CSS、設定檔、靜態資源）
 > 審查方式：靜態閱讀 + 資料完整性腳本驗證 + Chromium (Playwright) 實際載入 11 個頁面觀察 console / 網路 / 版面
 > **本階段未修改任何專案檔案**（僅新增此報告）
 
@@ -68,7 +68,7 @@
 | 第三方服務 | Google Sheets、Google Apps Script ×2、Google Calendar (iframe)、Supabase、postimg.cc（482 張圖）、Formspree（**未設定**）、cdnjs、unpkg、jsDelivr、corsproxy.io、allorigins.win、codetabs.com |
 | 建置工具 | **無**。無 bundler、無 transpile、無 minify |
 | 套件管理 | **無**。無 `package.json`、無 lock file。唯一 vendored 依賴：`vendor/three.min.js`（670 KB，手動放置） |
-| 部署 | GitHub Pages（`https://cj2vum4.github.io/starfishlarp/`），直接服務 repo 根目錄 |
+| 部署 | GitHub Pages（`https://cj2vum4.github.io/MJlarp/`），直接服務 repo 根目錄 |
 | 測試 | **無** |
 | Lint / Formatter / 型別檢查 | **無** |
 | 其他 | `ocr_batch.py`（本機 Python 工具，PDF → Claude Vision → Supabase） |
@@ -76,7 +76,7 @@
 ### 2.2 資料夾結構
 
 ```
-starfishlarp/
+MJlarp/
 ├── index.html                    首頁（劇本總覽 + 篩選 + 3D hero）
 ├── 榮譽牆.html                   玩家記錄牆（1618 行，CSS+HTML+JS 全在一檔）
 ├── 新增玩本記錄.html              玩本記錄表單
@@ -283,7 +283,7 @@ starfishlarp/
 - **建議修正方式**：三選一，優先序如下。
   1. **最省事**：到 formspree.io 建立表單，把 `YOUR_FORM_ID` 換成真實 ID（免費方案每月 50 封）。
   2. **與現有基礎一致**：改用已有的 Google Apps Script 模式（複製 `GoogleAppsScript_玩本記錄.gs` 的結構寫入另一個試算表分頁），這樣不新增第三方依賴。
-  3. **最快止血**：先把表單換成明確的 LINE / Email 引導區塊（Email `starfishlarp@gmail.com` 與 LINE 連結頁面上已有），等真正接好再放回來。
+  3. **最快止血**：先把表單換成明確的 LINE / Email 引導區塊（Email `MJlarp@gmail.com` 與 LINE 連結頁面上已有），等真正接好再放回來。
 - **建議修改範例**（方案 1）：
   ```html
   <form id="booking-form" action="https://formspree.io/f/實際ID" method="POST">
@@ -387,7 +387,7 @@ starfishlarp/
   - `台词卡/` 5 個 PDF、`角色海報/` 7 張 JPG
 
   GitHub Pages 直接服務 repo 根目錄，因此這些檔案全部可透過
-  `https://cj2vum4.github.io/starfishlarp/劇本資料/<檔名>` 直接下載，無需任何認證。
+  `https://cj2vum4.github.io/MJlarp/劇本資料/<檔名>` 直接下載，無需任何認證。
 - **問題說明**：這是**購買的正版劇本本體**，不是宣傳素材。角色劇本、搜證卡、還原線索、飛升儀式流程——這些正是劇本殺付費內容的全部價值。
 - **使用者影響**：任何拿到（或猜到）路徑的人都能取得完整劇本 → 玩家先看再來玩，整場體驗歸零。
 - **技術影響 / 法務影響**：對劇本發行商而言這等同公開散布其著作，是明確的侵權態樣，可能導致下架要求甚至求償。同時佔了 76 MB 部署量。
@@ -398,7 +398,7 @@ starfishlarp/
   4. 若某些檔案（如角色海報）確實需要公開，把它們搬到 `img/` 之類明確的公開資產目錄，與「劇本本體」分開。
 - **修改成本**：S（移除 + 修海報路徑）；若要重寫歷史則為 M
 - **修改風險**：中（會動到首頁一張海報；重寫歷史風險更高）
-- **驗證方式**：部署後直接請求 `https://cj2vum4.github.io/starfishlarp/劇本資料/《疯兔子》手册.pdf` 應回 404；首頁瘋兔子卡片海報仍正常顯示。
+- **驗證方式**：部署後直接請求 `https://cj2vum4.github.io/MJlarp/劇本資料/《疯兔子》手册.pdf` 應回 404；首頁瘋兔子卡片海報仍正常顯示。
 - **是否需要人工確認**：**是** — 需確認 (a) 是否有頁面依賴這些檔案（目前掃描僅海報一處）、(b) 是否要重寫 git 歷史。
 
 ---
@@ -1252,7 +1252,7 @@ starfishlarp/
 - **建議修改範例**：
   ```js
   // csv-utils.js
-  window.StarfishCSV = {
+  window.MJCSV = {
       SHEET_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-…/pub?output=csv',
       parseCSV(text) { /* 取自 reviews.js:232 */ },
       escapeHtml(s)  { /* 取自 reviews.js:261 */ },
@@ -1404,15 +1404,15 @@ starfishlarp/
   <meta property="og:url" content="https://example.com/"> <!-- TODO: Replace with actual URL -->
   <meta property="twitter:url" content="https://example.com/"> <!-- TODO: Replace with actual URL -->
   ```
-  對照 `index.html:9` 是正確的：`https://cj2vum4.github.io/starfishlarp/index.html`。
+  對照 `index.html:9` 是正確的：`https://cj2vum4.github.io/MJlarp/index.html`。
 - **問題說明**：`og:url` 是分享時的正規網址。這是**最需要被分享的一頁**（招攬客人用），而 og:title / og:description / og:image 都寫得很好，唯獨 URL 是佔位符。
 - **使用者影響**：分享到 LINE / Facebook 時，預覽卡片的來源顯示為 `example.com`，看起來像詐騙連結，也可能導致點擊後導向錯誤位置。
 - **技術影響**：搜尋引擎可能把 `example.com` 當成 canonical。
 - **建議修正方式**：
   ```html
-  <meta property="og:url" content="https://cj2vum4.github.io/starfishlarp/主持人資訊.html">
-  <meta property="twitter:url" content="https://cj2vum4.github.io/starfishlarp/主持人資訊.html">
-  <link rel="canonical" href="https://cj2vum4.github.io/starfishlarp/主持人資訊.html">
+  <meta property="og:url" content="https://cj2vum4.github.io/MJlarp/主持人資訊.html">
+  <meta property="twitter:url" content="https://cj2vum4.github.io/MJlarp/主持人資訊.html">
+  <link rel="canonical" href="https://cj2vum4.github.io/MJlarp/主持人資訊.html">
   ```
 - **修改成本**：XS
 - **修改風險**：低
@@ -1449,7 +1449,7 @@ starfishlarp/
   ```html
   <meta name="description" content="王座 · 7人（4男3女）· 4.5小時 · 神話/陣營/機制 — 敏捷私團">
   <meta property="og:type" content="article">
-  <meta property="og:url" content="https://cj2vum4.github.io/starfishlarp/7人/王座.html">
+  <meta property="og:url" content="https://cj2vum4.github.io/MJlarp/7人/王座.html">
   <meta property="og:title" content="王座｜敏捷私團">
   <meta property="og:description" content="7人 · 4.5小時 · 神話/陣營/機制">
   <meta property="og:image" content="https://i.postimg.cc/d0cKpGxL/2021-11-13-195627.jpg">
@@ -1582,7 +1582,7 @@ starfishlarp/
 ### 建議的資料夾結構（漸進式，不搬動既有頁面）
 
 ```
-starfishlarp/
+MJlarp/
 ├── index.html  榮譽牆.html  新增玩本記錄.html  ...     ← 頁面維持在根目錄（GitHub Pages 路由簡單）
 │
 ├── js/                          ← 新增：共用 JS 集中（目前散在根目錄）
@@ -1638,7 +1638,7 @@ starfishlarp/
 
 ```js
 // csv-utils.js — 資料存取層（取代兩套重複實作）
-window.StarfishCSV = {
+window.MJCSV = {
     SHEET_URL: '…',
     async fetchRecords()    { /* fetch + parse + 聚合，回傳純資料 */ },
     parseCSV(text)          { /* 取自 reviews.js */ },
@@ -1647,7 +1647,7 @@ window.StarfishCSV = {
 };
 
 // script-utils.js — 劇本資料存取層
-window.StarfishScripts = {
+window.MJScripts = {
     all()                   { return window.SCRIPTS || []; },
     byId(id)                { return this.all().find(s => s.id === id); },
     byReviewKey(key)        { return this.all().find(s => s.reviewKey === key); },
@@ -1658,7 +1658,7 @@ window.StarfishScripts = {
 
 ### 資料存取層規劃（為未來接後端鋪路）
 
-目前 CSV 讀取邏輯直接寫在頁面裡。抽成 `StarfishCSV.fetchRecords()` 後，**未來換成真正的 API 只需要改這一個函式**：
+目前 CSV 讀取邏輯直接寫在頁面裡。抽成 `MJCSV.fetchRecords()` 後，**未來換成真正的 API 只需要改這一個函式**：
 
 ```js
 // 現在
@@ -1678,7 +1678,7 @@ async fetchRecords() {
 | 區塊 | 現況 | 接後端時的改動 | 難度 |
 |------|------|--------------|------|
 | 劇本資料 | `scripts.js` 靜態陣列 | 幾乎不用改（劇本資料本來就適合靜態） | 極低 |
-| 玩本記錄讀取 | CSV → 兩套解析器 | 改 `StarfishCSV.fetchRecords()` 一處 | 低（**前提是先做 C-02 的抽取**） |
+| 玩本記錄讀取 | CSV → 兩套解析器 | 改 `MJCSV.fetchRecords()` 一處 | 低（**前提是先做 C-02 的抽取**） |
 | 玩本記錄寫入 | `no-cors` POST Apps Script | 改 `postRecord()` 一處 + 加認證 | 低（**前提是先做 F-03**） |
 | GM / 玩家工具 | Supabase anon key 直連 | 加 Supabase Auth + 重寫 RLS | 中 |
 | 訂位 | Formspree（未設定） | 改 form action + 加確認流程 | 低～中 |

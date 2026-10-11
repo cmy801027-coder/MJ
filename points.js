@@ -1,7 +1,7 @@
 /* ============================================================
    敏捷私團｜集點系統（榮譽牆共用元件）
 
-   資料來源：預約系統的快速副本（play-record-config.js 的 starfishFetchSummary），
+   資料來源：預約系統的快速副本（play-record-config.js 的 MJFetchSummary），
    讀不到時改走 Apps Script 的 ?action=summary 端點（JSONP）。
    走 JSONP 而不是 CSV，是因為發布的 CSV 有 5–10 分鐘快取，
    玩家剛送出記錄就會看不到自己的點數。
@@ -13,7 +13,7 @@
 (function () {
     'use strict';
 
-    const ENDPOINT = String(window.STARFISH_PLAY_RECORD_ENDPOINT || '').trim();
+    const ENDPOINT = String(window.MJ_PLAY_RECORD_ENDPOINT || '').trim();
 
     const state = {
         loaded: false,
@@ -22,7 +22,7 @@
         stale: false,         // 端點活著，但部署的是沒有 action=summary 的舊版
         summary: new Map(),   // 歸戶名 → { agent, earned, redeemed, balance, monthEarned, plays, last }
         rewards: [],
-        mystery: [],
+        storylab: [],
         quests: [],
         rules: [],
         doubleDayNote: '',
@@ -206,15 +206,15 @@
     .pts-mate b { color: #ffd978; font-variant-numeric: tabular-nums; }
 
     /* 神秘盒開箱紀錄 */
-    .pts-mystery { display: grid; gap: 6px; margin-bottom: 20px; }
-    .pts-mystery div {
+    .pts-storylab { display: grid; gap: 6px; margin-bottom: 20px; }
+    .pts-storylab div {
         display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
         padding: 8px 14px; border-radius: 8px;
         background: rgba(90, 60, 140, .16);
         border: 1px solid rgba(179, 157, 219, .3);
         font-size: .88rem;
     }
-    .pts-mystery span { color: #9c9080; font-size: .8rem; }
+    .pts-storylab span { color: #9c9080; font-size: .8rem; }
 
     /* ── 榮耀軌 ──────────────────────────────────────────────
        這三種裝飾都是玩家用點數換來的，成本為零但只有網站給得起，
@@ -406,8 +406,8 @@
 
         // 先讀預約系統的快速副本；讀不到再走 Apps Script。Apps Script 偶爾要
         // 10 秒以上才回應，第一次 8 秒沒回來就再試一次（再等 10 秒）。
-        const fast = typeof window.starfishFetchSummary === 'function'
-            ? window.starfishFetchSummary(4000) : Promise.resolve(null);
+        const fast = typeof window.MJFetchSummary === 'function'
+            ? window.MJFetchSummary(4000) : Promise.resolve(null);
         state.pending = true;
         return fast
             .then((payload) => { if (payload) applySummary(payload); return state.ok; })
@@ -421,7 +421,7 @@
         state.doubleDayNote = payload.doubleDayNote || '';
         state.monthKey = payload.monthKey || '';
         state.rewards = Array.isArray(payload.rewards) ? payload.rewards : [];
-        state.mystery = Array.isArray(payload.mystery) ? payload.mystery : [];
+        state.storylab = Array.isArray(payload.storylab) ? payload.storylab : [];
         state.quests = Array.isArray(payload.quests) ? payload.quests : [];
         state.rules = Array.isArray(payload.rules) ? payload.rules : [];
         payload.summary.forEach((item) => {
@@ -432,7 +432,7 @@
     /** 送一次 JSONP；有拿到可用的資料回傳 true。 */
     function requestSummary(timeoutMs) {
         return new Promise((resolve) => {
-            const callbackName = 'starfishPointsCb' + Date.now().toString(36) +
+            const callbackName = 'MJPointsCb' + Date.now().toString(36) +
                 Math.random().toString(36).slice(2, 6);
             const script = document.createElement('script');
             let settled = false;
@@ -981,7 +981,7 @@
         ctx.fillStyle = CARD.muted;
         ctx.font = '400 16px ' + CARD.mono;
         trackedText(ctx, new Date().toISOString().slice(0, 10).replace(/-/g, '.'), M, footY, 4, 'left');
-        trackedText(ctx, 'STARFISH LARP', W - M, footY, 5, 'right');
+        trackedText(ctx, 'MJ LARP', W - M, footY, 5, 'right');
 
         return canvas;
     }
@@ -1084,7 +1084,7 @@
         const greeting = greetingFor(playerName, playRecords);
         const mates = computeTeammates(playerName, playRecords);
         const quests = computeQuests(playerName);
-        const opened = state.mystery.filter((item) => normalizeName(item.name) === normalizeName(playerName));
+        const opened = state.storylab.filter((item) => normalizeName(item.name) === normalizeName(playerName));
 
         container.innerHTML =
             '<div class="pts-head">' +
@@ -1099,7 +1099,7 @@
             renderRules() +
             renderQuests(quests) +
             rewardsHtml +
-            renderMystery(opened) +
+            renderstorylab(opened) +
             renderMates(mates) +
             '<p class="pts-section-title">彩蛋徽章</p>' +
             badgeHtml +
@@ -1253,7 +1253,7 @@
             '<div class="pts-mates">' + chips + '</div>';
     }
 
-    function renderMystery(opened) {
+    function renderstorylab(opened) {
         if (!opened.length) return '';
 
         const items = opened.slice().reverse().map((item) =>
@@ -1261,7 +1261,7 @@
         ).join('');
 
         return '<p class="pts-section-title">神秘盒紀錄</p>' +
-            '<div class="pts-mystery">' + items + '</div>';
+            '<div class="pts-storylab">' + items + '</div>';
     }
 
     function renderNextGoal(balance) {
@@ -1323,7 +1323,7 @@
         container.hidden = false;
     }
 
-    window.StarfishPoints = {
+    window.MJPoints = {
         load: load,
         getPlayer: getPlayer,
         renderProfile: renderProfile,

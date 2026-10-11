@@ -38,7 +38,7 @@
     if (!config || !root) return;
 
     var endpoint = config.endpoint || SURVEY_ENDPOINT;
-    var draftKey = 'starfish-survey-draft:' + config.script;
+    var draftKey = 'MJ-survey-draft:' + config.script;
 
     injectStyle();
 

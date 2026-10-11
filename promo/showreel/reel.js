@@ -306,7 +306,7 @@ function cutLichuan(c, u, s) {
     c.strokeStyle = '#bff8ee'; c.lineWidth = 6; c.beginPath(); c.arc(lx, ly, lr, 0, TAU); c.stroke();
     c.lineWidth = 16; c.lineCap = 'round'; c.beginPath(); c.moveTo(lx + lr * .72, ly + lr * .72); c.lineTo(lx + lr * 1.2, ly + lr * 1.2); c.stroke();
   }
-  label(c, 'MYSTERY', TX, 330, u * 1.5, { fill: '#7ff5e2' });
+  label(c, 'storylab', TX, 330, u * 1.5, { fill: '#7ff5e2' });
   infoStack(c, s, TX, 770, { u: u * 1.5, col: '#dffbf6', acc: '#7ff5e2', tags: '日式 · 硬核推理 · 密室' });
 }
 const CONF = Array.from({ length: 170 }, (_, i) => { const r = rng(1900 + i); const a = r() * TAU, v = 500 + r() * 1500; return { vx: Math.cos(a) * v, vy: Math.sin(a) * v - 400, w: 10 + r() * 16, h: 6 + r() * 10, c: ['#ffffff', '#ffe14a', '#2ad1ff', '#ff3b7f', '#7c4dff', '#3cff9a'][r() * 6 | 0], rs: (r() - .5) * 30, ph: r() * TAU }; });
@@ -553,7 +553,7 @@ function logoScene(c, t) {
   }
   // brand type — 與網站開場相同的「字距收合」
   const ey = inv(8.35, 8.85, t);
-  txt(c, 'STARFISH · MURDER MYSTERY', 960, 726, { fam: F.cin, wt: 700, px: 24, ls: .55, fill: GOLD, alpha: ey });
+  txt(c, 'MJ · storylab', 960, 726, { fam: F.cin, wt: 700, px: 24, ls: .55, fill: GOLD, alpha: ey });
   const tq = inv(8.18, 9.15, t);
   if (tq > 0) {
     const e = E.outQuart(tq), ls = lerp(.9, .18, e), blur = lerp(12, 0, e), a = clamp(tq / .6);
@@ -580,7 +580,7 @@ function hud(c, t) {
   [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([x, y, sx, sy]) => { c.beginPath(); c.moveTo(x, y + sy * L); c.lineTo(x, y); c.lineTo(x + sx * L, y); c.stroke(); });
   const f = Math.floor(t * FPS + 1e-6), tc = `00:00:${String(Math.floor(f / FPS)).padStart(2, '0')}:${String(f % FPS).padStart(2, '0')}`;
   const o = { fam: F.mono, wt: 600, px: 16, ls: .16, fill: col, base: 'middle' };
-  txt(c, 'STARFISH MYSTERY · SHOWREEL 2026', m + 44, m + 6, { ...o, align: 'left' });
+  txt(c, 'MJ storylab · SHOWREEL 2026', m + 44, m + 6, { ...o, align: 'left' });
   txt(c, tc, W - m - 44, m + 6, { ...o, align: 'right' });
   c.fillStyle = '#ff3b30'; c.globalAlpha = a * (Math.floor(t * 2) % 2 ? .35 : 1); c.beginPath(); c.arc(W - m - 44 - tw(tc, F.mono, 600, 16, .16) - 20, m + 6, 5, 0, TAU); c.fill(); c.globalAlpha = a;
   let k = 0; while (k < SC.length - 1 && t >= SC[k + 1][0]) k++;
