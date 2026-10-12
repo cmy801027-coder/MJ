@@ -87,38 +87,8 @@
                 <span class="pwa-install-icon" aria-hidden="true">↓</span>
                 <span id="pwaInstallLabel">安裝 App</span>
             </button>
-            <button class="nav-toggle" id="navToggle" aria-label="開啟選單" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
         </div>
     </nav>
-
-    <!-- drawer -->
-    <div class="drawer-overlay" id="drawerOverlay"></div>
-    <aside class="drawer" id="drawer" aria-hidden="true">
-        <div class="drawer-head">
-            <span class="d-title">✦ 選單</span>
-            <button class="drawer-close" id="drawerClose" aria-label="關閉選單">✕</button>
-        </div>
-        <a class="drawer-link" href="#scriptsGrid" data-close>
-            <span class="d-ico">🎭</span>
-            <span><span class="d-name">劇本總覽</span><span class="d-desc">瀏覽全部劇本</span></span>
-        </a>
-        <a class="drawer-link" onclick="goToPage('劇本介紹.html')">
-            <span class="d-ico">📖</span>
-            <span><span class="d-name">劇本介紹</span><span class="d-desc">新手入門指南</span></span>
-        </a>
-        <a class="drawer-link" onclick="goToPage('榮譽牆.html')">
-            <span class="d-ico">🏆</span>
-            <span><span class="d-name">榮譽牆</span><span class="d-desc">記錄遊戲里程</span></span>
-        </a>
-        <a class="drawer-link" onclick="goToPage('主持人資訊.html')">
-            <span class="d-ico">👨‍💼</span>
-            <span><span class="d-name">主持人資訊</span><span class="d-desc">認識海星</span></span>
-        </a>
-        <div class="drawer-sep"></div>
-        <div class="drawer-foot">沉浸其中・探索謎局<br>© 敏捷私團</div>
-    </aside>
 
     <!-- hero -->
     <section id="three-hero">
@@ -159,22 +129,17 @@
                  沒有對應的 option 會讓 value 變成空字串、篩選靜默失效。 -->
             <select id="typeFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
                 <option value="">全部類型</option>
-                <option value="情感">情感</option>
                 <option value="推理">推理</option>
-                <option value="陣營">陣營</option>
+                <option value="情感">情感</option>
+                <option value="機制">機制</option>
+                <option value="恐怖">恐怖</option>
                 <option value="歡樂">歡樂</option>
-                <option value="微恐">微恐</option>
-                <option value="新手">新手</option>
-                <option value="繁體">繁體</option>
-            </select>
-            <select id="difficultyFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
-                <option value="">全部難度</option>
-                <option value="0">0星 - 無推理</option>
-                <option value="1">1星 - 極簡</option>
-                <option value="2">2星 - 簡單</option>
-                <option value="3">3星 - 中等</option>
-                <option value="4">4星 - 困難</option>
-                <option value="5">5星 - 極難</option>
+                <option value="古風">古風</option>
+                <option value="歐式">歐式</option>
+                <option value="民國">民國</option>
+                <option value="科幻">科幻</option>
+                <option value="日式">日式</option>
+                <option value="陣營">陣營</option>
             </select>
 
             <div class="filter-group">
@@ -193,26 +158,17 @@
                 <div class="filter-group-label">🎭 劇本類型</div>
                 <div class="tag-row scrollx">
                     <button class="ftag active" data-filter="type" data-value="">全部</button>
-                    <button class="ftag" data-filter="type" data-value="情感">情感</button>
                     <button class="ftag" data-filter="type" data-value="推理">推理</button>
-                    <button class="ftag" data-filter="type" data-value="陣營">陣營</button>
+                    <button class="ftag" data-filter="type" data-value="情感">情感</button>
+                    <button class="ftag" data-filter="type" data-value="機制">機制</button>
+                    <button class="ftag" data-filter="type" data-value="恐怖">恐怖</button>
                     <button class="ftag" data-filter="type" data-value="歡樂">歡樂</button>
-                    <button class="ftag" data-filter="type" data-value="微恐">微恐</button>
-                    <button class="ftag" data-filter="type" data-value="新手">新手</button>
-                    <button class="ftag" data-filter="type" data-value="繁體">繁體</button>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <div class="filter-group-label">⭐ 推理難度</div>
-                <div class="tag-row">
-                    <button class="ftag active" data-filter="diff" data-value="">全部</button>
-                    <button class="ftag" data-filter="diff" data-value="0">0星</button>
-                    <button class="ftag" data-filter="diff" data-value="1">1星</button>
-                    <button class="ftag" data-filter="diff" data-value="2">2星</button>
-                    <button class="ftag" data-filter="diff" data-value="3">3星</button>
-                    <button class="ftag" data-filter="diff" data-value="4">4星</button>
-                    <button class="ftag" data-filter="diff" data-value="5">5星</button>
+                    <button class="ftag" data-filter="type" data-value="古風">古風</button>
+                    <button class="ftag" data-filter="type" data-value="歐式">歐式</button>
+                    <button class="ftag" data-filter="type" data-value="民國">民國</button>
+                    <button class="ftag" data-filter="type" data-value="科幻">科幻</button>
+                    <button class="ftag" data-filter="type" data-value="日式">日式</button>
+                    <button class="ftag" data-filter="type" data-value="陣營">陣營</button>
                 </div>
             </div>
 
@@ -222,7 +178,6 @@
                     <select id="sortFilter" class="filter-select">
                         <option value="default">預設順序</option>
                         <option value="name">按名稱排序</option>
-                        <option value="difficulty">按難度排序</option>
                         <option value="time">按時長排序</option>
                         <option value="players">按人數排序</option>
                     </select>

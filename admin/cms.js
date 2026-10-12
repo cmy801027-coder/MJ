@@ -84,7 +84,7 @@ function setCheckedTypes(types=[]){
   if(legacy.length){
     hint.textContent =
       '此劇本原有其他類型：'+legacy.join('、')+
-      '。編輯儲存時會保留這些舊標籤。';
+      '。請改選新版類型，儲存時統一使用上述 11 種。';
     hint.classList.remove('hidden');
   }else{
     hint.textContent = '';
@@ -385,16 +385,7 @@ $('form').onsubmit = async e=>{
       throw Error('請至少勾選一個劇本類型');
     }
 
-    // 保留舊劇本中不屬於新版 11 種的標籤
-    const legacyTypes = Array.isArray(current?.types)
-      ? current.types.filter(
-          type=>!allowedTypes.includes(type)
-        )
-      : [];
-
-    const types = Array.from(
-      new Set([...selectedTypes,...legacyTypes])
-    );
+    const types = selectedTypes.filter(type=>allowedTypes.includes(type));
 
     // 舊版 Cloudflare API 仍要求 difficulty
     // 新增劇本使用 0，編輯時保留原值

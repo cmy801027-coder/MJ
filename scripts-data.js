@@ -1,10 +1,8 @@
 /* 劇本資料：單一來源 window.SCRIPTS（定義於 scripts.js）。
    新增/修改劇本請改 scripts.js，不要在這裡維護資料。 */
 
-/* 篩選只用這 7 個核心標籤（必須與 index.html 的 typeFilter／.ftag 一致）。
-   scripts.js 每本 types 至少要有其中一個，且寫法要完全相同
-   （不要寫「新手友善」「繁化」「恐怖」這類變體）；其餘標籤只顯示在卡片上。 */
-const FILTER_TYPES = ['情感', '推理', '陣營', '歡樂', '微恐', '新手', '繁體'];
+/* 劇本類型與首頁、後台統一為以下 11 種。 */
+const FILTER_TYPES = ['推理', '情感', '機制', '恐怖', '歡樂', '古風', '歐式', '民國', '科幻', '日式', '陣營'];
 
 function normalizeTypes(types) {
     return FILTER_TYPES.filter(t => (types || []).includes(t));
@@ -24,10 +22,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
             filterScripts();
         });
         document.getElementById('typeFilter').addEventListener('change', () => {
-            updateAvailableOptions();
-            filterScripts();
-        });
-        document.getElementById('difficultyFilter').addEventListener('change', () => {
             updateAvailableOptions();
             filterScripts();
         });
@@ -52,32 +46,28 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function updateAvailableOptions() {
         const playerFilter = document.getElementById('playerFilter').value;
         const typeFilter = document.getElementById('typeFilter').value;
-        const difficultyFilter = document.getElementById('difficultyFilter').value;
         
         // 根據當前篩選條件找出符合的劇本
         let filteredScripts = scripts.filter(script => {
             let match = true;
             if (playerFilter && script.players != playerFilter) match = false;
             if (typeFilter && !script.filterTypes.includes(typeFilter)) match = false;
-            if (difficultyFilter && script.difficulty != difficultyFilter) match = false;
             return match;
         });
         
         // 更新人數選項
-        updatePlayerOptions(filteredScripts, typeFilter, difficultyFilter);
+        updatePlayerOptions(filteredScripts, typeFilter);
         
         // 更新類型選項
-        updateTypeOptions(filteredScripts, playerFilter, difficultyFilter);
+        updateTypeOptions(filteredScripts, playerFilter);
         
-        // 更新難度選項
-        updateDifficultyOptions(filteredScripts, playerFilter, typeFilter);
         
         // 更新篩選結果數量
         updateFilteredCount(filteredScripts.length);
     }
     
     // 更新人數選項
-    function updatePlayerOptions(baseScripts, typeFilter, difficultyFilter) {
+    function updatePlayerOptions(baseScripts, typeFilter) {
         const playerSelect = document.getElementById('playerFilter');
         const currentValue = playerSelect.value;
         
@@ -86,7 +76,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
         scripts.forEach(script => {
             let match = true;
             if (typeFilter && !script.filterTypes.includes(typeFilter)) match = false;
-            if (difficultyFilter && script.difficulty != difficultyFilter) match = false;
             if (match) {
                 availablePlayers.add(script.players);
             }
@@ -113,7 +102,7 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     }
     
     // 更新類型選項
-    function updateTypeOptions(baseScripts, playerFilter, difficultyFilter) {
+    function updateTypeOptions(baseScripts, playerFilter) {
         const typeSelect = document.getElementById('typeFilter');
         const currentValue = typeSelect.value;
         
@@ -122,7 +111,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
         scripts.forEach(script => {
             let match = true;
             if (playerFilter && script.players != playerFilter) match = false;
-            if (difficultyFilter && script.difficulty != difficultyFilter) match = false;
             if (match) {
                 script.filterTypes.forEach(type => availableTypes.add(type));
             }
@@ -147,42 +135,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
         }
     }
     
-    // 更新難度選項
-    function updateDifficultyOptions(baseScripts, playerFilter, typeFilter) {
-        const difficultySelect = document.getElementById('difficultyFilter');
-        const currentValue = difficultySelect.value;
-        
-        // 找出在其他條件下可用的難度
-        let availableDifficulties = new Set();
-        scripts.forEach(script => {
-            let match = true;
-            if (playerFilter && script.players != playerFilter) match = false;
-            if (typeFilter && !script.filterTypes.includes(typeFilter)) match = false;
-            if (match) {
-                availableDifficulties.add(script.difficulty);
-            }
-        });
-        
-        // 更新選項
-        const options = difficultySelect.querySelectorAll('option');
-        options.forEach(option => {
-            if (option.value === '') return; // 保留"全部難度"選項
-            const difficulty = parseInt(option.value);
-            if (availableDifficulties.has(difficulty)) {
-                option.style.display = 'block';
-                option.disabled = false;
-            } else {
-                option.style.display = 'none';
-                option.disabled = true;
-            }
-        });
-        
-        // 如果當前選擇的選項不可用，清空選擇
-        if (currentValue && !availableDifficulties.has(parseInt(currentValue))) {
-            difficultySelect.value = '';
-        }
-    }
-
     // 解析 CSS 時間字串為秒數（支援 s / ms）
     function parseCssTimeToSeconds(timeString) {
         if (!timeString) return 0;
@@ -222,7 +174,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function filterScripts() {
         const playerFilter = document.getElementById('playerFilter').value;
         const typeFilter = document.getElementById('typeFilter').value;
-        const difficultyFilter = document.getElementById('difficultyFilter').value;
         const searchQuery = document.getElementById('searchInput').value.toLowerCase();
         
         const scriptCards = document.querySelectorAll('.script-card');
@@ -232,7 +183,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
         scriptCards.forEach(card => {
             const players = card.dataset.players;
             const types = card.dataset.types.split(',');
-            const difficulty = card.dataset.difficulty;
             const title = card.querySelector('.script-title').textContent.toLowerCase();
             
             let shouldShow = true;
@@ -240,9 +190,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
                 shouldShow = false;
             }
             if (typeFilter && !types.includes(typeFilter)) {
-                shouldShow = false;
-            }
-            if (difficultyFilter && difficulty !== difficultyFilter) {
                 shouldShow = false;
             }
             if (searchQuery && !title.includes(searchQuery)) {
@@ -282,7 +229,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function resetFilters() {
         document.getElementById('playerFilter').value = '';
         document.getElementById('typeFilter').value = '';
-        document.getElementById('difficultyFilter').value = '';
         document.getElementById('searchInput').value = '';
         document.getElementById('sortFilter').value = 'default';
         updateAvailableOptions();
@@ -313,7 +259,6 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
         const ordered = scripts.slice().sort((a, b) => {
             switch (sortType) {
                 case 'name':       return a.name.localeCompare(b.name, 'zh-TW');
-                case 'difficulty': return a.difficulty - b.difficulty;
                 case 'time':       return a.time - b.time;
                 case 'players':    return a.players - b.players;
                 default:           return 0;   // 維持 scripts.js 的原始順序
@@ -361,11 +306,10 @@ function renderCards() {
         const badgeData = [
             '👥 ' + (s.playersLabel || (s.players + '人')),
             '⏰ ' + (s.timeLabel || (s.time + '小時')),
-            '⭐ ' + s.difficulty + '星',
         ];
         const badges = badgeData.map(b => `<span class="info-badge">${b}</span>`).join('');
         const types  = s.types.map(t => `<span class="type-tag">${t}</span>`).join('');
-        return `<article class="script-card" data-id="${s.id}" data-theme="${s.theme}" data-players="${s.players}" data-types="${s.filterTypes.join(',')}" data-difficulty="${s.difficulty}">
+        return `<article class="script-card" data-id="${s.id}" data-theme="${s.theme}" data-players="${s.players}" data-types="${s.filterTypes.join(',')}">
             <div class="card-media">
                 ${img
                     ? `<img src="${img}" alt="${s.name}" class="script-image" loading="lazy">`

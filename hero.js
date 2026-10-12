@@ -5,31 +5,8 @@
         window.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
 
-        // drawer
-        const toggle  = document.getElementById('navToggle');
-        const drawer  = document.getElementById('drawer');
-        const overlay = document.getElementById('drawerOverlay');
-        const closeBtn = document.getElementById('drawerClose');
-        function openDrawer() {
-            drawer.classList.add('open'); overlay.classList.add('open');
-            toggle.classList.add('active'); toggle.setAttribute('aria-expanded', 'true');
-            drawer.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
-        }
-        function closeDrawer() {
-            drawer.classList.remove('open'); overlay.classList.remove('open');
-            toggle.classList.remove('active'); toggle.setAttribute('aria-expanded', 'false');
-            drawer.setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
-        }
-        if (toggle) toggle.addEventListener('click', () =>
-            drawer.classList.contains('open') ? closeDrawer() : openDrawer());
-        if (overlay) overlay.addEventListener('click', closeDrawer);
-        if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-        document.querySelectorAll('.drawer-link').forEach(l =>
-            l.addEventListener('click', () => setTimeout(closeDrawer, 120)));
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
-
         // tag-button filters bridge to hidden <select>s
-        const selectMap = { player: 'playerFilter', type: 'typeFilter', diff: 'difficultyFilter' };
+        const selectMap = { player: 'playerFilter', type: 'typeFilter' };
         document.querySelectorAll('.ftag').forEach(btn => {
             btn.addEventListener('click', () => {
                 const f = btn.dataset.filter, v = btn.dataset.value;
