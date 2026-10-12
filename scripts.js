@@ -37,6 +37,28 @@ window.SCRIPTS = [
     "reviewKey": "醉凌雲",
     "youtube": "",
     "file": "script.html?id=drunk"
+  },
+  {
+    "id": "polar-night",
+    "name": "極夜",
+    "store": "其他店家",
+    "players": 6,
+    "playersLabel": "不限制性別",
+    "time": 5.5,
+    "timeLabel": "5.5–8小時\n超時：30分鐘／75元",
+    "priceLabel": "900元（不含加時）",
+    "difficulty": 0,
+    "types": [
+      "情感",
+      "機制"
+    ],
+    "allowCrossGender": true,
+    "characters": [],
+    "poster": "img/劇本/polar-night/poster.png",
+    "theme": "default",
+    "reviewKey": "極夜",
+    "youtube": "",
+    "file": "script.html?id=polar-night"
   }
 ];
 
