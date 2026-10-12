@@ -12,6 +12,7 @@
 window.SCRIPTS = [
   {
     "id": "drunk",
+    "store": "敏捷私團",
     "name": "醉凌雲",
     "players": 6,
     "playersLabel": "2男4女/3男3女",

@@ -115,6 +115,20 @@
                 <input type="text" id="searchInput" placeholder="🔍 搜索劇本名稱…" autocomplete="off">
             </div>
 
+            <select id="storeFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
+                <option value="">全部店家</option>
+                <option value="敏捷私團">敏捷私團</option>
+                <option value="其他店家">其他店家</option>
+            </select>
+            <div class="filter-group">
+                <div class="filter-group-label">🏠 店家</div>
+                <div class="tag-row">
+                    <button class="ftag active" data-filter="store" data-value="">全部</button>
+                    <button class="ftag" data-filter="store" data-value="敏捷私團">敏捷私團</button>
+                    <button class="ftag" data-filter="store" data-value="其他店家">其他店家</button>
+                </div>
+            </div>
+
             <!-- hidden selects preserve existing filter logic -->
             <select id="playerFilter" class="hidden-select" tabindex="-1" aria-hidden="true">
                 <option value="">全部人數</option>

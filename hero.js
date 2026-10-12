@@ -6,7 +6,7 @@
         onScroll();
 
         // tag-button filters bridge to hidden <select>s
-        const selectMap = { player: 'playerFilter', type: 'typeFilter' };
+        const selectMap = { store: 'storeFilter', player: 'playerFilter', type: 'typeFilter' };
         document.querySelectorAll('.ftag').forEach(btn => {
             btn.addEventListener('click', () => {
                 const f = btn.dataset.filter, v = btn.dataset.value;

@@ -10,12 +10,17 @@ function normalizeTypes(types) {
 
 const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     // 篩選專用的標籤清單；script.types 保持原樣供卡片顯示
+    store: script.store === "敏捷私團" ? "敏捷私團" : "其他店家",
     filterTypes: normalizeTypes(script.types)
 }));
 
     // DOM載入後執行的初始化函式
     document.addEventListener('DOMContentLoaded', () => {
         renderCards();
+        document.getElementById('storeFilter').addEventListener('change', () => {
+            updateAvailableOptions();
+            filterScripts();
+        });
         // 綁定篩選事件監聽
         document.getElementById('playerFilter').addEventListener('change', () => {
             updateAvailableOptions();
@@ -46,12 +51,14 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function updateAvailableOptions() {
         const playerFilter = document.getElementById('playerFilter').value;
         const typeFilter = document.getElementById('typeFilter').value;
+        const storeFilter = document.getElementById('storeFilter').value;
         
         // 根據當前篩選條件找出符合的劇本
         let filteredScripts = scripts.filter(script => {
             let match = true;
             if (playerFilter && script.players != playerFilter) match = false;
             if (typeFilter && !script.filterTypes.includes(typeFilter)) match = false;
+            if (storeFilter && script.store !== storeFilter) match = false;
             return match;
         });
         
@@ -98,6 +105,7 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function filterScripts() {
         const playerFilter = document.getElementById('playerFilter').value;
         const typeFilter = document.getElementById('typeFilter').value;
+        const storeFilter = document.getElementById('storeFilter').value;
         const searchQuery = document.getElementById('searchInput').value.toLowerCase();
         
         const scriptCards = document.querySelectorAll('.script-card');
@@ -109,7 +117,7 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
             const types = card.dataset.types.split(',');
             const title = card.querySelector('.script-title').textContent.toLowerCase();
             
-            let shouldShow = true;
+            let shouldShow = !storeFilter || card.dataset.store === storeFilter;
             if (playerFilter && players !== playerFilter) {
                 shouldShow = false;
             }
@@ -153,6 +161,7 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
     function resetFilters() {
         document.getElementById('playerFilter').value = '';
         document.getElementById('typeFilter').value = '';
+        document.getElementById('storeFilter').value = '';
         document.getElementById('searchInput').value = '';
         document.getElementById('sortFilter').value = 'default';
         updateAvailableOptions();
@@ -228,12 +237,13 @@ function renderCards() {
     grid.innerHTML = scripts.map(s => {
         const img    = s.poster || '';
         const badgeData = [
+            '🏠 ' + s.store,
             '👥 ' + (s.playersLabel || (s.players + '人')),
             '⏰ ' + (s.timeLabel || (s.time + '小時')),
         ];
         const badges = badgeData.map(b => `<span class="info-badge">${b}</span>`).join('');
         const types  = s.types.map(t => `<span class="type-tag">${t}</span>`).join('');
-        return `<article class="script-card" data-id="${s.id}" data-theme="${s.theme}" data-players="${s.players}" data-types="${s.filterTypes.join(',')}">
+        return `<article class="script-card" data-id="${s.id}" data-store="${s.store}" data-theme="${s.theme}" data-players="${s.players}" data-types="${s.filterTypes.join(',')}">
             <div class="card-media">
                 ${img
                     ? `<img src="${img}" alt="${s.name}" class="script-image" loading="lazy">`

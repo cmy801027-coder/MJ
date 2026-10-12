@@ -140,6 +140,7 @@ function newItem(){
 
   field('players',6);
   field('time',4);
+  field('store','敏捷私團');
 
   setCheckedTypes([]);
   $('allowCrossGender').checked = false;
@@ -174,6 +175,7 @@ function editItem(id){
     field(f,s[f]);
   }
 
+  field('store',s.store === '敏捷私團' ? '敏捷私團' : '其他店家');
   setCheckedTypes(s.types || []);
 
   $('allowCrossGender').checked =
@@ -409,6 +411,7 @@ $('form').onsubmit = async e=>{
       playersLabel:$('playersLabel').value.trim(),
       time:Number($('time').value),
       timeLabel:$('time').value+'小時',
+      store:$('store').value,
       difficulty,
       types,
       allowCrossGender:$('allowCrossGender').checked,
