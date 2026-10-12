@@ -31,6 +31,7 @@ const validate=(s,d)=>{
  if(typeof s.time!=="number"||s.time<=0||s.time>48)throw Error("時間格式不正確");
  if(!Number.isInteger(s.difficulty)||s.difficulty<0||s.difficulty>5)throw Error("難度為 0-5");
  if(s.store!==undefined&&!["敏捷私團","其他店家"].includes(s.store))throw Error("店家必須為敏捷私團或其他店家");
+ if(!allowedString(s.priceLabel||"",100))throw Error("金額顯示過長");
  if(!Array.isArray(s.types)||s.types.length>30||s.types.some(x=>!allowedString(x,60)))throw Error("標籤不正確");
  if(!Array.isArray(s.characters)||s.characters.length>40||s.characters.some(x=>!allowedString(x,100)))throw Error("角色名單不正確");
  if(!allowedString(s.playersLabel,80)||!allowedString(s.timeLabel,80)||!allowedString(s.youtube||"",300))throw Error("基本資料過長");

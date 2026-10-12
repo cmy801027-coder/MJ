@@ -15,6 +15,33 @@ if(!item){root.innerHTML='<section class="section"><h1>找不到這本劇本</h1
 document.title=item.name+'｜MJ LARP';
 fetch('script-details.json',{cache:'no-cache'}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(all=>{
 const d=all[id]||{};
+if(item.store !== '敏捷私團'){
+    document.body.classList.add('notebook-page');
+    const image=safePath(d.poster||item.poster);
+    const types=(item.types||[]).map(t=>`<span>${esc(t)}</span>`).join(' / ');
+    root.innerHTML=`<article class="notebook" aria-label="${attr(item.name)}劇本介紹">
+      <div class="notebook-top">
+        <div class="notebook-left">
+          ${image?`<img class="notebook-poster" src="${attr(image)}" alt="${attr(item.name)}海報">`:`<h1 class="notebook-name">${esc(item.name)}</h1>`}
+          <div class="notebook-genres"><small>類型：</small><p>${types||'待補充'}</p></div>
+        </div>
+        <div class="notebook-note">
+          <h1>${esc(item.name)}</h1>
+          <dl>
+            <dt>人數：</dt><dd>${esc(item.players)}人${item.playersLabel?'（'+esc(item.playersLabel)+'）':''}${item.allowCrossGender?' · 可反串':''}</dd>
+            <dt>金額：</dt><dd>${esc(item.priceLabel||'請洽店家')}</dd>
+            <dt>時長：</dt><dd>${esc(item.timeLabel||item.time+'小時')}</dd>
+            <dt>預約方式：</dt><dd class="notebook-booking">${esc(d.bookingNote||'請洽店家預約')}</dd>
+          </dl>
+        </div>
+      </div>
+      <section class="notebook-story"><h2>故事大綱</h2><div>${esc(d.story||'故事介紹整理中。')}</div></section>
+      ${d.notice?`<section class="notebook-extra"><h2>遊玩須知</h2><div>${esc(d.notice)}</div></section>`:''}
+      ${d.features?`<section class="notebook-extra"><h2>遊戲特色</h2><div>${esc(d.features)}</div></section>`:''}
+    </article>`;
+    return;
+}
+
 const tags=(item.types||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
 const poster=safePath(d.poster||item.poster);
 const chars=(d.characters||item.characters||[]).map(c=>{

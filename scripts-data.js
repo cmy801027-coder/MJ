@@ -212,7 +212,7 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
         const script = scripts.find(s => s.id === scriptId);
         if (script && script.file) {
             const destination = 'script.html?id=' + encodeURIComponent(script.id);
-            if (typeof window.playStorybookTransition === 'function') {
+            if (script.store === '敏捷私團' && typeof window.playStorybookTransition === 'function') {
                 window.playStorybookTransition(script, destination);
             } else {
                 window.location.href = destination;

@@ -23,7 +23,7 @@ let current = null;
 
 const basicFields = [
   'id','name','players','playersLabel','time',
-  'tagline','story','features','notice','bookingNote'
+  'tagline','story','features','notice','bookingNote','priceLabel','timeLabel'
 ];
 
 const allowedTypes = [
@@ -176,6 +176,8 @@ function editItem(id){
   }
 
   field('store',s.store === '敏捷私團' ? '敏捷私團' : '其他店家');
+  field('priceLabel',s.priceLabel || '');
+  field('timeLabel',s.timeLabel || '');
   setCheckedTypes(s.types || []);
 
   $('allowCrossGender').checked =
@@ -410,7 +412,8 @@ $('form').onsubmit = async e=>{
       players:Number($('players').value),
       playersLabel:$('playersLabel').value.trim(),
       time:Number($('time').value),
-      timeLabel:$('time').value+'小時',
+      timeLabel:$('timeLabel').value.trim() || $('time').value+'小時',
+      priceLabel:$('priceLabel').value.trim(),
       store:$('store').value,
       difficulty,
       types,
