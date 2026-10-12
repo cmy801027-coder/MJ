@@ -55,84 +55,8 @@ const scripts = (window.SCRIPTS || []).map(script => Object.assign({}, script, {
             return match;
         });
         
-        // 更新人數選項
-        updatePlayerOptions(filteredScripts, typeFilter);
-        
-        // 更新類型選項
-        updateTypeOptions(filteredScripts, playerFilter);
-        
-        
         // 更新篩選結果數量
         updateFilteredCount(filteredScripts.length);
-    }
-    
-    // 更新人數選項
-    function updatePlayerOptions(baseScripts, typeFilter) {
-        const playerSelect = document.getElementById('playerFilter');
-        const currentValue = playerSelect.value;
-        
-        // 找出在其他條件下可用的人數
-        let availablePlayers = new Set();
-        scripts.forEach(script => {
-            let match = true;
-            if (typeFilter && !script.filterTypes.includes(typeFilter)) match = false;
-            if (match) {
-                availablePlayers.add(script.players);
-            }
-        });
-        
-        // 更新選項
-        const options = playerSelect.querySelectorAll('option');
-        options.forEach(option => {
-            if (option.value === '') return; // 保留"全部人數"選項
-            const playerCount = parseInt(option.value);
-            if (availablePlayers.has(playerCount)) {
-                option.style.display = 'block';
-                option.disabled = false;
-            } else {
-                option.style.display = 'none';
-                option.disabled = true;
-            }
-        });
-        
-        // 如果當前選擇的選項不可用，清空選擇
-        if (currentValue && !availablePlayers.has(parseInt(currentValue))) {
-            playerSelect.value = '';
-        }
-    }
-    
-    // 更新類型選項
-    function updateTypeOptions(baseScripts, playerFilter) {
-        const typeSelect = document.getElementById('typeFilter');
-        const currentValue = typeSelect.value;
-        
-        // 找出在其他條件下可用的類型
-        let availableTypes = new Set();
-        scripts.forEach(script => {
-            let match = true;
-            if (playerFilter && script.players != playerFilter) match = false;
-            if (match) {
-                script.filterTypes.forEach(type => availableTypes.add(type));
-            }
-        });
-        
-        // 更新選項
-        const options = typeSelect.querySelectorAll('option');
-        options.forEach(option => {
-            if (option.value === '') return; // 保留"全部類型"選項
-            if (availableTypes.has(option.value)) {
-                option.style.display = 'block';
-                option.disabled = false;
-            } else {
-                option.style.display = 'none';
-                option.disabled = true;
-            }
-        });
-        
-        // 如果當前選擇的選項不可用，清空選擇
-        if (currentValue && !availableTypes.has(currentValue)) {
-            typeSelect.value = '';
-        }
     }
     
     // 解析 CSS 時間字串為秒數（支援 s / ms）
