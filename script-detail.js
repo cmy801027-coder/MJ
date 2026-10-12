@@ -36,7 +36,7 @@ if(item.store !== '敏捷私團'){
         </div>
       </div>
       <section class="notebook-story"><h2>故事大綱</h2><div>${esc(d.story||'故事介紹整理中。')}</div></section>
-    </article><div class="notebook-continuation">${d.notice?`<section class="notebook-extra"><h2>遊玩須知</h2><div>${esc(d.notice)}</div></section>`:''}${d.features?`<section class="notebook-extra"><h2>遊戲特色</h2><div>${esc(d.features)}</div></section>`:''}</div>`;
+    </article>`;
     return;
 }
 
