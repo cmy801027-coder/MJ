@@ -20,12 +20,12 @@ if(item.store !== '敏捷私團'){
     const image=safePath(d.poster||item.poster);
     const types=(item.types||[]).map(t=>`<span>${esc(t)}</span>`).join(' / ');
     root.innerHTML=`<article class="notebook" aria-label="${attr(item.name)}劇本介紹">
-      <div class="notebook-top">
+      <div class="notebook-rings" aria-hidden="true"></div><div class="notebook-fold" aria-hidden="true"></div><div class="notebook-top">
         <div class="notebook-left">
           ${image?`<img class="notebook-poster" src="${attr(image)}" alt="${attr(item.name)}海報">`:`<h1 class="notebook-name">${esc(item.name)}</h1>`}
           <div class="notebook-genres"><small>類型：</small><p>${types||'待補充'}</p></div>
         </div>
-        <div class="notebook-note">
+        <div class="notebook-note"><span class="notebook-clip" aria-hidden="true"></span>
           <h1>${esc(item.name)}</h1>
           <dl>
             <dt>人數：</dt><dd>${esc(item.players)}人${item.playersLabel?'（'+esc(item.playersLabel)+'）':''}${item.allowCrossGender?' · 可反串':''}</dd>
