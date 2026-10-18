@@ -600,10 +600,11 @@ function decorateTextStyleEditors() {
       const toolbarElement =
         toolbar.firstElementChild;
 
-      field.insertAdjacentElement(
-        'afterend',
-        toolbarElement
-      );
+      // Keep a text field and its toolbar in one grid item.
+      const fieldGroup = document.createElement('div');
+      fieldGroup.className = 'text-style-field';
+      field.replaceWith(fieldGroup);
+      fieldGroup.append(field, toolbarElement);
 
       bindTextStyleToolbar(
         toolbarElement,
