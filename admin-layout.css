@@ -43,3 +43,11 @@ header>div:last-child{display:flex;gap:10px;flex-wrap:wrap}
 @media(max-width:850px){.admin-shell{grid-template-columns:minmax(0,1fr)}aside{position:static;flex-wrap:wrap;overflow:visible;gap:6px}aside button{flex:1 1 90px;text-align:center;padding:10px 12px}main{padding:18px}.script-card>.row{justify-content:flex-start}}
 @media(max-width:480px){main{padding:12px}.card{padding:16px}.list-item{padding:12px}.login-card{padding:24px}.text-style-toolbar{grid-template-columns:minmax(0,1fr)}.score-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.score-grid>.danger{grid-column:1/-1;justify-self:start}.theme-live-preview{padding:18px}.row>button{flex:1 1 120px}header>div:last-child{width:100%}header>div:last-child button{flex:1 1 120px}}
 .text-style-toggles button[data-style-reset]{flex:0 1 auto;min-width:90px;padding:7px 12px;white-space:nowrap}
+
+/* Any number of male/female roles can be scored per answer. */
+.score-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr))}
+.score-grid>.audience-field{grid-column:1/-1}
+.score-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr));gap:12px;align-items:end}
+.score-row>label,.audience-field{display:grid;gap:6px;min-width:0;font-size:13px;overflow-wrap:anywhere}
+.score-row input{min-width:0;width:100%;padding:9px;border:1px solid #ccd3da;border-radius:7px}
+.audience-field{margin:12px 0}

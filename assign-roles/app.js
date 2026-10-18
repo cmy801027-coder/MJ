@@ -12,7 +12,7 @@ let liffError = '';
 
 
 const resetState = () => ({
-  page: 'scriptSelect', route: null, index: 0, scores: [0,0,0],
+  page: 'scriptSelect', route: null, index: 0, scores: [],
   answers: [], muted: false, note: '', playerName: '', playDate: '',
 });
 state = resetState();
@@ -44,7 +44,7 @@ function buildGoogleSheetPayload() {
         ? '男角路線'
         : state.route === 'female'
           ? '女角路線'
-          : '',
+          : state.route === 'any' ? '不限路線' : '',
     resultCharacterId: top?.id || '',
     resultCharacter: top?.name || '',
     resultPercentage: Number(top?.pct || 0),
@@ -790,15 +790,15 @@ function goToQuizWithInterlude(
   );
 }
 
-function chars(){
-  return (
-    DATA.characters?.[state.route] || []
-  ).map(
-    (character, index) => ({
-      ...character,
-      _sourceIndex: index
-    })
-  );
+function chars(){return RoleQuestionnaire.characters(DATA.characters,state.route||'any');}
+function questionIndices(){return RoleQuestionnaire.indices(DATA.questions,state.route);}
+function visibleAnswerEntries(q){return RoleQuestionnaire.answers(q,state.route);}
+function resetScores(){state.scores=chars().map(()=>0);}
+function roleVector(owner,key,legacy){return RoleQuestionnaire.vector(DATA.characters,state.route,owner,key,legacy);}
+function startRoute(route){
+  state.route=route;state.answers=[];resetScores();
+  state.index=questionIndices()[0]??-1;
+  if(state.index<0){state.page='quiz';render();}else goToQuizWithInterlude(state.index);
 }
 function result(){
   const max=Math.max(...state.scores,1);
@@ -1353,7 +1353,7 @@ async function createResultShareBlob() {
     top.name || '',
     540,
     cursorY,
-    `characters.${state.route}.${top._sourceIndex ?? 0}.name`,
+    `characters.${top._group}.${top._sourceIndex ?? 0}.name`,
     {
       fontSize: 82,
       fontWeight: 700,
@@ -1378,7 +1378,7 @@ async function createResultShareBlob() {
       top.kr,
       540,
       cursorY,
-      `characters.${state.route}.${top._sourceIndex ?? 0}.kr`,
+      `characters.${top._group}.${top._sourceIndex ?? 0}.kr`,
       {
         fontSize: 32,
         fontWeight: 400,
@@ -1413,7 +1413,7 @@ async function createResultShareBlob() {
         cursorY +
           index *
             descriptionLineHeight,
-        `characters.${state.route}.${top._sourceIndex ?? 0}.description`,
+        `characters.${top._group}.${top._sourceIndex ?? 0}.description`,
         {
           fontSize: 34,
           fontWeight: 400,
@@ -1773,28 +1773,31 @@ function renderStart(p){
   <button class="btn" id="startBtn">${styledText(DATA.story.opening.button||'開始','story.opening.button')}</button>`;
 }
 function renderRoute(p){
-  const r=DATA.setting.routeSelection;
+  const r=DATA.setting.routeSelection||{};
   p.innerHTML=`<div class="eyebrow">SELECT YOUR VIEW</div><h2 class="section-title">${esc(r.title)}</h2><div class="routes">
   <button class="route" data-route="male"><small>${esc(r.maleEyebrow)}</small><h3>${esc(r.maleLabel)}</h3><p>${DATA.characters.male.map(c=>esc(c.name)).join('<br>')}</p></button>
-  <button class="route" data-route="female"><small>${esc(r.femaleEyebrow)}</small><h3>${esc(r.femaleLabel)}</h3><p>${DATA.characters.female.map(c=>esc(c.name)).join('<br>')}</p></button></div>`;
+  <button class="route" data-route="female"><small>${esc(r.femaleEyebrow)}</small><h3>${esc(r.femaleLabel)}</h3><p>${DATA.characters.female.map(c=>esc(c.name)).join('<br>')}</p></button>
+  <button class="route" data-route="any"><small>ALL CHARACTERS</small><h3>${esc(r.anyLabel||'不限')}</h3><p>查看所有男女題目與選項<br>由全部角色中配對結果</p></button></div>`;
 }
 function renderQuiz(p) {
+  const eligible = questionIndices();
   const q = DATA.questions[state.index];
-  const type = q.type || 'single';
-  const progress =
-    (state.index + 1) /
-    DATA.questions.length *
-    100;
+  if(!q || !eligible.includes(state.index) || !chars().length){
+    p.innerHTML='<h2>目前沒有符合此選擇的題目</h2><p>請返回選擇其他路線，或請主持人確認題目及答案的顯示設定。</p><button class="btn" id="previousQuestion">返回性別選擇</button>';return;
+  }
+  const position=eligible.indexOf(state.index);
+  const type=q.type||'single';
+  const progress=(position+1)/eligible.length*100;
 
   let controlHtml = '';
 
   if (type === 'bestWorst') {
     controlHtml = `
       <div class="best-worst-options">
-        ${(q.answers || []).map((answer, index) => `
+        ${visibleAnswerEntries(q).map(({answer,index},displayIndex) => `
           <div class="best-worst-option" data-bw-option="${index}">
             <div class="best-worst-text">
-              <span>${String(index + 1).padStart(2, '0')}</span>
+              <span>${String(displayIndex + 1).padStart(2, '0')}</span>
               <strong>${styledText(answer.text,`questions.${state.index}.answers.${index}.text`)}</strong>
             </div>
 
@@ -1875,13 +1878,13 @@ function renderQuiz(p) {
   } else {
     controlHtml = `
       <div class="answers">
-        ${(q.answers || []).map((answer, index) => `
+        ${visibleAnswerEntries(q).map(({answer,index},displayIndex) => `
           <button
             class="answer"
             data-answer="${index}"
             type="button"
           >
-            <span>${String(index + 1).padStart(2, '0')}</span>
+            <span>${String(displayIndex + 1).padStart(2, '0')}</span>
             <span>${styledText(answer.text,`questions.${state.index}.answers.${index}.text`)}</span>
           </button>
         `).join('')}
@@ -1901,9 +1904,9 @@ function renderQuiz(p) {
         </button>
 
         <div class="qnum">
-          QUESTION ${String(state.index + 1).padStart(2, '0')}
+          QUESTION ${String(position + 1).padStart(2, '0')}
           /
-          ${String(DATA.questions.length).padStart(2, '0')}
+          ${String(eligible.length).padStart(2, '0')}
         </div>
       </div>
 
@@ -1921,7 +1924,7 @@ function renderQuiz(p) {
 function renderResult(p){
   const {ranking,top}=result(), s=DATA.setting.result;
   p.innerHTML=`<div class="eyebrow">${esc(s.eyebrow)}</div><div class="result-card"><img src="${esc(top.image)}" alt="${esc(top.name)}">
-  <div class="result-name"><h1>${styledText(top.name,`characters.${state.route}.${top._sourceIndex ?? 0}.name`)}</h1><p>${styledText(top.kr||'',`characters.${state.route}.${top._sourceIndex ?? 0}.kr`)}</p></div></div><p class="desc">${styledText(top.description||top.desc||'',`characters.${state.route}.${top._sourceIndex ?? 0}.description`)}</p>
+  <div class="result-name"><h1>${styledText(top.name,`characters.${top._group}.${top._sourceIndex ?? 0}.name`)}</h1><p>${styledText(top.kr||'',`characters.${top._group}.${top._sourceIndex ?? 0}.kr`)}</p></div></div><p class="desc">${styledText(top.description||top.desc||'',`characters.${top._group}.${top._sourceIndex ?? 0}.description`)}</p>
   <div class="eyebrow resonance-title">${esc(s.resonanceLabel)}</div><div class="rank">${ranking.map(c=>`<div class="rank-row"><span>${esc(c.name)}</span><div class="bar"><i style="width:${c.pct}%"></i></div><b>${c.pct}%</b></div>`).join('')}</div>
   <div class="actions result-share-actions">
   <button class="btn" id="goShare">${esc(s.shareButton)}</button>
@@ -2040,254 +2043,59 @@ function addScores(scoreArray) {
   );
 }
 
-function scoreContributionForAnswer(record) {
-  const question =
-    DATA.questions?.[
-      Number(record?.questionIndex)
-    ];
-
-  if (!question || !record) {
-    return [0, 0, 0];
+function scoreContributionForAnswer(record){
+  const q=DATA.questions?.[Number(record?.questionIndex)];
+  const zero=chars().map(()=>0);
+  if(!q||!record)return zero;
+  const type=record.type||q.type||'single';
+  if(type==='bestWorst'){
+    const most=q.answers?.[Number(record.mostIndex)];
+    const least=q.answers?.[Number(record.leastIndex)];
+    const high=roleVector(most,'mostRoleScores','mostScore');
+    const low=roleVector(least,'leastRoleScores','leastScore');
+    return high.map((v,i)=>v+low[i]);
   }
-
-  const type =
-    record.type ||
-    question.type ||
-    'single';
-
-  if (type === 'bestWorst') {
-    const most =
-      question.answers?.[
-        Number(record.mostIndex)
-      ];
-
-    const least =
-      question.answers?.[
-        Number(record.leastIndex)
-      ];
-
-    return [0, 1, 2].map(index =>
-      Number(
-        (
-          most?.mostScore ||
-          most?.score ||
-          []
-        )[index] || 0
-      ) +
-      Number(
-        (
-          least?.leastScore ||
-          []
-        )[index] || 0
-      )
-    );
+  if(type==='slider'){
+    const slider=q.slider||{},min=Number(slider.min??0),max=Number(slider.max??100);
+    const ratio=max===min?0:Math.max(0,Math.min(1,(Number(record.value??min)-min)/(max-min)));
+    const low=roleVector(slider,'minRoleScores','minScore');
+    const high=roleVector(slider,'maxRoleScores','maxScore');
+    return low.map((v,i)=>v+(high[i]-v)*ratio);
   }
-
-  if (type === 'slider') {
-    const slider =
-      question.slider || {};
-
-    const min =
-      Number(slider.min ?? 0);
-
-    const max =
-      Number(slider.max ?? 100);
-
-    const value =
-      Number(record.value ?? min);
-
-    const ratio =
-      max === min
-        ? 0
-        : Math.max(
-            0,
-            Math.min(
-              1,
-              (value - min) /
-                (max - min)
-            )
-          );
-
-    const minScore =
-      slider.minScore || [0, 0, 0];
-
-    const maxScore =
-      slider.maxScore || [0, 0, 0];
-
-    return [0, 1, 2].map(index => {
-      const low =
-        Number(minScore[index] || 0);
-
-      const high =
-        Number(maxScore[index] || 0);
-
-      return low +
-        (high - low) * ratio;
-    });
-  }
-
-  const answer =
-    question.answers?.[
-      Number(record.answerIndex)
-    ];
-
-  return [0, 1, 2].map(index =>
-    Number(answer?.score?.[index] || 0)
-  );
+  return roleVector(q.answers?.[Number(record.answerIndex)],'roleScores','score');
 }
-
-function rebuildScoresFromAnswers() {
-  state.scores = [0, 0, 0];
-
-  state.answers.forEach(record => {
-    const contribution =
-      scoreContributionForAnswer(record);
-
-    state.scores =
-      state.scores.map(
-        (score, index) =>
-          score +
-          Number(
-            contribution[index] || 0
-          )
-      );
-  });
+function rebuildScoresFromAnswers(){resetScores();state.answers.forEach(r=>addScores(scoreContributionForAnswer(r)));}
+function goToPreviousQuestion(){
+  const indices=questionIndices(),position=indices.indexOf(state.index);
+  if(position<=0){state.answers=[];state.scores=[];state.route=null;state.page='route';render();return;}
+  const previousIndex=indices[position-1];
+  state.answers=state.answers.filter(r=>Number(r.questionIndex)<previousIndex);
+  state.index=previousIndex;rebuildScoresFromAnswers();state.page='quiz';render();
 }
-
-function goToPreviousQuestion() {
-  if (state.index <= 0) {
-    state.answers = [];
-    state.scores = [0, 0, 0];
-    state.route = null;
-    state.page = 'route';
-    render();
-    return;
-  }
-
-  const previousIndex =
-    state.index - 1;
-
-  state.answers =
-    state.answers.filter(
-      answerRecord =>
-        Number(
-          answerRecord.questionIndex
-        ) < previousIndex
-    );
-
-  state.index = previousIndex;
-  rebuildScoresFromAnswers();
-  state.page = 'quiz';
-  render();
+function finishQuestion(record){
+  state.answers.push({questionIndex:state.index,type:DATA.questions[state.index].type||'single',...record});
+  const next=questionIndices().find(i=>i>state.index);
+  if(next===undefined){cinematic(DATA.story.epilogue,'result','story.epilogue');}
+  else{state.index=next;goToQuizWithInterlude(next);}
 }
-
-function finishQuestion(answerRecord) {
-  state.answers.push({
-    questionIndex: state.index,
-    type:
-      DATA.questions[state.index].type ||
-      'single',
-    ...answerRecord
-  });
-
-  state.index += 1;
-
-  if (state.index >= DATA.questions.length) {
-    cinematic(
-      DATA.story.epilogue,
-      'result',
-      'story.epilogue'
-    );
-  } else {
-    goToQuizWithInterlude(
-      state.index
-    );
-  }
+function answer(i){
+  const q=DATA.questions[state.index],a=q?.answers?.[i];
+  if(!q||!RoleQuestionnaire.visible(q,state.route)||!a||!RoleQuestionnaire.visible(a,state.route))return;
+  const record={answerIndex:i,answer:a.text};
+  addScores(scoreContributionForAnswer({questionIndex:state.index,...record}));finishQuestion(record);
 }
-
-function answer(i) {
-  const q = DATA.questions[state.index];
-  const a = q.answers[i];
-
-  addScores(a.score);
-
-  finishQuestion({
-    answerIndex: i,
-    answer: a.text
-  });
+function answerBestWorst(mostIndex,leastIndex){
+  const q=DATA.questions[state.index],most=q?.answers?.[mostIndex],least=q?.answers?.[leastIndex];
+  if(mostIndex===leastIndex||!most||!least||!RoleQuestionnaire.visible(most,state.route)||!RoleQuestionnaire.visible(least,state.route))return;
+  const record={mostIndex,leastIndex,mostAnswer:most.text,leastAnswer:least.text};
+  addScores(scoreContributionForAnswer({questionIndex:state.index,type:'bestWorst',...record}));finishQuestion(record);
 }
-
-function answerBestWorst(
-  mostIndex,
-  leastIndex
-) {
-  const q = DATA.questions[state.index];
-  const most = q.answers[mostIndex];
-  const least = q.answers[leastIndex];
-
-  addScores(
-    most.mostScore ||
-    most.score
-  );
-
-  addScores(
-    least.leastScore
-  );
-
-  finishQuestion({
-    mostIndex,
-    leastIndex,
-    mostAnswer: most.text,
-    leastAnswer: least.text
-  });
-}
-
-function answerSlider(value) {
-  const q = DATA.questions[state.index];
-  const slider = q.slider || {};
-
-  const min = Number(slider.min ?? 0);
-  const max = Number(slider.max ?? 100);
-  const numericValue = Number(value);
-
-  const ratio =
-    max === min
-      ? 0
-      : Math.max(
-          0,
-          Math.min(
-            1,
-            (numericValue - min) /
-              (max - min)
-          )
-        );
-
-  const minScore =
-    slider.minScore || [0, 0, 0];
-
-  const maxScore =
-    slider.maxScore || [0, 0, 0];
-
-  const interpolated =
-    state.scores.map((_, index) => {
-      const low =
-        Number(minScore[index] || 0);
-
-      const high =
-        Number(maxScore[index] || 0);
-
-      return (
-        low +
-        (high - low) * ratio
-      );
-    });
-
-  addScores(interpolated);
-
-  finishQuestion({
-    value: numericValue,
-    ratio
-  });
+function answerSlider(value){
+  const q=DATA.questions[state.index],slider=q.slider||{},min=Number(slider.min??0),max=Number(slider.max??100);
+  const numericValue=Number(value);if(!Number.isFinite(numericValue))return;
+  const ratio=max===min?0:Math.max(0,Math.min(1,(numericValue-min)/(max-min)));
+  const record={value:numericValue,ratio};
+  addScores(scoreContributionForAnswer({questionIndex:state.index,type:'slider',...record}));finishQuestion(record);
 }
 function saveForm() {
   state.playerName =
@@ -2372,7 +2180,7 @@ function bind(){
   });
   document.querySelector('#startBtn')?.addEventListener('click',()=>{initAudio();cinematic(DATA.story.prologue,'route','story.prologue')});
   document.querySelector('#previousQuestion')?.addEventListener('click',goToPreviousQuestion);
-  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{state.route=b.dataset.route;state.index=0;state.scores=[0,0,0];goToQuizWithInterlude(0)});
+  document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>startRoute(b.dataset.route));
   document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
   let mostIndex = null;
   let leastIndex = null;

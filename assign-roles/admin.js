@@ -1184,23 +1184,9 @@ function renderStory(){
 
 function renderQuestions() {
   const qs = script().questions;
-  const characters =
-    script().characters.male || [];
-
-  const scoreInputs = (
-    attribute,
-    value,
-    labelPrefix = ''
-  ) => [0, 1, 2].map(index => `
-    <label>
-      ${esc(labelPrefix)}
-      ${esc(characters[index]?.name || `角色${index + 1}`)}
-      <input
-        type="number"
-        ${attribute}="${value}:${index}"
-      >
-    </label>
-  `).join('');
+  const characters = RoleQuestionnaire.characters(script().characters);
+  const genderSelect = (attribute,value,gender='any') => `<label class="audience-field">顯示對象<select ${attribute}="${value}"><option value="any" ${!gender||gender==='any'?'selected':''}>不限（皆顯示）</option><option value="male" ${gender==='male'?'selected':''}>男生</option><option value="female" ${gender==='female'?'selected':''}>女生</option></select></label>`;
+  const roleInputs = (attribute,value,owner,key,legacy) => characters.map((c,index)=>`<label>${c._group==='male'?'男角':'女角'}・${esc(c.name)}<input type="number" step="any" ${attribute}="${value}:${index}" value="${RoleQuestionnaire.score(owner,key,legacy,c)}"></label>`).join('');
 
   const renderSingle = (q, qi) => `
     <h3>單選答案與角色分數</h3>
@@ -1208,22 +1194,14 @@ function renderQuestions() {
     ${(q.answers || []).map((answer, ai) => `
       <div class="list-item">
         <div class="score-grid">
+          ${genderSelect('data-answer-gender',`${qi}:${ai}`,answer.gender)}
           <input
             data-answer-text="${qi}:${ai}"
             value="${esc(answer.text)}"
             placeholder="答案文字"
           >
 
-          ${[0, 1, 2].map(si => `
-            <label>
-              ${esc(characters[si]?.name || `角色${si + 1}`)}
-              <input
-                type="number"
-                data-score="${qi}:${ai}:${si}"
-                value="${Number(answer.score?.[si] || 0)}"
-              >
-            </label>
-          `).join('')}
+          ${roleInputs('data-score',`${qi}:${ai}`,answer,'roleScores','score')}
 
           <button
             class="danger"
@@ -1249,13 +1227,14 @@ function renderQuestions() {
 
     <p class="muted">
       玩家必須各選一個。每個選項可分別設定「選為最喜歡」和
-      「選為最不喜歡」時，三名角色得到的分數。
+      「選為最不喜歡」時，所有男女角色得到的分數。
     </p>
 
     ${(q.answers || []).map((answer, ai) => `
       <div class="list-item">
         <div class="field">
           <label>選項 ${ai + 1}</label>
+          ${genderSelect('data-answer-gender',`${qi}:${ai}`,answer.gender)}
           <input
             data-answer-text="${qi}:${ai}"
             value="${esc(answer.text)}"
@@ -1264,30 +1243,12 @@ function renderQuestions() {
 
         <h4>被選為最喜歡時</h4>
         <div class="score-row">
-          ${[0, 1, 2].map(si => `
-            <label>
-              ${esc(characters[si]?.name || `角色${si + 1}`)}
-              <input
-                type="number"
-                data-most-score="${qi}:${ai}:${si}"
-                value="${Number(answer.mostScore?.[si] ?? answer.score?.[si] ?? 0)}"
-              >
-            </label>
-          `).join('')}
+          ${roleInputs('data-most-score',`${qi}:${ai}`,answer,'mostRoleScores','mostScore')}
         </div>
 
         <h4>被選為最不喜歡時</h4>
         <div class="score-row">
-          ${[0, 1, 2].map(si => `
-            <label>
-              ${esc(characters[si]?.name || `角色${si + 1}`)}
-              <input
-                type="number"
-                data-least-score="${qi}:${ai}:${si}"
-                value="${Number(answer.leastScore?.[si] || 0)}"
-              >
-            </label>
-          `).join('')}
+          ${roleInputs('data-least-score',`${qi}:${ai}`,answer,'leastRoleScores','leastScore')}
         </div>
 
         <button
@@ -1375,32 +1336,14 @@ function renderQuestions() {
       <div class="list-item">
         <h4>拉到最左端時的角色分數</h4>
         <div class="score-row">
-          ${[0, 1, 2].map(si => `
-            <label>
-              ${esc(characters[si]?.name || `角色${si + 1}`)}
-              <input
-                type="number"
-                data-slider-min-score="${qi}:${si}"
-                value="${Number(slider.minScore?.[si] || 0)}"
-              >
-            </label>
-          `).join('')}
+          ${roleInputs('data-slider-min-score',`${qi}`,slider,'minRoleScores','minScore')}
         </div>
       </div>
 
       <div class="list-item">
         <h4>拉到最右端時的角色分數</h4>
         <div class="score-row">
-          ${[0, 1, 2].map(si => `
-            <label>
-              ${esc(characters[si]?.name || `角色${si + 1}`)}
-              <input
-                type="number"
-                data-slider-max-score="${qi}:${si}"
-                value="${Number(slider.maxScore?.[si] || 0)}"
-              >
-            </label>
-          `).join('')}
+          ${roleInputs('data-slider-max-score',`${qi}`,slider,'maxRoleScores','maxScore')}
         </div>
 
         <p class="muted">
@@ -1421,6 +1364,7 @@ function renderQuestions() {
       </div>
     </div>
 
+    <p class="muted">顯示對象：男生會看到「男生＋不限」，女生會看到「女生＋不限」，選擇「不限」會看到全部。每題與每個答案可分別設定。分數欄位涵蓋所有男女角色；最喜歡／最不喜歡題在該路線至少需有兩個可見選項。</p>
     ${qs.map((q, qi) => {
       const type = q.type || 'single';
 
@@ -1440,6 +1384,7 @@ function renderQuestions() {
           </div>
 
           <div class="field">
+            ${genderSelect('data-question-gender',qi,q.gender)}
             <label>題目類型</label>
             <select data-question-type="${qi}">
               <option value="single" ${type === 'single' ? 'selected' : ''}>
@@ -1497,37 +1442,20 @@ function renderQuestions() {
       element.value;
   });
 
-  bindInput('[data-score]', element => {
-    const [q, a, s] =
-      element.dataset.score
-        .split(':')
-        .map(Number);
-
-    qs[q].answers[a].score[s] =
-      Number(element.value);
+  const bindRoleScores = (attribute,key,legacy,isSlider=false) => bindInput(`[${attribute}]`,element=>{
+    const values=element.getAttribute(attribute).split(':').map(Number);
+    const [q,a,index]=values;
+    let owner;
+    if(isSlider){qs[q].slider ||= {};owner=qs[q].slider;}else owner=qs[q].answers[a];
+    RoleQuestionnaire.setScore(script().characters,owner,key,legacy,characters[isSlider?a:index],element.value);
   });
-
-  bindInput('[data-most-score]', element => {
-    const [q, a, s] =
-      element.dataset.mostScore
-        .split(':')
-        .map(Number);
-
-    qs[q].answers[a].mostScore ||= [0, 0, 0];
-    qs[q].answers[a].mostScore[s] =
-      Number(element.value);
-  });
-
-  bindInput('[data-least-score]', element => {
-    const [q, a, s] =
-      element.dataset.leastScore
-        .split(':')
-        .map(Number);
-
-    qs[q].answers[a].leastScore ||= [0, 0, 0];
-    qs[q].answers[a].leastScore[s] =
-      Number(element.value);
-  });
+  bindRoleScores('data-score','roleScores','score');
+  bindRoleScores('data-most-score','mostRoleScores','mostScore');
+  bindRoleScores('data-least-score','leastRoleScores','leastScore');
+  bindRoleScores('data-slider-min-score','minRoleScores','minScore',true);
+  bindRoleScores('data-slider-max-score','maxRoleScores','maxScore',true);
+  document.querySelectorAll('[data-question-gender]').forEach(el=>el.onchange=()=>{qs[Number(el.dataset.questionGender)].gender=el.value;setDirty();});
+  document.querySelectorAll('[data-answer-gender]').forEach(el=>el.onchange=()=>{const [q,a]=el.dataset.answerGender.split(':').map(Number);qs[q].answers[a].gender=el.value;setDirty();});
 
   bindInput('[data-slider]', element => {
     const [q, key] =
@@ -1549,30 +1477,6 @@ function renderQuestions() {
         : element.value;
   });
 
-  bindInput('[data-slider-min-score]', element => {
-    const [q, s] =
-      element.dataset.sliderMinScore
-        .split(':')
-        .map(Number);
-
-    qs[q].slider ||= {};
-    qs[q].slider.minScore ||= [0, 0, 0];
-    qs[q].slider.minScore[s] =
-      Number(element.value);
-  });
-
-  bindInput('[data-slider-max-score]', element => {
-    const [q, s] =
-      element.dataset.sliderMaxScore
-        .split(':')
-        .map(Number);
-
-    qs[q].slider ||= {};
-    qs[q].slider.maxScore ||= [0, 0, 0];
-    qs[q].slider.maxScore[s] =
-      Number(element.value);
-  });
-
   document
     .querySelectorAll('[data-question-type]')
     .forEach(select => {
@@ -1583,6 +1487,7 @@ function renderQuestions() {
         q.type = select.value;
 
         if (q.type === 'single') {
+          (q.answers||[]).forEach(a=>{a.roleScores ||= a.mostRoleScores; a.score ||= a.mostScore || [0,0,0];});
           q.answers ||= [
             {
               text: '答案 A',
@@ -1599,6 +1504,8 @@ function renderQuestions() {
                 q.answers?.[index] || {};
 
               return {
+                ...old,
+                mostRoleScores: old.mostRoleScores || old.roleScores,
                 text:
                   old.text ||
                   `選項 ${index + 1}`,

@@ -475,3 +475,7 @@ button [data-text-style],
     opacity: 0;
   }
 }
+
+/* Three gender choices, including all characters. */
+.routes{grid-template-columns:repeat(3,minmax(0,1fr));max-width:960px;gap:20px}.route{min-width:0;overflow-wrap:anywhere}
+@media(max-width:700px){.routes{grid-template-columns:minmax(0,1fr)}}
