@@ -19,7 +19,7 @@ if(item.store !== '敏捷私團'){
     document.body.classList.add('notebook-page');
     const image=safePath(d.poster||item.poster);
     const types=(item.types||[]).map(t=>`<span>${esc(t)}</span>`).join(' / ');
-    root.innerHTML=`<article class="notebook" aria-label="${attr(item.name)}劇本介紹">
+    root.innerHTML=`<article class="notebook" aria-label="${attr(item.name)}劇本介紹"><div class="notebook-content">
       <div class="notebook-top">
         <div class="notebook-left">
           ${image?`<img class="notebook-poster" src="${attr(image)}" alt="${attr(item.name)}海報">`:`<h1 class="notebook-name">${esc(item.name)}</h1>`}
@@ -36,7 +36,7 @@ if(item.store !== '敏捷私團'){
         </div>
       </div>
       <section class="notebook-story"><h2>故事大綱</h2><div>${esc(d.story||'故事介紹整理中。')}</div></section>
-    </article>`;
+    </div></article>`;
     return;
 }
 
